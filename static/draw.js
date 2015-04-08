@@ -5,32 +5,48 @@
 (function(){
     var elem = document.getElementById('canvas'),
         params = {width: 800, height: 800},
-        two = new Two(params).appendTo(elem),
-        maxX = two.width,
-        maxY = two.height,
-        count = 24,
-        spine1 = two.makeLine(0, 0, maxX, 0),
-        spine2 = two.makeLine(0, 0, 0, maxY),
-        spine3 = two.makeLine(maxX, maxY, 0, maxY),
-        spine4 = two.makeLine(maxX, maxY, maxX, 0);
+        two = new Two(params).appendTo(elem);
     window.curve = two.makeGroup();
-    curve.add(spine1, spine2, spine3, spine4);
-    curve.stroke = "red";
-    var box = [spine1, spine2, spine3, spine4],
-        step = 4;
 
-    for (var i=0; i<count/step; i++){
-        var layer = stitchContinuous(box, count, count + i*step);
-        layer.stroke = "rgba(0, "+(127+i*16)+", "+(255-i*32)+", "+ (1.0-i/8)+")";
-        layer.addTo(curve);
+    function test(){
+        drawRectCurve(24, 4, two.width/2, two.height/2)
+    }
+
+    window.drawRectCurve = function(resolution, layerCount, width, height) {
+        // TODO: explain
+        // TODO: figure out an API for color properties
+        resolution = resolution || 2;
+        layerCount = layerCount || 1;
+        width = width || two.width;
+        height = height || two.height;
+
+        var spine1 = two.makeLine(0, 0, width, 0),
+            spine2 = two.makeLine(0, 0, 0, height),
+            spine3 = two.makeLine(width, height, 0, height),
+            spine4 = two.makeLine(width, height, width, 0),
+            box = [spine1, spine2, spine3, spine4];
+        curve.add(spine1, spine2, spine3, spine4);
+
+        for (var i = 0; i < layerCount; i++) {
+            var layer = stitchContinuous(box, resolution, resolution + i * layerCount);
+            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
+            layer.addTo(curve);
+        }
+        two.render();
+    };
+
+    function rgba(r, g, b, a){
+        return "rgba("+ r + "," + g + "," + b + "," + a + ")"
     }
 
     function pointStr(vector){
         return "("+vector.x+","+vector.y+")";
     }
 
-    function logPoint(vector){
-        console.log(pointStr(vector));
+    function drawLine(v1, v2){
+        // wrapper function to make a line between a pair
+        // of Two.Vector points (or anything else with x, y properties)
+        return two.makeLine(v1.x, v1.y, v2.x, v2.y);
     }
 
     function decenter(point, trans){
@@ -39,16 +55,11 @@
         return point.clone().set(trans.x - point.x, trans.y + point.y);
     }
 
-    function drawLine(v1, v2){
-        // wrapper function to make a line between a pair
-        // of Two.Vector points
-        return two.makeLine(v1.x, v1.y, v2.x, v2.y);
-    }
-
-    function getPoints(line, resolution, reverse){
+    function getPoints(line, resolution){
         // Returns an array of `resolution` points
         // evenly spaced along `line`.
         // if `reverse`, get the points in reverse order.
+        // TODO: test with polygons
         var vertices = line.vertices,
             translation = line.translation,
             points = [];
@@ -58,26 +69,19 @@
                 rangeX = vertexB.x - vertexA.x,
                 rangeY = vertexB.y - vertexA.y,
                 stepX = rangeX / resolution,
-                stepY = rangeY / resolution,
-                linePoints = [];
+                stepY = rangeY / resolution;
             // hack to avoid repetition
             if (vertexB === vertices[0] && vertices.length <= 2){
                 continue;
             }
 
-            console.log(pointStr(vertexA) + "->" + pointStr(vertexB));
             for(var stepNum=0; stepNum <= resolution; stepNum++){
                 var curX = vertexA.x + stepNum * stepX,
                     curY = vertexA.y + stepNum * stepY,
                     curPoint = decenter(new Two.Anchor(curX, curY), translation);
-                logPoint(curPoint);
-                two.makeCircle(curPoint.x, curPoint.y, 2);
                 points.push(curPoint);
             }
-            //points.push(linePoints);
         }
-        // Flip array if necessary
-        reverse && points.reverse();
         return points;
 
     }
@@ -91,23 +95,7 @@
             return group;
         }
         for(var i=0; i<len; i++){
-            console.log("Connecting " + pointStr(arr1[i]) + "~>" + pointStr(arr2[i]));
             var line = drawLine(arr1[i], arr2[i]);
-            line.addTo(group);
-        }
-        return group;
-    }
-
-    function _followCurve(points, separation){
-        // Takes an array of points and connects each to
-        // the one `separation` ahead of it.
-        var group = new Two.Group(),
-            len = points.length;
-        for(var i=0; i+separation<len; i++){
-            var pointA = points[i],
-                pointB = points[i+separation],
-                line = drawLine(pointA, pointB);
-            console.log("Connecting " + pointStr(pointA) + "~>" + pointStr(pointB));
             line.addTo(group);
         }
         return group;
@@ -123,9 +111,24 @@
         return stitches;
     }
 
-    function stitchContinuous(lines, resolution, step){
-        // "Stitch" a curve between the two lines given,
-        // with `resolution` lines in the curve.
+    function _followCurve(points, separation){
+        // Takes an array of points and connects each to
+        // the one `separation` ahead of it.
+        var group = new Two.Group(),
+            len = points.length;
+        for(var i=0; i+separation<len; i++){
+            var pointA = points[i],
+                pointB = points[i+separation],
+                line = drawLine(pointA, pointB);
+            line.addTo(group);
+        }
+        return group;
+    }
+
+    function stitchContinuous(lines, resolution, separation){
+        // "Stitch" a continuous curve between the list of lines given,
+        // with `resolution` points per line, and a given number of
+        // points of separation
         var points = getPoints(lines[0], resolution),
             stitches;
             for(var i = 0; i<lines.length; i++){
@@ -135,11 +138,11 @@
                 }
                 points = points.concat(newPoints);
             }
-        step = step || resolution + 1;
-        stitches = _followCurve(points, step);//_connectDots(line1Points, line2Points);
+        separation = separation || resolution + 1;
+        stitches = _followCurve(points, separation);//_connectDots(line1Points, line2Points);
 
         return stitches;
     }
 
-    two.render();
+    test();
 })();
