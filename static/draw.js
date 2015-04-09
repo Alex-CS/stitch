@@ -5,7 +5,14 @@
 (function(){
     var elem = document.getElementById('canvas'),
         params = {width: 800, height: 800},
-        two = new Two(params).appendTo(elem);
+        two = new Two(params).appendTo(elem),
+        pi = Math.PI,
+        defaults = {
+            resolution: 2,
+            layers: 1,
+            width: two.width,
+            height: two.height
+        };
     window.curve = two.makeGroup();
 
     function test(){
@@ -15,10 +22,10 @@
     window.drawRectCurve = function(resolution, layerCount, width, height) {
         // TODO: explain
         // TODO: figure out an API for color properties
-        resolution = resolution || 2;
-        layerCount = layerCount || 1;
-        width = width || two.width;
-        height = height || two.height;
+        resolution = resolution || defaults.resolution;
+        layerCount = layerCount || defaults.layers;
+        width = width || defaults.width;
+        height = height || defaults.height;
 
         var spine1 = two.makeLine(0, 0, width, 0),
             spine2 = two.makeLine(0, 0, 0, height),
@@ -35,6 +42,16 @@
         two.render();
     };
 
+    function Color(red, green, blue, alpha){
+        this.red = red;
+        this.grn = green;
+        this.blu = blue;
+        this.alph = alpha;
+        this.rgbaStr = function(){
+            return rgba(this.red, this.grn, this.blu, this.alph)
+        };
+    }
+
     function rgba(r, g, b, a){
         return "rgba("+ r + "," + g + "," + b + "," + a + ")"
     }
@@ -46,12 +63,14 @@
     function drawLine(v1, v2){
         // wrapper function to make a line between a pair
         // of Two.Vector points (or anything else with x, y properties)
+        // TODO: extend Two with this
         return two.makeLine(v1.x, v1.y, v2.x, v2.y);
     }
 
     function decenter(point, trans){
         // Take a Two.Vector positioned relative to center,
         // and change it to be relative to top-left corner
+        // TODO: extend Two.Vector with this
         return point.clone().set(trans.x - point.x, trans.y + point.y);
     }
 
@@ -60,6 +79,7 @@
         // evenly spaced along `line`.
         // if `reverse`, get the points in reverse order.
         // TODO: test with polygons
+        // TODO: extend Two.Polygon with this
         var vertices = line.vertices,
             translation = line.translation,
             points = [];
