@@ -11,7 +11,11 @@
             resolution: 2,
             layers: 1,
             width: two.width,
-            height: two.height
+            height: two.height,
+            center: {
+                x: two.width/2,
+                y: two.height/2
+            }
         };
     window.curve = two.makeGroup();
 
@@ -27,6 +31,8 @@
         width = width || defaults.width;
         height = height || defaults.height;
 
+        var curve = new Two.Group();
+
         var spine1 = two.makeLine(0, 0, width, 0),
             spine2 = two.makeLine(0, 0, 0, height),
             spine3 = two.makeLine(width, height, 0, height),
@@ -39,22 +45,53 @@
             layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
             layer.addTo(curve);
         }
+
         two.render();
+        return curve;
     };
 
-    window.drawStarCurve = function(starPointNum, resolution, layerCount, width, height){
+    window.drawStarCurve = function(starPointNum, resolution, layerCount, width, height, center){
         // TODO Do it...
         resolution = resolution || defaults.resolution;
         layerCount = layerCount || defaults.layers;
         width = width || defaults.width;
         height = height || defaults.height;
+        center = center || defaults.center;
 
-        var center = new Two.Anchor(0, 0);
+        var star = Two.Group();
+
+        var angleBetween = revToRad(1.0/starPointNum);
+        var radius = Math.min(width, height) / 2; // FIXME this only works for rotationally symmetric stars
+
+        var spines = [];
+        // rotate through all the angles drawing a spine for each
+        for(var i=0;i<starPointNum;i++){
+            var tipPoint = getPositions(i*angleBetween, radius);
+
+            // Have to alternate to get pretty curves
+            var p1 = (i % 2 == 0) ? center : tipPoint,
+                p2 = (i % 2 == 0) ? tipPoint : center;
+
+            var line = drawLine(p1, p2);
+
+            spines.push(line);
+        }
+
+        // TODO draw curves
+
+
+        return group;
 
     };
 
+    function revToRad(rev){
+        // Converts a number of revolutions (1 rev = 2pi radians)
+        return 2 * Math.PI / rev;
+    }
+
     var getPositions = function(angle, radius) {
-        // Get x,y coords for a point with the given angle and radius
+        // Get x,y coordinates for a point `radius`
+        // from (0,0) at the given `angle`.
         return {
             x: Math.cos(angle) * radius,
             y: Math.sin(angle) * radius
@@ -62,7 +99,9 @@
     };
 
     var rotateAbout = function(cen, poly, angle){
+        // Rotates a Two.Polygon about a point, "orbiting" that point.
         // TODO: extend Two.Polygon with this
+        // Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
         console.log("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
         poly.rotation = (poly.rotation + angle) % (2*pi);
         var pos = getPositions(poly.rotation, poly.length);
@@ -156,14 +195,14 @@
         // with `resolution` lines in the curve.
         var line1Points = getPoints(line1, resolution),
             line2Points = getPoints(line2, resolution),
-            stitches = _followCurve(line1Points.concat(line2Points), resolution+2);//_connectDots(line1Points, line2Points);
+            stitches = _connectDots(line1Points, line2Points);
 
         return stitches;
     }
 
     function _followCurve(points, separation){
-        // Takes an array of points and connects each to
-        // the one `separation` ahead of it.
+        // Takes an array of points and draws a line from
+        // each point to the one `separation` ahead of it.
         var group = new Two.Group(),
             len = points.length;
         for(var i=0; i+separation<len; i++){
@@ -178,7 +217,7 @@
     function stitchContinuous(lines, resolution, separation){
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
-        // points of separation
+        // points of `separation`
         var points = getPoints(lines[0], resolution),
             stitches;
             for(var i = 0; i<lines.length; i++){
