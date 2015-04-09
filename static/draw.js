@@ -42,6 +42,35 @@
         two.render();
     };
 
+    window.drawStarCurve = function(starPointNum, resolution, layerCount, width, height){
+        // TODO Do it...
+        resolution = resolution || defaults.resolution;
+        layerCount = layerCount || defaults.layers;
+        width = width || defaults.width;
+        height = height || defaults.height;
+
+        var center = new Two.Anchor(0, 0);
+
+    };
+
+    var getPositions = function(angle, radius) {
+        // Get x,y coords for a point with the given angle and radius
+        return {
+            x: Math.cos(angle) * radius,
+            y: Math.sin(angle) * radius
+        };
+    };
+
+    var rotateAbout = function(cen, poly, angle){
+        // TODO: extend Two.Polygon with this
+        console.log("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
+        poly.rotation = (poly.rotation + angle) % (2*pi);
+        var pos = getPositions(poly.rotation, poly.length);
+        poly.translation.x = cen.x + pos.x/2;
+        poly.translation.y = cen.y + pos.y/2;
+        console.log("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
+    };
+
     function Color(red, green, blue, alpha){
         this.red = red;
         this.grn = green;
@@ -57,13 +86,14 @@
     }
 
     function pointStr(vector){
+        // TODO: extend Two.Vector with this
         return "("+vector.x+","+vector.y+")";
     }
 
     function drawLine(v1, v2){
         // wrapper function to make a line between a pair
         // of Two.Vector points (or anything else with x, y properties)
-        // TODO: extend Two with this
+        // TODO: extend Two.prototype with this
         return two.makeLine(v1.x, v1.y, v2.x, v2.y);
     }
 
