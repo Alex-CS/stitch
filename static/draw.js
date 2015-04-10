@@ -4,10 +4,17 @@
 
 (function(){
     var elem = document.getElementById('canvas'),
-        params = {width: 800, height: 800},
-        two = new Two(params).appendTo(elem),
-        pi = Math.PI,
-        defaults = {
+        two = new Two({
+            width: 800,
+            height: 800
+        }).appendTo(elem);
+    window.curve = two.makeGroup();
+
+    // Constants
+    var pi = Math.PI;
+
+    function curveConfig(opts) {
+        return _.defaults(opts || {}, {
             resolution: 2,
             layerCount: 1,
             layerSepFactor: 1,
@@ -16,12 +23,17 @@
             center: {
                 x: two.width/2,
                 y: two.height/2
-            }
-        };
-    window.curve = two.makeGroup();
+            },
+            startAngle: 0
+        });
+    }
 
     function test(){
-        drawRectCurve(64, 1, 32);
+        drawRectCurve({
+            resolution: 32,
+            layerCount: 4,
+            layerSepFactor: 1
+        });
         //drawStarCurve(4, 32);
         two.render();
     }
@@ -33,55 +45,47 @@
         }
     }
 
-    window.drawRectCurve = function(resolution, layerCount, layerSepFactor, width, height) {
+    window.drawRectCurve = function(opts) {
         // TODO: explain
         // TODO: figure out an API for color properties
         // TODO: add initialAngle property
-        resolution = resolution || defaults.resolution;
-        layerCount = layerCount || defaults.layerCount;
-        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
-        width = width || defaults.width;
-        height = height || defaults.height;
-        // TODO: add center
+        opts = curveConfig(opts);
 
         var c = [
             p(0,0),
-            p(width,0),
-            p(width, height),
-            p(0, height)
+            p(opts.width,0),
+            p(opts.width, opts.height),
+            p(0, opts.height)
         ];
 
         var spines = [
             drawLine(c[0], c[1]),
-            drawLine(c[2], c[1]),
+            drawLine(c[1], c[2]),
             drawLine(c[2], c[3]),
-            drawLine(c[0], c[3])
+            drawLine(c[3], c[0])
         ];
 
-        doStitching(spines, resolution, layerCount, layerSepFactor)
+        doStitching(spines, opts);
 
     };
 
-    window.drawStarCurve = function(starPointNum, resolution, layerCount, layerSepFactor, width, height, center){
+    window.drawStarCurve = function(starPointNum, opts){
         // TODO Do it...
-        resolution = resolution || defaults.resolution;
-        layerCount = layerCount || defaults.layerCount;
-        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
-        width = width || defaults.width;
-        height = height || defaults.height;
-        center = center || defaults.center;
+        opts = curveConfig(opts);
 
-        var radius = Math.min(width, height) / 2; // FIXME this only works for rotationally symmetric stars
+        var radius = Math.min(opts.width, opts.height) / 2; // FIXME this only works for rotationally symmetric stars
 
-        var spines = [],
-            startAngle = 0;
+        var spines = [];
         // rotate through all the angles drawing a spine for each
         for(var i=0;i<starPointNum;i++){
-            var tipPoint = getPositions(i/starPointNum + startAngle, radius, center);
+            var tipPoint = getPositions(
+                i/starPointNum + opts.startAngle,
+                radius, opts.center
+            );
 
             // Have to alternate to get pretty curves
-            var p1 = (i % 2 == 0) ? center : tipPoint,
-                p2 = (i % 2 == 0) ? tipPoint : center;
+            var p1 = (i % 2 == 0) ? opts.center : tipPoint,
+                p2 = (i % 2 == 0) ? tipPoint : opts.center;
 
             var line = drawLine(p1, p2);
 
@@ -89,18 +93,24 @@
             two.render();
         }
 
-        doStitching(spines, resolution, layerCount, layerSepFactor);
+        doStitching(spines, opts);
     };
 
-    function doStitching(spines, resolution, layerCount, layerSepFactor/*,something about color*/){
+    function doStitching(spines, opts){
         // TODO: explain inputs
-        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
+        var resolution = opts.resolution,
+            layerCount = opts.layerCount,
+            layerSepFactor = opts.layerSepFactor;
 
         curve.add(spines);
 
         for (var i = 0; i < layerCount; i++) {
-            var layer = stitchContinuous(spines, resolution, (i + 1) * layerSepFactor);
-            layer.stroke = rgba(0, 183 - i * 16, 0 - i * 32, 1.0 - i / 8);
+            var layer = stitchContinuous(
+                spines,
+                resolution,
+                i * Math.round(resolution/layerCount) * layerSepFactor
+            );
+            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
             layer.addTo(curve);
         }
     }
@@ -195,7 +205,7 @@
             stepX = rangeX / resolution,
             stepY = rangeY / resolution;
 
-        for (var stepNum = 0; stepNum <= resolution; stepNum++) {
+        for(var stepNum=0; stepNum <= resolution; stepNum++){
             var curX = vertexA.x + stepNum * stepX,
                 curY = vertexA.y + stepNum * stepY,
                 curPoint = new Two.Anchor(curX, curY);
@@ -260,7 +270,7 @@
                 points = points.concat(newPoints);
             }
         separation = separation || 1;
-        stitches = _followCurve(points, (resolution + separation) % resolution);
+        stitches = _followCurve(points, resolution + separation);
 
         return stitches;
     }
