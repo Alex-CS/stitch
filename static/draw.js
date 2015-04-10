@@ -184,10 +184,8 @@
         // TODO: extend Two.Polygon with this
         var vertices = line.vertices,
             translation = line.translation,
-            points = [],
-            s = line.stroke;
-        line.stroke = "skyblue";
-        var pass = false;
+            points = [];
+
         for(var i=0; i<vertices.length; i++){
             // INFO: for some wacky behavior, try not decentering the vertices
             var vertexA = decenter(vertices[i], translation),
@@ -211,9 +209,8 @@
                 break;
             }
         }
-        line.stroke = s;
-        return points;
 
+        return points;
     }
 
     function _connectDots(arr1, arr2) {
