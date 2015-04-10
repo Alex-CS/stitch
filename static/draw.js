@@ -155,11 +155,14 @@
         return "("+vector.x+","+vector.y+")";
     }
 
-    function drawLine(v1, v2){
+   function drawLine(v1, v2){
         // wrapper function to make a line between a pair
         // of Two.Vector points (or anything else with x, y properties)
         // TODO: extend Two.prototype with this
         var line = two.makeLine(v1.x, v1.y, v2.x, v2.y);
+        // Two.Polygon's vertices don't stay in consistent order...
+        line.startPoint = v1;
+        line.endPoint = v2;
         two.render();
         return line;
     }
@@ -183,32 +186,21 @@
         // evenly spaced along `line`.
         // TODO: test with polygons
         // TODO: extend Two.Polygon with this
-        var vertices = line.vertices,
-            translation = line.translation,
-            points = [];
+        var points = [];
 
-        for(var i=0; i<vertices.length; i++){
-            // INFO: for some wacky behavior, try not decentering the vertices
-            var vertexA = decenter(vertices[i], translation),
-                vertexB = decenter(vertices[(i+1) % vertices.length], translation),
-                rangeX = vertexB.x - vertexA.x,
-                rangeY = vertexB.y - vertexA.y,
-                stepX = rangeX / resolution,
-                stepY = rangeY / resolution;
+        var vertexA = line.startPoint,
+            vertexB = line.endPoint,
+            rangeX = vertexB.x - vertexA.x,
+            rangeY = vertexB.y - vertexA.y,
+            stepX = rangeX / resolution,
+            stepY = rangeY / resolution;
 
-            for(var stepNum=0; stepNum <= resolution; stepNum++){
-                // vertices aren't actual end points for lines..
-                var curX = vertexA.x + stepNum * stepX,
-                    curY = vertexA.y + stepNum * stepY,
-                    curPoint = new Two.Anchor(curX, curY);
-                //plot(curPoint);
-                points.push(curPoint);
-            }
-
-            // hack to avoid repetition
-            if (vertices.length <= 2){
-                break;
-            }
+        for (var stepNum = 0; stepNum <= resolution; stepNum++) {
+            var curX = vertexA.x + stepNum * stepX,
+                curY = vertexA.y + stepNum * stepY,
+                curPoint = new Two.Anchor(curX, curY);
+            //plot(curPoint);
+            points.push(curPoint);
         }
 
         return points;
