@@ -9,7 +9,8 @@
         pi = Math.PI,
         defaults = {
             resolution: 2,
-            layers: 1,
+            layerCount: 1,
+            layerSepFactor: 1,
             width: two.width,
             height: two.height,
             center: {
@@ -20,53 +21,63 @@
     window.curve = two.makeGroup();
 
     function test(){
-        drawRectCurve(24, 4, two.width/2, two.height/2)
+        drawRectCurve(32, 1);
+        drawStarCurve(4, 32);
+        two.render();
     }
 
-    window.drawRectCurve = function(resolution, layerCount, width, height) {
+    function p(x, y){
+        return {
+            x: x,
+            y: y
+        }
+    }
+
+    window.drawRectCurve = function(resolution, layerCount, width, height, layerSepFactor) {
         // TODO: explain
         // TODO: figure out an API for color properties
+        // TODO: add initialAngle property
         resolution = resolution || defaults.resolution;
-        layerCount = layerCount || defaults.layers;
+        layerCount = layerCount || defaults.layerCount;
+        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
         width = width || defaults.width;
         height = height || defaults.height;
+        // TODO: add center
 
-        var curve = new Two.Group();
+        var c = [
+            p(0,0),
+            p(width,0),
+            p(width, height),
+            p(0, height)
+        ];
 
-        var spine1 = two.makeLine(0, 0, width, 0),
-            spine2 = two.makeLine(0, 0, 0, height),
-            spine3 = two.makeLine(width, height, 0, height),
-            spine4 = two.makeLine(width, height, width, 0),
-            box = [spine1, spine2, spine3, spine4];
-        curve.add(spine1, spine2, spine3, spine4);
+        var spines = [
+            drawLine(c[0], c[1]),
+            drawLine(c[1], c[2]),
+            drawLine(c[2], c[3]),
+            drawLine(c[3], c[0])
+        ];
 
-        for (var i = 0; i < layerCount; i++) {
-            var layer = stitchContinuous(box, resolution, resolution + i * layerCount);
-            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
-            layer.addTo(curve);
-        }
+        doStitching(spines, resolution, layerCount, layerSepFactor)
 
-        two.render();
-        return curve;
     };
 
-    window.drawStarCurve = function(starPointNum, resolution, layerCount, width, height, center){
+    window.drawStarCurve = function(starPointNum, resolution, layerCount, layerSepFactor, width, height, center){
         // TODO Do it...
         resolution = resolution || defaults.resolution;
-        layerCount = layerCount || defaults.layers;
+        layerCount = layerCount || defaults.layerCount;
+        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
         width = width || defaults.width;
         height = height || defaults.height;
         center = center || defaults.center;
 
-        var star = Two.Group();
-
-        var angleBetween = revToRad(1.0/starPointNum);
         var radius = Math.min(width, height) / 2; // FIXME this only works for rotationally symmetric stars
 
-        var spines = [];
+        var spines = [],
+            startAngle = 0;
         // rotate through all the angles drawing a spine for each
         for(var i=0;i<starPointNum;i++){
-            var tipPoint = getPositions(i*angleBetween, radius);
+            var tipPoint = getPositions(i/starPointNum + startAngle, radius, center);
 
             // Have to alternate to get pretty curves
             var p1 = (i % 2 == 0) ? center : tipPoint,
@@ -75,26 +86,36 @@
             var line = drawLine(p1, p2);
 
             spines.push(line);
+            two.render();
         }
 
-        // TODO draw curves
-
-
-        return group;
-
+        doStitching(spines, resolution, layerCount, layerSepFactor);
     };
+
+    function doStitching(spines, resolution, layerCount, layerSepFactor/*,something about color*/){
+        // TODO: explain inputs
+        layerSepFactor = layerSepFactor || defaults.layerSepFactor;
+
+        curve.add(spines);
+
+        for (var i = 0; i < layerCount; i++) {
+            var layer = stitchContinuous(spines, resolution, i * layerCount * layerSepFactor);
+            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
+            layer.addTo(curve);
+        }
+    }
 
     function revToRad(rev){
         // Converts a number of revolutions (1 rev = 2pi radians)
-        return 2 * Math.PI / rev;
+        return 2 * pi * rev;
     }
 
-    var getPositions = function(angle, radius) {
+    var getPositions = function(angle, radius, center) {
         // Get x,y coordinates for a point `radius`
-        // from (0,0) at the given `angle`.
+        // from `center` at the given `angle`.
         return {
-            x: Math.cos(angle) * radius,
-            y: Math.sin(angle) * radius
+            x: Math.cos(revToRad(angle)) * radius + (center.x || 0),
+            y: Math.sin(revToRad(angle)) * radius + (center.y || 0)
         };
     };
 
@@ -111,14 +132,19 @@
     };
 
     function Color(red, green, blue, alpha){
-        this.red = red;
-        this.grn = green;
-        this.blu = blue;
-        this.alph = alpha;
+        this.r = red;
+        this.g = green;
+        this.b = blue;
+        this.a = alpha;
         this.rgbaStr = function(){
-            return rgba(this.red, this.grn, this.blu, this.alph)
+            return rgba(this.r, this.g, this.b, this.a)
         };
     }
+
+    // TODO: Color profile
+    // startColor,
+    // endColor,
+    // pattern(?) alternate or transition
 
     function rgba(r, g, b, a){
         return "rgba("+ r + "," + g + "," + b + "," + a + ")"
@@ -143,6 +169,13 @@
         return point.clone().set(trans.x - point.x, trans.y + point.y);
     }
 
+    function plot(point, radius, color){
+        var dot = two.makeCircle(point.x, point.y, radius || 1);
+        dot.stroke = color || "red";
+        dot.fill = color || "red";
+        two.render();
+    }
+
     function getPoints(line, resolution){
         // Returns an array of `resolution` points
         // evenly spaced along `line`.
@@ -151,26 +184,34 @@
         // TODO: extend Two.Polygon with this
         var vertices = line.vertices,
             translation = line.translation,
-            points = [];
+            points = [],
+            s = line.stroke;
+        line.stroke = "skyblue";
+        var pass = false;
         for(var i=0; i<vertices.length; i++){
-            var vertexA = vertices[i],
-                vertexB = vertices[(i+1) % vertices.length],
+            // INFO: for some wacky behavior, try not decentering the vertices
+            var vertexA = decenter(vertices[i], translation),
+                vertexB = decenter(vertices[(i+1) % vertices.length], translation),
                 rangeX = vertexB.x - vertexA.x,
                 rangeY = vertexB.y - vertexA.y,
                 stepX = rangeX / resolution,
                 stepY = rangeY / resolution;
-            // hack to avoid repetition
-            if (vertexB === vertices[0] && vertices.length <= 2){
-                continue;
-            }
 
             for(var stepNum=0; stepNum <= resolution; stepNum++){
+                // vertices aren't actual end points for lines..
                 var curX = vertexA.x + stepNum * stepX,
-                    curY = vertexA.y + stepNum * stepY,
-                    curPoint = decenter(new Two.Anchor(curX, curY), translation);
+                    curY = vertexB.y - stepNum * stepY,
+                    curPoint = new Two.Anchor(curX, curY);
+                plot(curPoint);
                 points.push(curPoint);
             }
+
+            // hack to avoid repetition
+            if (vertices.length <= 2){
+                break;
+            }
         }
+        line.stroke = s;
         return points;
 
     }
@@ -209,6 +250,7 @@
             var pointA = points[i],
                 pointB = points[i+separation],
                 line = drawLine(pointA, pointB);
+            //console.log(pointStr(pointA) + "~>" + pointStr(pointB));
             line.addTo(group);
         }
         return group;
@@ -227,11 +269,12 @@
                 }
                 points = points.concat(newPoints);
             }
-        separation = separation || resolution + 1;
-        stitches = _followCurve(points, separation);//_connectDots(line1Points, line2Points);
+        separation = separation || 1;
+        stitches = _followCurve(points, resolution + separation);
 
         return stitches;
     }
 
     test();
+    two.render();
 })();

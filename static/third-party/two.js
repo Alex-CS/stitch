@@ -3961,7 +3961,9 @@ var Backbone = Backbone || {};
       var elem = document.createElementNS(this.ns, tag);
       if (tag === 'svg') {
         attrs = _.defaults(attrs || {}, {
-          version: this.version
+          version: this.version,
+          xmlns: this.ns,
+          "xmlns:xlink": this.xlink
         });
       }
       if (_.isObject(attrs)) {
