@@ -21,8 +21,8 @@
     window.curve = two.makeGroup();
 
     function test(){
-        drawRectCurve(32, 1);
-        drawStarCurve(4, 32);
+        drawRectCurve(64, 1, 32);
+        //drawStarCurve(4, 32);
         two.render();
     }
 
@@ -33,7 +33,7 @@
         }
     }
 
-    window.drawRectCurve = function(resolution, layerCount, width, height, layerSepFactor) {
+    window.drawRectCurve = function(resolution, layerCount, layerSepFactor, width, height) {
         // TODO: explain
         // TODO: figure out an API for color properties
         // TODO: add initialAngle property
@@ -53,9 +53,9 @@
 
         var spines = [
             drawLine(c[0], c[1]),
-            drawLine(c[1], c[2]),
+            drawLine(c[2], c[1]),
             drawLine(c[2], c[3]),
-            drawLine(c[3], c[0])
+            drawLine(c[0], c[3])
         ];
 
         doStitching(spines, resolution, layerCount, layerSepFactor)
@@ -99,8 +99,8 @@
         curve.add(spines);
 
         for (var i = 0; i < layerCount; i++) {
-            var layer = stitchContinuous(spines, resolution, i * layerCount * layerSepFactor);
-            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
+            var layer = stitchContinuous(spines, resolution, (i + 1) * layerSepFactor);
+            layer.stroke = rgba(0, 183 - i * 16, 0 - i * 32, 1.0 - i / 8);
             layer.addTo(curve);
         }
     }
@@ -159,7 +159,9 @@
         // wrapper function to make a line between a pair
         // of Two.Vector points (or anything else with x, y properties)
         // TODO: extend Two.prototype with this
-        return two.makeLine(v1.x, v1.y, v2.x, v2.y);
+        var line = two.makeLine(v1.x, v1.y, v2.x, v2.y);
+        two.render();
+        return line;
     }
 
     function decenter(point, trans){
@@ -179,7 +181,6 @@
     function getPoints(line, resolution){
         // Returns an array of `resolution` points
         // evenly spaced along `line`.
-        // if `reverse`, get the points in reverse order.
         // TODO: test with polygons
         // TODO: extend Two.Polygon with this
         var vertices = line.vertices,
@@ -198,9 +199,9 @@
             for(var stepNum=0; stepNum <= resolution; stepNum++){
                 // vertices aren't actual end points for lines..
                 var curX = vertexA.x + stepNum * stepX,
-                    curY = vertexB.y - stepNum * stepY,
+                    curY = vertexA.y + stepNum * stepY,
                     curPoint = new Two.Anchor(curX, curY);
-                plot(curPoint);
+                //plot(curPoint);
                 points.push(curPoint);
             }
 
@@ -260,14 +261,14 @@
         var points = getPoints(lines[0], resolution),
             stitches;
             for(var i = 0; i<lines.length; i++){
-                var newPoints = getPoints(lines[(i+1)%lines.length], resolution);
+                var newPoints = getPoints(lines[(i+1) % lines.length], resolution);
                 if (points.length && points[points.length-1].equals(newPoints[0])){
                     newPoints.shift();
                 }
                 points = points.concat(newPoints);
             }
         separation = separation || 1;
-        stitches = _followCurve(points, resolution + separation);
+        stitches = _followCurve(points, (resolution + separation) % resolution);
 
         return stitches;
     }
