@@ -11,7 +11,8 @@
     window.curve = two.makeGroup();
 
     // Constants
-    var pi = Math.PI;
+    var pi = Math.PI,
+        round = Math.round;
 
     function curveConfig(opts) {
         return _.defaults(opts || {}, {
@@ -108,7 +109,7 @@
             var layer = stitchContinuous(
                 spines,
                 resolution,
-                i * Math.round(resolution/layerCount) * layerSepFactor
+                i * round(resolution/layerCount) * layerSepFactor
             );
             layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
             layer.addTo(curve);
@@ -166,15 +167,15 @@
     }
 
    function drawLine(v1, v2){
-        // wrapper function to make a line between a pair
-        // of Two.Vector points (or anything else with x, y properties)
-        // TODO: extend Two.prototype with this
-        var line = two.makeLine(v1.x, v1.y, v2.x, v2.y);
-        // Two.Polygon's vertices don't stay in consistent order...
-        line.startPoint = v1;
-        line.endPoint = v2;
-        two.render();
-        return line;
+       // wrapper function to make a line between a pair
+       // of Two.Vector points (or anything else with x, y properties)
+       // TODO: extend Two.prototype with this
+       var line = two.makeLine(v1.x, v1.y, v2.x, v2.y);
+       // Two.Polygon's vertices don't stay in consistent order...
+       line.startPoint = v1;
+       line.endPoint = v2;
+
+       return line;
     }
 
     function decenter(point, trans){
@@ -188,7 +189,6 @@
         var dot = two.makeCircle(point.x, point.y, radius || 1);
         dot.stroke = color || "red";
         dot.fill = color || "red";
-        two.render();
     }
 
     function getPoints(line, resolution){
@@ -277,4 +277,11 @@
 
     test();
     two.render();
+})();
+
+(function(){
+    var saveLink = document.getElementById("save-me"),
+        svg = document.getElementsByTagName("svg")[0];
+    saveLink.href = "data:text/plain;charset=utf-8," + svg.outerHTML;
+    saveLink.download = "curve.svg";
 })();
