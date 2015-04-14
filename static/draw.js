@@ -25,18 +25,19 @@
                 x: two.width/2,
                 y: two.height/2
             },
-            startAngle: 0
+            startAngle: 0,
+            leaveOpen: false
         });
     }
 
     function test(){
         drawRectCurve({
-            resolution: 32,
-            layerCount: 4,
-            layerSepFactor: 1
+            resolution: 64,
+            layerCount: 2,
+            layerSepFactor: 1,
+            leaveOpen: false
         });
-        //drawStarCurve(4, 32);
-        two.render();
+        //drawStarCurve(4, {resolution: 32, startAngle: 1/8});
     }
 
     function p(x, y){
@@ -71,7 +72,7 @@
     };
 
     window.drawStarCurve = function(starPointNum, opts){
-        // TODO Do it...
+        // TODO: explain why this is different than rect
         opts = curveConfig(opts);
 
         var radius = Math.min(opts.width, opts.height) / 2; // FIXME this only works for rotationally symmetric stars
@@ -109,10 +110,12 @@
             var layer = stitchContinuous(
                 spines,
                 resolution,
-                i * round(resolution/layerCount) * layerSepFactor
+                i * round(resolution/layerCount) * layerSepFactor,
+                opts.leaveOpen
             );
             layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
             layer.addTo(curve);
+            two.render();
         }
     }
 
@@ -174,6 +177,7 @@
        // Two.Polygon's vertices don't stay in consistent order...
        line.startPoint = v1;
        line.endPoint = v2;
+       two.render();
 
        return line;
     }
@@ -256,13 +260,16 @@
         return group;
     }
 
-    function stitchContinuous(lines, resolution, separation){
+    function stitchContinuous(lines, resolution, separation, leaveOpen){
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
         // points of `separation`
         var points = getPoints(lines[0], resolution),
             stitches;
             for(var i = 0; i<lines.length; i++){
+                if (i+1 === lines.length && leaveOpen) {
+                    break;
+                }
                 var newPoints = getPoints(lines[(i+1) % lines.length], resolution);
                 if (points.length && points[points.length-1].equals(newPoints[0])){
                     newPoints.shift();
