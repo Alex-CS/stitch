@@ -27,16 +27,20 @@
                 y: two.height/2
             },
             startAngle: 0,
-            leaveOpen: false
+            leaveOpen: false,
+            spectrum: new Spectrum(new Color(0, 0, 0, 1))
         });
     }
 
     function test(){
+        var spect = new Spectrum(new Color(0, 127, 255, 1.0),
+                                 new Color(0, 255, 127, .5));
         drawRectCurve({
             resolution: 64,
             layerCount: 2,
             layerSepFactor: 1,
-            leaveOpen: false
+            leaveOpen: false,
+            spectrum: spect
         });
         drawStarCurve(4, {resolution: 32, startAngle: 1/4});
     }
@@ -109,7 +113,8 @@
         // TODO: explain inputs
         var resolution = opts.resolution,
             layerCount = opts.layerCount,
-            layerSepFactor = opts.layerSepFactor;
+            layerSepFactor = opts.layerSepFactor,
+            spectrum = opts.spectrum.segmentColors(layerCount);
 
         curve.add(spines);
 
@@ -120,7 +125,7 @@
                 i * floor(resolution/layerCount) * layerSepFactor,
                 opts.leaveOpen
             );
-            layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
+            layer.stroke = spectrum.nextColor().rgbaStr();
             layer.addTo(curve);
             two.render();
         }
@@ -144,22 +149,29 @@
         // Rotates a Two.Polygon about a point, "orbiting" that point.
         // TODO: extend Two.Polygon with this
         // Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
-        console.log("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
+        //console.log("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
         poly.rotation = (poly.rotation + angle) % (2*pi);
         var pos = getPositions(poly.rotation, poly.length);
         poly.translation.x = cen.x + pos.x/2;
         poly.translation.y = cen.y + pos.y/2;
-        console.log("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
+        //console.log("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
     };
 
     function Color(red, green, blue, alpha){
-        this.red = red;
-        this.grn = green;
-        this.blu = blue;
-        this.alf = alpha;
+        this.red = red || 0;
+        this.grn = green || 0;
+        this.blu = blue || 0;
+        this.alf = alpha || 1.0;
         this.attrList = [this.red, this.grn, this.blu, this.alf];
         this.rgbaStr = function(){
             return rgba(this.red, this.grn, this.blu, this.alf)
+        };
+
+        this.toString = function(){
+            return "Color (" + this.red + ","
+                             + this.grn + ","
+                             + this.blu + ","
+                             + this.alf + ")";
         };
 
         this.scaleDown = function(factor){
@@ -179,9 +191,11 @@
         };
 
         this.stepsToward = function(otherColor, resolution){
-            var colors = [],
+            var colors = [this],
                 colorStep = this.distanceTo(otherColor).scaleDown(resolution);
-            for (var i=0; i<resolution; i++){
+
+            // Handle all the colors between the start and end
+            for (var i=1; i+1<resolution; i++){
                 var r = this.red + (colorStep.red * i),
                     g = this.grn + (colorStep.grn * i),
                     b = this.blu + (colorStep.blu * i),
@@ -189,11 +203,12 @@
                 var nextColor = new Color(r, g, b, a);
                 colors.push(nextColor);
             }
+            colors.push(otherColor);
             return colors;
         };
     }
 
-    function Specturm(){
+    function Spectrum(){
         //
         // TODO: test plotting through more than 2 initial colors
         this._colors = arguments || [];
@@ -211,16 +226,17 @@
             // Add `resolution` colors between existing colors in the spectrum
             if (this._colors.length < 2){
                 // There's no need to segment a single color
-                return;
+                return this;
             }
             var newColors = [];
             for (var i=0; i+1<this._colors.length; i++){
                 var startingColor = this._colors[i],
                     endingColor = this._colors[i+1];
-                newColors.concat(startingColor.stepsToward(endingColor, resolution));
+                newColors = newColors.concat(startingColor.stepsToward(endingColor, resolution));
             }
 
             this._colors = newColors;
+            return this;
         };
     }
 
@@ -267,7 +283,7 @@
     function getPoints(line, resolution){
         // Returns an array of `resolution` points
         // evenly spaced along `line`.
-        // TODO: test with polygons
+        // TODO: test with Polygons
         // TODO: extend Two.Polygon with this
         var points = [];
 
