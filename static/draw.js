@@ -12,7 +12,8 @@
 
     // Constants
     var pi = Math.PI,
-        round = Math.round;
+        round = Math.round,
+        floor = Math.floor;
 
     function curveConfig(opts) {
         return _.defaults(opts || {}, {
@@ -37,13 +38,19 @@
             layerSepFactor: 1,
             leaveOpen: false
         });
-        //drawStarCurve(4, {resolution: 32, startAngle: 1/8});
+        drawStarCurve(4, {resolution: 32, startAngle: 1/4});
     }
 
     function p(x, y){
         return {
             x: x,
-            y: y
+            y: y,
+            equals: function(p2) {
+                return p2.x === x && p2.y === y;
+            },
+            toString: function() {
+                return "("+x+","+y+")"
+            }
         }
     }
 
@@ -110,7 +117,7 @@
             var layer = stitchContinuous(
                 spines,
                 resolution,
-                i * round(resolution/layerCount) * layerSepFactor,
+                i * floor(resolution/layerCount) * layerSepFactor,
                 opts.leaveOpen
             );
             layer.stroke = rgba(0, 127 + i * 16, 255 - i * 32, 1.0 - i / 8);
@@ -212,7 +219,7 @@
         for(var stepNum=0; stepNum <= resolution; stepNum++){
             var curX = vertexA.x + stepNum * stepX,
                 curY = vertexA.y + stepNum * stepY,
-                curPoint = new Two.Anchor(curX, curY);
+                curPoint = p(curX, curY);
             //plot(curPoint);
             points.push(curPoint);
         }
@@ -250,12 +257,11 @@
         // each point to the one `separation` ahead of it.
         var group = new Two.Group(),
             len = points.length;
-        for(var i=0; i+separation<len; i++){
-            var pointA = points[i],
-                pointB = points[i+separation],
-                line = drawLine(pointA, pointB);
+        for(var i=0; i<len; i++){
+            var pointA = points[(len - separation + i) % len],
+                pointB = points[i];
             //console.log(pointStr(pointA) + "~>" + pointStr(pointB));
-            line.addTo(group);
+            drawLine(pointA, pointB).addTo(group);
         }
         return group;
     }
@@ -264,20 +270,17 @@
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
         // points of `separation`
-        var points = getPoints(lines[0], resolution),
+        var points = [],
             stitches;
             for(var i = 0; i<lines.length; i++){
-                if (i+1 === lines.length && leaveOpen) {
-                    break;
-                }
-                var newPoints = getPoints(lines[(i+1) % lines.length], resolution);
+                var newPoints = getPoints(lines[i], resolution);
                 if (points.length && points[points.length-1].equals(newPoints[0])){
                     newPoints.shift();
                 }
                 points = points.concat(newPoints);
             }
-        separation = separation || 1;
-        stitches = _followCurve(points, resolution + separation);
+        separation = separation || 0;
+        stitches = _followCurve(points, resolution + separation + 1);
 
         return stitches;
     }
