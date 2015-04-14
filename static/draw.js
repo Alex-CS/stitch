@@ -37,12 +37,12 @@
                                  new Color(0, 255, 127, .5));
         drawRectCurve({
             resolution: 64,
-            layerCount: 2,
+            layerCount: 4,
             layerSepFactor: 1,
             leaveOpen: false,
             spectrum: spect
         });
-        drawStarCurve(4, {resolution: 32, startAngle: 1/4});
+        //drawStarCurve(4, {resolution: 32, startAngle: 1/4});
     }
 
     function p(x, y){
@@ -350,13 +350,18 @@
         // points of `separation`
         var points = [],
             stitches;
-            for(var i = 0; i<lines.length; i++){
-                var newPoints = getPoints(lines[i], resolution);
-                if (points.length && points[points.length-1].equals(newPoints[0])){
-                    newPoints.shift();
-                }
-                points = points.concat(newPoints);
+        for(var i = 0; i<lines.length; i++){
+            var newPoints = getPoints(lines[i], resolution);
+            if (points.length && points[points.length-1].equals(newPoints[0])){
+                newPoints.shift();
             }
+            points = points.concat(newPoints);
+        }
+
+        // If the shape is closed
+        if(points[0].equals(points[points.length-1])){
+            points.pop();
+        }
         separation = separation || 0;
         stitches = _followCurve(points, resolution + separation + 1);
 
