@@ -153,12 +153,74 @@
     };
 
     function Color(red, green, blue, alpha){
-        this.r = red;
-        this.g = green;
-        this.b = blue;
-        this.a = alpha;
+        this.red = red;
+        this.grn = green;
+        this.blu = blue;
+        this.alf = alpha;
+        this.attrList = [this.red, this.grn, this.blu, this.alf];
         this.rgbaStr = function(){
-            return rgba(this.r, this.g, this.b, this.a)
+            return rgba(this.red, this.grn, this.blu, this.alf)
+        };
+
+        this.scaleDown = function(factor){
+            this.red /= factor;
+            this.grn /= factor;
+            this.blu /= factor;
+            this.alf /= factor;
+            return this;
+        };
+
+        this.distanceTo = function(otherColor){
+            var rDist = otherColor.red - this.red,
+                gDist = otherColor.grn - this.grn,
+                bDist = otherColor.blu - this.blu,
+                aDist = otherColor.alf - this.alf;
+            return new Color(rDist, gDist, bDist, aDist);
+        };
+
+        this.stepsToward = function(otherColor, resolution){
+            var colors = [],
+                colorStep = this.distanceTo(otherColor).scaleDown(resolution);
+            for (var i=0; i<resolution; i++){
+                var r = this.red + (colorStep.red * i),
+                    g = this.grn + (colorStep.grn * i),
+                    b = this.blu + (colorStep.blu * i),
+                    a = this.alf + (colorStep.alf * i);
+                var nextColor = new Color(r, g, b, a);
+                colors.push(nextColor);
+            }
+            return colors;
+        };
+    }
+
+    function Specturm(){
+        //
+        // TODO: test plotting through more than 2 initial colors
+        this._colors = arguments || [];
+        this._nextIndex = 0;
+        this.nextColor = function(){
+            // Returns the next color in the sequence
+            // Will repeat through colors if _nextIndex is greater
+            // than the number of colors.
+            var next = this._colors[this._nextIndex % this._colors.length];
+            this._nextIndex++;
+            return next;
+        };
+
+        this.segmentColors = function(resolution){
+            // Add `resolution` colors between existing colors in the spectrum
+            if (this._colors.length < 2){
+                // There's no need to segment a single color
+                return;
+            }
+            var newColors = [];
+            for (var i=0; i+1<this._colors.length; i++){
+                var startingColor = this._colors[i],
+                    endingColor = this._colors[i+1];
+                newColors.concat(startingColor.stepsToward(endingColor, resolution));
+            }
+
+            this._colors = newColors;
         };
     }
 
