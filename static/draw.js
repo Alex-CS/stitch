@@ -33,16 +33,17 @@
     }
 
     function test(){
+        // FIXME: there's a weird bug with trying to segment between colors with 0s and those without
         var spect = new Spectrum(new Color(0, 127, 255, 1.0),
                                  new Color(0, 255, 127, .5));
         drawRectCurve({
             resolution: 64,
-            layerCount: 4,
+            layerCount: 2,
             layerSepFactor: 1,
             leaveOpen: false,
             spectrum: spect
         });
-        //drawStarCurve(4, {resolution: 32, startAngle: 1/4});
+        drawStarCurve(4, {resolution: 32, startAngle: 1/4});
     }
 
     function p(x, y){
@@ -91,10 +92,8 @@
         var spines = [];
         // rotate through all the angles drawing a spine for each
         for(var i=0;i<starPointNum;i++){
-            var tipPoint = getPositions(
-                i/starPointNum + opts.startAngle,
-                radius, opts.center
-            );
+            var tipPoint = getPositions(i/starPointNum + opts.startAngle,
+                                        radius, opts.center);
 
             // Have to alternate to get pretty curves
             var p1 = (i % 2 == 0) ? opts.center : tipPoint,
@@ -117,10 +116,11 @@
             spectrum = opts.spectrum.segmentColors(layerCount);
 
         curve.add(spines);
+        var points = getAllPoints(spines, resolution);
 
         for (var i = 0; i < layerCount; i++) {
             var layer = stitchContinuous(
-                spines,
+                points,
                 resolution,
                 i * floor(resolution/layerCount) * layerSepFactor,
                 opts.leaveOpen
@@ -240,11 +240,6 @@
         };
     }
 
-    // TODO: Color profile
-    // startColor,
-    // endColor,
-    // pattern(?) alternate or transition
-
     function rgba(r, g, b, a){
         return "rgba("+ r + "," + g + "," + b + "," + a + ")"
     }
@@ -305,6 +300,23 @@
         return points;
     }
 
+    function getAllPoints(spines, resolution){
+        var points = [];
+        for(var i = 0; i<spines.length; i++){
+            var newPoints = getPoints(spines[i], resolution);
+            if (points.length && points[points.length-1].equals(newPoints[0])){
+                newPoints.shift();
+            }
+            points = points.concat(newPoints);
+        }
+
+        // If the shape is closed
+        if(points[0].equals(points[points.length-1])){
+            points.pop();
+        }
+        return points;
+    }
+
     function _connectDots(arr1, arr2) {
         // Given 2 equal-sized arrays of points,
         // connect them (draw lines) in order.
@@ -344,26 +356,13 @@
         return group;
     }
 
-    function stitchContinuous(lines, resolution, separation, leaveOpen){
+    function stitchContinuous(points, resolution, separation){
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
         // points of `separation`
-        var points = [],
-            stitches;
-        for(var i = 0; i<lines.length; i++){
-            var newPoints = getPoints(lines[i], resolution);
-            if (points.length && points[points.length-1].equals(newPoints[0])){
-                newPoints.shift();
-            }
-            points = points.concat(newPoints);
-        }
 
-        // If the shape is closed
-        if(points[0].equals(points[points.length-1])){
-            points.pop();
-        }
         separation = separation || 0;
-        stitches = _followCurve(points, resolution + separation + 1);
+        var stitches = _followCurve(points, resolution + separation + 1);
 
         return stitches;
     }
