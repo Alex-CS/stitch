@@ -98,7 +98,7 @@
     }
 
     window.drawMultipleCurves = function(reps, startAngle, radius, drawFunction, curveOptions){
-        var curves = Two.Group();
+        var curves = two.makeGroup();
         for(var i=0; i<reps; i++){
             var angle = i/reps + startAngle;
             var opts = _.defaults({
@@ -201,7 +201,7 @@
             spine.stroke = (opts.showSpines) ? spine.stroke : rgba(0,0,0,0);
         });
 
-        var group = Two.Group();
+        var group = two.makeGroup();
         group.add(spines);
         var points = opts.points || getAllPoints(spines, opts);
 
