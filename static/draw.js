@@ -38,16 +38,16 @@
     function test(){
         var w = two.width,
             h = two.height;
-        var spect = new Spectrum(new Color(0, 127, 255, 1.0),
-                                 new Color(0, 255, 127, .5));
-        //drawRectCurve({
-        //    resolution: 64,
-        //    layerCount: 2,
-        //    layerSepFactor: 1,
-        //    leaveOpen: false,
-        //    spectrum: spect
-        //});
-        //
+        var spect = new Spectrum(new Color(0, 255, 127, 1.0),
+                                 new Color(0, 127, 255, .5));
+        drawRectCurve({
+            resolution: 64,
+            layerCount: 2,
+            layerSepFactor: 1,
+            leaveOpen: false,
+            spectrum: spect
+        });
+
         //drawStarCurve({
         //    numVertices: 8,
         //    resolution: 32,
@@ -56,14 +56,14 @@
         //    spectrum: new Spectrum(new Color(255, 127, 0, .75))
         //});
 
-        drawEllipseCurve({
-            resolution: 32,
-            numVertices: 4,
-            layerCount: 4,
-            layerSepFactor: 2,
-            spectrum: new Spectrum(new Color(255, 191, 0, 1),
-                                   new Color(255, 31, 0, .5))
-        });
+        //drawEllipseCurve({
+        //    resolution: 32,
+        //    numVertices: 4,
+        //    layerCount: 8,
+        //    layerSepFactor: 1.5,
+        //    spectrum: new Spectrum(new Color(255, 191, 0, 1),
+        //                           new Color(255, 31, 0, .5))
+        //});
 
         //var ellOpts = {
         //    resolution: 32,
@@ -209,7 +209,7 @@
             var layer = stitchContinuous(
                 points,
                 resolution,
-                (i * floor(resolution/layerCount) * layerSepFactor) % points.length/2,
+                ((layerCount - i) * floor(resolution/layerCount) * layerSepFactor) % points.length/2,
                 opts.inward
             );
             layer.stroke = spectrum.nextColor().rgbaStr();
