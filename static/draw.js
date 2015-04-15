@@ -8,7 +8,7 @@
             width: 800,
             height: 800
         }).appendTo(elem);
-    window.curve = two.makeGroup();
+    window.stitchCanvas = two.makeGroup();
 
     // Constants
     var pi = Math.PI,
@@ -32,28 +32,56 @@
     }
 
     function debugLog(message){
-        (window.DEBUG) && console.log(message);
+        (window.DEBUG) && console.log(message) && two.render();
     }
 
     function test(){
-        // FIXME: there's a weird bug with trying to segment between colors with 0s and those without
+        var w = two.width,
+            h = two.height;
         var spect = new Spectrum(new Color(0, 127, 255, 1.0),
                                  new Color(0, 255, 127, .5));
-        drawRectCurve({
-            resolution: 64,
-            layerCount: 2,
-            layerSepFactor: 1,
-            leaveOpen: false,
-            spectrum: spect
+        //drawRectCurve({
+        //    resolution: 64,
+        //    layerCount: 2,
+        //    layerSepFactor: 1,
+        //    leaveOpen: false,
+        //    spectrum: spect
+        //});
+        //
+        //drawStarCurve({
+        //    numVertices: 8,
+        //    resolution: 32,
+        //    width: 600,
+        //    startAngle: 1/4,
+        //    spectrum: new Spectrum(new Color(255, 127, 0, .75))
+        //});
+
+        drawEllipseCurve({
+            resolution: 32,
+            numVertices: 4,
+            layerCount: 4,
+            layerSepFactor: 2,
+            spectrum: new Spectrum(new Color(255, 191, 0, 1),
+                                   new Color(255, 31, 0, .5))
         });
 
-        drawStarCurve({
-            numVertices: 8,
-            resolution: 32,
-            width: 600,
-            startAngle: 1/4,
-            spectrum: new Spectrum(new Color(255, 127, 0, .75))
-        });
+        //var ellOpts = {
+        //    resolution: 32,
+        //    numVertices: 4,
+        //    layerCount: 4,
+        //    layerSepFactor: 2,
+        //    width: two.width*8/16,
+        //    height: two.width*8/16,
+        //    spectrum: new Spectrum(new Color(255, 191, 0, 1),
+        //                           new Color(255, 31, 0, .5)
+        //    )
+        //};
+        //var curveReps = 4,
+        //    startAngle = 1/8,
+        //    rad = ellOpts.height / 2;
+        //drawMultipleCurves(8, 1/8, ellOpts.height/2, drawEllipseCurve, ellOpts);
+
+
     }
 
     function p(x, y){
@@ -69,9 +97,23 @@
         }
     }
 
+    window.drawMultipleCurves = function(reps, startAngle, radius, drawFunction, curveOptions){
+        var curves = Two.Group();
+        for(var i=0; i<reps; i++){
+            var angle = i/reps + startAngle;
+            var opts = _.defaults({
+                center: getPositions(angle, radius,
+                                     curveConfig().center),
+                //startAngle: angle,
+                spectrum: curveOptions.spectrum.clone()
+            }, curveOptions);
+            curves.add(drawFunction(opts));
+        }
+        return curves;
+    };
+
     window.drawRectCurve = function(opts) {
         // TODO: explain
-        // TODO: figure out an API for color properties
         // TODO: add initialAngle property
         opts = curveConfig(opts);
 
@@ -89,8 +131,7 @@
             drawLine(c[3], c[0])
         ];
 
-        doStitching(spines, opts);
-
+        return doStitching(spines, opts);
     };
 
     window.drawStarCurve = function(opts){
@@ -115,12 +156,38 @@
                 p2 = (i % 2 == 0) ? tipPoint : opts.center;
 
             var line = drawLine(p1, p2);
-            line.stroke = (opts.showSpines) ? line.stroke : rgba(0,0,0,0);
 
             spines.push(line);
         }
 
-        doStitching(spines, opts);
+        return doStitching(spines, opts);
+    };
+
+    window.drawEllipseCurve = function (opts) {
+        // TODO: Description
+        opts = curveConfig(opts);
+        opts.inward = true;
+
+        var radius = {
+            x: opts.width / 2,
+            y: opts.height / 2
+        };
+
+        var vertices = [getPositions(opts.startAngle, radius, opts.center)],
+            spines = [];
+        var vertCount = opts.resolution * opts.numVertices;
+
+        for(var i=1; i<vertCount; i++){
+            var point = getPositions(i/vertCount +  opts.startAngle,
+                                     radius, opts.center);
+            var spine = drawLine(vertices[i-1], point);
+            vertices.push(point);
+            spines.push(spine);
+        }
+        opts.points = vertices;
+        spines.push(drawLine(vertices[vertices.length-1], vertices[0]));
+
+        return doStitching(spines, opts);
     };
 
     function doStitching(spines, opts){
@@ -130,20 +197,27 @@
             layerSepFactor = opts.layerSepFactor,
             spectrum = opts.spectrum.segmentColors(layerCount);
 
-        curve.add(spines);
-        var points = getAllPoints(spines, opts);
+        spines.forEach(function(spine){
+            spine.stroke = (opts.showSpines) ? spine.stroke : rgba(0,0,0,0);
+        });
+
+        var group = Two.Group();
+        group.add(spines);
+        var points = opts.points || getAllPoints(spines, opts);
 
         for (var i = 0; i < layerCount; i++) {
             var layer = stitchContinuous(
                 points,
                 resolution,
-                i * floor(resolution/layerCount) * layerSepFactor,
+                (i * floor(resolution/layerCount) * layerSepFactor) % points.length/2,
                 opts.inward
             );
             layer.stroke = spectrum.nextColor().rgbaStr();
-            layer.addTo(curve);
-            two.render();
+            group.add(layer);
         }
+
+        stitchCanvas.add(group);
+        return group;
     }
 
     function revToRad(rev){
@@ -191,9 +265,9 @@
         };
 
         this.scaleDown = function(factor){
-            this.red /= factor;
-            this.grn /= factor;
-            this.blu /= factor;
+            this.red = round(this.red/factor);
+            this.grn = round(this.grn/factor);
+            this.blu = round(this.blu/factor);
             this.alf /= factor;
             return this;
         };
@@ -225,10 +299,16 @@
     }
 
     function Spectrum(){
-        //
         // TODO: test plotting through more than 2 initial colors
+
         this._colors = arguments || [];
         this._nextIndex = 0;
+        this.clone = function(){
+            var clone = new Spectrum(this._colors);
+            clone._colors = this._colors;
+            return clone;
+        };
+
         this.firstColor = function(){
             return this._colors[0];
         };
@@ -279,7 +359,6 @@
        // Two.Polygon's vertices don't stay in consistent order...
        line.startPoint = v1;
        line.endPoint = v2;
-       two.render();
        debugLog(v1 + "~>" + v2);
 
        return line;
@@ -391,7 +470,7 @@
         // with `resolution` points per line, and a given number of
         // points of `separation`
 
-        separation = separation || 0;
+        separation = round(separation || 0);
         var buffer = (inward) ? 1 : 0;
         return _followCurve(points, resolution + separation + buffer);
 
