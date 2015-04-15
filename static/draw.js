@@ -17,19 +17,22 @@
 
     function curveConfig(opts) {
         return _.defaults(opts || {}, {
+            numVertices: 4,
             resolution: 2,
             layerCount: 1,
             layerSepFactor: 1,
             width: two.width,
             height: two.height,
-            center: {
-                x: two.width/2,
-                y: two.height/2
-            },
+            center: p(two.width/2, two.height/2),
             startAngle: 0,
-            leaveOpen: false,
+            inward: true,
+            showSpines: false,
             spectrum: new Spectrum(new Color(0, 0, 0, 1))
         });
+    }
+
+    function debugLog(message){
+        (window.DEBUG) && console.log(message);
     }
 
     function test(){
@@ -43,7 +46,14 @@
             leaveOpen: false,
             spectrum: spect
         });
-        drawStarCurve(4, {resolution: 32, startAngle: 1/4});
+
+        drawStarCurve({
+            numVertices: 8,
+            resolution: 32,
+            width: 600,
+            startAngle: 1/4,
+            spectrum: new Spectrum(new Color(255, 127, 0, .75))
+        });
     }
 
     function p(x, y){
@@ -83,11 +93,16 @@
 
     };
 
-    window.drawStarCurve = function(starPointNum, opts){
+    window.drawStarCurve = function(opts){
         // TODO: explain why this is different than rect
         opts = curveConfig(opts);
+        opts.inward = false;
+        var starPointNum = opts.numVertices;
 
-        var radius = Math.min(opts.width, opts.height) / 2; // FIXME this only works for rotationally symmetric stars
+        var radius = {
+            x: opts.width / 2,
+            y: opts.height / 2
+        };
 
         var spines = [];
         // rotate through all the angles drawing a spine for each
@@ -100,9 +115,9 @@
                 p2 = (i % 2 == 0) ? tipPoint : opts.center;
 
             var line = drawLine(p1, p2);
+            line.stroke = (opts.showSpines) ? line.stroke : rgba(0,0,0,0);
 
             spines.push(line);
-            two.render();
         }
 
         doStitching(spines, opts);
@@ -116,14 +131,14 @@
             spectrum = opts.spectrum.segmentColors(layerCount);
 
         curve.add(spines);
-        var points = getAllPoints(spines, resolution);
+        var points = getAllPoints(spines, opts);
 
         for (var i = 0; i < layerCount; i++) {
             var layer = stitchContinuous(
                 points,
                 resolution,
                 i * floor(resolution/layerCount) * layerSepFactor,
-                opts.leaveOpen
+                opts.inward
             );
             layer.stroke = spectrum.nextColor().rgbaStr();
             layer.addTo(curve);
@@ -139,22 +154,23 @@
     var getPositions = function(angle, radius, center) {
         // Get x,y coordinates for a point `radius`
         // from `center` at the given `angle`.
-        return {
-            x: Math.cos(revToRad(angle)) * radius + (center.x || 0),
-            y: Math.sin(revToRad(angle)) * radius + (center.y || 0)
-        };
+        radius = (typeof radius == "number") ? {x:radius,y:radius} : radius;
+        return p(
+            Math.cos(revToRad(angle)) * radius.x + (center.x || 0),
+            Math.sin(revToRad(angle)) * radius.y + (center.y || 0)
+        );
     };
 
     var rotateAbout = function(cen, poly, angle){
         // Rotates a Two.Polygon about a point, "orbiting" that point.
         // TODO: extend Two.Polygon with this
         // Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
-        //console.log("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
+        debugLog("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
         poly.rotation = (poly.rotation + angle) % (2*pi);
         var pos = getPositions(poly.rotation, poly.length);
         poly.translation.x = cen.x + pos.x/2;
         poly.translation.y = cen.y + pos.y/2;
-        //console.log("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
+        debugLog("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
     };
 
     function Color(red, green, blue, alpha){
@@ -213,6 +229,12 @@
         // TODO: test plotting through more than 2 initial colors
         this._colors = arguments || [];
         this._nextIndex = 0;
+        this.firstColor = function(){
+            return this._colors[0];
+        };
+        this.lastColor = function(){
+            return this._colors[this._colors.length-1];
+        };
         this.nextColor = function(){
             // Returns the next color in the sequence
             // Will repeat through colors if _nextIndex is greater
@@ -258,6 +280,7 @@
        line.startPoint = v1;
        line.endPoint = v2;
        two.render();
+       debugLog(v1 + "~>" + v2);
 
        return line;
     }
@@ -300,10 +323,10 @@
         return points;
     }
 
-    function getAllPoints(spines, resolution){
+    function getAllPoints(spines, opts){
         var points = [];
         for(var i = 0; i<spines.length; i++){
-            var newPoints = getPoints(spines[i], resolution);
+            var newPoints = getPoints(spines[i], opts.resolution);
             if (points.length && points[points.length-1].equals(newPoints[0])){
                 newPoints.shift();
             }
@@ -314,6 +337,14 @@
         if(points[0].equals(points[points.length-1])){
             points.pop();
         }
+
+        // If the shape is a star, remove the center
+        if(!opts.inward){
+            return points.filter(function(point){
+                return !point.equals(opts.center);
+            });
+        }
+
         return points;
     }
 
@@ -350,21 +381,20 @@
         for(var i=0; i<len; i++){
             var pointA = points[(len - separation + i) % len],
                 pointB = points[i];
-            //console.log(pointStr(pointA) + "~>" + pointStr(pointB));
             drawLine(pointA, pointB).addTo(group);
         }
         return group;
     }
 
-    function stitchContinuous(points, resolution, separation){
+    function stitchContinuous(points, resolution, separation, inward){
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
         // points of `separation`
 
         separation = separation || 0;
-        var stitches = _followCurve(points, resolution + separation + 1);
+        var buffer = (inward) ? 1 : 0;
+        return _followCurve(points, resolution + separation + buffer);
 
-        return stitches;
     }
 
     test();
