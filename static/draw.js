@@ -10,10 +10,11 @@
         }).appendTo(elem);
     window.stitchCanvas = two.makeGroup();
 
-    // Constants
-    var pi = Math.PI,
-        round = Math.round,
-        floor = Math.floor;
+    // Math Constants
+    var round = Math.round,
+        floor = Math.floor,
+        sqrt = Math.sqrt,
+        pi = Math.PI;
 
     function curveConfig(opts) {
         return _.defaults(opts || {}, {
@@ -44,9 +45,26 @@
             resolution: 64,
             layerCount: 2,
             layerSepFactor: 1,
-            leaveOpen: false,
+            width: w*sqrt(2),
+            height: h*sqrt(2),
+            startAngle: 1/8,
             spectrum: spect
         });
+
+        var options = {
+            resolution: 32,
+            numVertices: 4,
+            layerCount: 2,
+            width: w/2,
+            height: h/2,
+            startAngle: 1/8,
+            spectrum: new Spectrum(new Color(13, 255, 255, 1.0),
+                                   new Color(52, 255, 13, .5)),
+            center: curveConfig().center
+        };
+
+        //drawStarCurve(options);
+        drawMultipleCurves(4, 1/8, h/4, drawRectCurve, options);
 
         //drawStarCurve({
         //    numVertices: 8,
@@ -74,7 +92,8 @@
         //    height: two.width*8/16,
         //    spectrum: new Spectrum(new Color(255, 191, 0, 1),
         //                           new Color(255, 31, 0, .5)
-        //    )
+        //    ),
+        //    center: curveConfig().center
         //};
         //var curveReps = 4,
         //    startAngle = 1/8,
@@ -103,33 +122,39 @@
             var angle = i/reps + startAngle;
             var opts = _.defaults({
                 center: getPositions(angle, radius,
-                                     curveConfig().center),
-                //startAngle: angle,
-                spectrum: curveOptions.spectrum.clone()
+                                     curveOptions.center),
+                spectrum: curveOptions.spectrum
             }, curveOptions);
-            curves.add(drawFunction(opts));
+            var curvI = drawFunction(opts);
+            two.render();
+            //rotateAbout(curveOptions.center, curvI, angle, radius);
+            curves.add(curvI);
         }
         return curves;
     };
 
     window.drawRectCurve = function(opts) {
         // TODO: explain
-        // TODO: add initialAngle property
         opts = curveConfig(opts);
+        opts.inward = true;
+        var radius = {
+                x: opts.width/2,
+                y: opts.height/2
+            };
 
-        var c = [
-            p(0,0),
-            p(opts.width,0),
-            p(opts.width, opts.height),
-            p(0, opts.height)
-        ];
+        var vertCount = opts.numVertices,
+            vertices = [getPositions(opts.startAngle, radius, opts.center)],
+            spines = [];
 
-        var spines = [
-            drawLine(c[0], c[1]),
-            drawLine(c[1], c[2]),
-            drawLine(c[2], c[3]),
-            drawLine(c[3], c[0])
-        ];
+        for(var i=1; i<vertCount; i++){
+            var point = getPositions(i/vertCount +  opts.startAngle,
+                                     radius, opts.center);
+            var spine = drawLine(vertices[i-1], point);
+            vertices.push(point);
+            spines.push(spine);
+        }
+
+        spines.push(drawLine(vertices[vertices.length-1], vertices[0]));
 
         return doStitching(spines, opts);
     };
@@ -235,13 +260,13 @@
         );
     };
 
-    var rotateAbout = function(cen, poly, angle){
+    var rotateAbout = function(cen, poly, angle, radius){
         // Rotates a Two.Polygon about a point, "orbiting" that point.
         // TODO: extend Two.Polygon with this
         // Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
         debugLog("OLD: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation);
         poly.rotation = (poly.rotation + angle) % (2*pi);
-        var pos = getPositions(poly.rotation, poly.length);
+        var pos = getPositions(poly.rotation, radius, cen);
         poly.translation.x = cen.x + pos.x/2;
         poly.translation.y = cen.y + pos.y/2;
         debugLog("NEW: angle=" + (poly.rotation/pi) + ", trans=" + poly.translation + "\n");
