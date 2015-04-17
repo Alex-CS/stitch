@@ -24,7 +24,7 @@
             layerSepFactor: 1,
             width: two.width,
             height: two.height,
-            center: p(two.width/2, two.height/2),
+            center: new Point(two.width/2, two.height/2),
             startAngle: 0,
             inward: true,
             showSpines: false,
@@ -103,17 +103,15 @@
 
     }
 
-    function p(x, y){
-        return {
-            x: x,
-            y: y,
-            equals: function(p2) {
-                return p2.x === x && p2.y === y;
-            },
-            toString: function() {
-                return "("+x+","+y+")"
-            }
-        }
+    function Point(x, y){
+        this.x = x;
+        this.y = y;
+        this.equals = function(p2) {
+            return p2.x === this.x && p2.y === this.y;
+        };
+        this.toString = function() {
+            return "("+this.x+","+this.y+")"
+        };
     }
 
     window.drawMultipleCurves = function(reps, startAngle, radius, drawFunction, curveOptions){
@@ -254,7 +252,7 @@
         // Get x,y coordinates for a point `radius`
         // from `center` at the given `angle`.
         radius = (typeof radius == "number") ? {x:radius,y:radius} : radius;
-        return p(
+        return new Point(
             Math.cos(revToRad(angle)) * radius.x + (center.x || 0),
             Math.sin(revToRad(angle)) * radius.y + (center.y || 0)
         );
@@ -419,7 +417,7 @@
         for(var stepNum=0; stepNum <= resolution; stepNum++){
             var curX = vertexA.x + stepNum * stepX,
                 curY = vertexA.y + stepNum * stepY,
-                curPoint = p(curX, curY);
+                curPoint = new Point(curX, curY);
             //plot(curPoint);
             points.push(curPoint);
         }
