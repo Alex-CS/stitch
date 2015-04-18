@@ -10,11 +10,15 @@
         }).appendTo(elem);
     window.stitchCanvas = two.makeGroup();
 
-    // Math Constants
+    // Math shortcuts
     var round = Math.round,
         floor = Math.floor,
         sqrt = Math.sqrt,
         pi = Math.PI;
+
+    // Calculated constants
+    var root2 = sqrt(2),
+        root3 = sqrt(3);
 
     function curveConfig(opts) {
         return _.defaults(opts || {}, {
@@ -41,28 +45,30 @@
             h = two.height;
         var spect = new Spectrum(new Color(0, 255, 127, 1.0),
                                  new Color(0, 127, 255, .5));
-        drawRectCurve({
-            resolution: 64,
-            layerCount: 2,
-            layerSepFactor: 1,
-            width: w*sqrt(2),
-            height: h*sqrt(2),
-            startAngle: 1/8,
-            spectrum: spect
-        });
+        //drawRectCurve({
+        //    resolution: 64,
+        //    layerCount: 2,
+        //    layerSepFactor: 1,
+        //    width: w,
+        //    height: h,
+        //    startAngle: 1/4,
+        //    spectrum: spect
+        //});
 
         var options = {
             resolution: 32,
             numVertices: 4,
-            layerCount: 2,
-            width: w/2,
+            layerCount: 4,
+            layerSepFactor: 1,
+            width: w/4,
             height: h/2,
-            startAngle: 1/8,
-            spectrum: new Spectrum(new Color(13, 255, 255, 1.0),
-                                   new Color(52, 255, 13, .5)),
+            startAngle: 1/4,
+            spectrum: new Spectrum(new Color(100, 100, 255, 1.0),
+                                   new Color(255, 127, 100, .5)),
             center: curveConfig().center
         };
 
+        //drawRectCurve(options);
         //drawStarCurve(options);
         drawMultipleCurves(4, 1/8, h/4, drawRectCurve, options);
 
@@ -104,8 +110,8 @@
     }
 
     function Point(x, y){
-        this.x = x;
-        this.y = y;
+        this.x = x || 0;
+        this.y = y || 0;
         this.equals = function(p2) {
             return p2.x === this.x && p2.y === this.y;
         };
@@ -121,11 +127,11 @@
             var opts = _.defaults({
                 center: getPositions(angle, radius,
                                      curveOptions.center),
-                spectrum: curveOptions.spectrum
+                spectrum: curveOptions.spectrum.clone()
             }, curveOptions);
             var curvI = drawFunction(opts);
             two.render();
-            //rotateAbout(curveOptions.center, curvI, angle, radius);
+            curvI.rotation += revToRad(angle);
             curves.add(curvI);
         }
         return curves;
@@ -138,15 +144,16 @@
         var radius = {
                 x: opts.width/2,
                 y: opts.height/2
-            };
+            },
+            center = new Point();
 
         var vertCount = opts.numVertices,
-            vertices = [getPositions(opts.startAngle, radius, opts.center)],
+            vertices = [getPositions(0, radius, center)],
             spines = [];
 
         for(var i=1; i<vertCount; i++){
-            var point = getPositions(i/vertCount +  opts.startAngle,
-                                     radius, opts.center);
+            var point = getPositions(i/vertCount,
+                                     radius, center);
             var spine = drawLine(vertices[i-1], point);
             vertices.push(point);
             spines.push(spine);
@@ -164,19 +171,20 @@
         var starPointNum = opts.numVertices;
 
         var radius = {
-            x: opts.width / 2,
-            y: opts.height / 2
-        };
+                x: opts.width / 2,
+                y: opts.height / 2
+            },
+            center = new Point();
 
         var spines = [];
         // rotate through all the angles drawing a spine for each
         for(var i=0;i<starPointNum;i++){
-            var tipPoint = getPositions(i/starPointNum + opts.startAngle,
-                                        radius, opts.center);
+            var tipPoint = getPositions(i/starPointNum,
+                                        radius, center);
 
             // Have to alternate to get pretty curves
-            var p1 = (i % 2 == 0) ? opts.center : tipPoint,
-                p2 = (i % 2 == 0) ? tipPoint : opts.center;
+            var p1 = (i % 2 == 0) ? center : tipPoint,
+                p2 = (i % 2 == 0) ? tipPoint : center;
 
             var line = drawLine(p1, p2);
 
@@ -192,17 +200,18 @@
         opts.inward = true;
 
         var radius = {
-            x: opts.width / 2,
-            y: opts.height / 2
-        };
+                x: opts.width / 2,
+                y: opts.height / 2
+            },
+            center = new Point();
 
-        var vertices = [getPositions(opts.startAngle, radius, opts.center)],
+        var vertices = [getPositions(0, radius, center)],
             spines = [];
         var vertCount = opts.resolution * opts.numVertices;
 
         for(var i=1; i<vertCount; i++){
-            var point = getPositions(i/vertCount +  opts.startAngle,
-                                     radius, opts.center);
+            var point = getPositions(i/vertCount,
+                                     radius, center);
             var spine = drawLine(vertices[i-1], point);
             vertices.push(point);
             spines.push(spine);
@@ -239,7 +248,9 @@
             group.add(layer);
         }
 
-        stitchCanvas.add(group);
+        group.translation.set(opts.center.x, opts.center.y);
+        group.rotation = revToRad(opts.startAngle);
+
         return group;
     }
 
@@ -251,10 +262,11 @@
     var getPositions = function(angle, radius, center) {
         // Get x,y coordinates for a point `radius`
         // from `center` at the given `angle`.
-        radius = (typeof radius == "number") ? {x:radius,y:radius} : radius;
+        radius = (typeof radius == "number") ? {x:radius, y:radius} : radius;
+        center = center || new Point();
         return new Point(
-            Math.cos(revToRad(angle)) * radius.x + (center.x || 0),
-            Math.sin(revToRad(angle)) * radius.y + (center.y || 0)
+            Math.cos(revToRad(angle)) * radius.x + center.x,
+            Math.sin(revToRad(angle)) * radius.y + center.y
         );
     };
 
