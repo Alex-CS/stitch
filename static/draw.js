@@ -2,14 +2,8 @@
  * Created by alex on 4/7/15.
  */
 
-(function(){
-    var elem = document.getElementById('canvas'),
-        two = new Two({
-            width: 800,
-            height: 800
-        }).appendTo(elem);
-    window.stitchCanvas = two.makeGroup();
 
+(function(){
     // Math shortcuts
     var round = Math.round,
         floor = Math.floor,
@@ -20,7 +14,21 @@
     var root2 = sqrt(2),
         root3 = sqrt(3);
 
-    function curveConfig(opts) {
+    var elem = document.getElementById('canvas'),
+        two = new Two({
+            width: 800,
+            height: 800
+        }).appendTo(elem),
+        CurveType = {
+            Polygon: "Polygon",
+            Star: "Star",
+            Ellipse: "Ellipse",
+            Other: "Other"
+        },
+        CENTER = new Point(0,0);
+    window.stitchCanvas = two.makeGroup();
+
+    function curveConfig(opts, curveType) {
         return _.defaults(opts || {}, {
             numVertices: 4,
             resolution: 2,
@@ -30,7 +38,7 @@
             height: two.height,
             center: new Point(two.width/2, two.height/2),
             startAngle: 0,
-            inward: true,
+            curveType: curveType || CurveType.Other,
             showSpines: false,
             spectrum: new Spectrum(new Color(0, 0, 0, 1))
         });
@@ -57,20 +65,20 @@
 
         var options = {
             resolution: 32,
-            numVertices: 6,
-            layerCount: 1,
-            layerSepFactor: 1.5,
-            width: w,
-            height: h,
+            numVertices: 4,
+            layerCount: 4,
+            layerSepFactor: 1,
+            width: root2*w/2,
+            height: root2*h/2,
             startAngle: 1/4,
             spectrum: new Spectrum(new Color(100, 100, 255, 1.0),
                                    new Color(255, 127, 100, .5)),
             center: curveConfig().center
         };
 
-        drawRectCurve(options);
+        //drawRectCurve(options);
         //drawStarCurve(options);
-        //drawMultipleCurves(4, 1/8, h/4, drawRectCurve, options);
+        drawMultipleCurves(4, 1/8, root2*h/4, drawStarCurve, options);
 
         //drawStarCurve({
         //    numVertices: 8,
@@ -139,56 +147,49 @@
 
     window.drawRectCurve = function(opts) {
         // TODO: explain
-        opts = curveConfig(opts);
-        opts.inward = true;
+        opts = curveConfig(opts, CurveType.Polygon);
         var radius = {
                 x: opts.width/2,
                 y: opts.height/2
             },
-            center = new Point();
+            center = CENTER;
 
         var vertCount = opts.numVertices,
             vertices = [getPositions(0, radius, center)],
-            spines = [];
+            spines = two.makeGroup();
 
         for(var i=1; i<vertCount; i++){
-            var point = getPositions(i/vertCount,
-                                     radius, center);
+            var point = getPositions(i/vertCount, radius, center);
             var spine = drawLine(vertices[i-1], point);
             vertices.push(point);
-            spines.push(spine);
+            spines.add(spine);
         }
 
-        spines.push(drawLine(vertices[vertices.length-1], vertices[0]));
+        spines.add(drawLine(vertices[vertices.length-1], vertices[0]));
 
         return doStitching(spines, opts);
     };
 
     window.drawStarCurve = function(opts){
         // TODO: explain why this is different than rect
-        opts = curveConfig(opts);
-        opts.inward = false;
+        opts = curveConfig(opts, CurveType.Star);
         var starPointNum = opts.numVertices;
 
         var radius = {
                 x: opts.width / 2,
                 y: opts.height / 2
             },
-            center = new Point();
+            center = CENTER;
 
-        var spines = [];
+        var spines = two.makeGroup();
         // rotate through all the angles drawing a spine for each
         for(var i=0;i<starPointNum;i++){
             var tipPoint = getPositions(i/starPointNum,
                                         radius, center);
 
-            // Have to alternate to get pretty curves
-            var p1 = (i % 2 == 0) ? center : tipPoint,
-                p2 = (i % 2 == 0) ? tipPoint : center;
+            var line = drawLine(center, tipPoint);
 
-            var line = drawLine(p1, p2);
-
-            spines.push(line);
+            spines.add(line);
         }
 
         return doStitching(spines, opts);
@@ -196,28 +197,27 @@
 
     window.drawEllipseCurve = function (opts) {
         // TODO: Description
-        opts = curveConfig(opts);
+        opts = curveConfig(opts, CurveType.Ellipse);
         opts.inward = true;
 
         var radius = {
                 x: opts.width / 2,
                 y: opts.height / 2
             },
-            center = new Point();
+            center = CENTER;
 
         var vertices = [getPositions(0, radius, center)],
-            spines = [];
+            spines = two.makeGroup();
         var vertCount = opts.resolution * opts.numVertices;
 
         for(var i=1; i<vertCount; i++){
-            var point = getPositions(i/vertCount,
-                                     radius, center);
+            var point = getPositions(i/vertCount, radius, center);
             var spine = drawLine(vertices[i-1], point);
             vertices.push(point);
-            spines.push(spine);
+            spines.add(spine);
         }
         opts.points = vertices;
-        spines.push(drawLine(vertices[vertices.length-1], vertices[0]));
+        spines.add(drawLine(_.last(vertices), _.first(vertices)));
 
         return doStitching(spines, opts);
     };
@@ -229,25 +229,33 @@
             layerSepFactor = opts.layerSepFactor,
             spectrum = opts.spectrum.segmentColors(layerCount);
 
-        spines.forEach(function(spine){
-            spine.stroke = (opts.showSpines) ? spine.stroke : rgba(0,0,0,0);
-        });
+        spines.stroke = (opts.showSpines) ? spines.stroke : rgba(0,0,0,0);
 
         var group = two.makeGroup();
         group.add(spines);
-        var points = opts.points || getAllPoints(spines, opts);
+        var points = opts.points || getAllPoints(_.values(spines.children), opts);
+
+        // Layering constants
+        var layerRatio = floor(resolution/layerCount);
 
         for (var i = 0; i < layerCount; i++) {
-            var layer = stitchContinuous(
-                points,
-                resolution,
-                ((layerCount - i) * floor(resolution/layerCount) * layerSepFactor) % points.length/2,
-                opts.inward
-            );
+            var layer;
+            switch (opts.curveType) {
+                case CurveType.Star:
+                    layer = stitchOutward(points, (i * layerSepFactor * layerRatio) % resolution / 2);
+                    break;
+                case CurveType.Ellipse: // This might be independent at some point
+                case CurveType.Other:
+                case CurveType.Polygon:
+                    var separation = ((layerCount - i) * layerRatio * layerSepFactor) % points.length/2;
+                    layer = stitchInward(points, resolution, separation);
+                    break;
+            }
             layer.stroke = spectrum.nextColor().rgbaStr();
             group.add(layer);
         }
 
+        // Move the group to the right place
         group.translation.set(opts.center.x, opts.center.y);
         group.rotation = revToRad(opts.startAngle);
 
@@ -263,7 +271,7 @@
         // Get x,y coordinates for a point `radius`
         // from `center` at the given `angle`.
         radius = (typeof radius == "number") ? {x:radius, y:radius} : radius;
-        center = center || new Point();
+        center = center || CENTER;
         return new Point(
             Math.cos(revToRad(angle)) * radius.x + center.x,
             Math.sin(revToRad(angle)) * radius.y + center.y
@@ -339,8 +347,9 @@
         this._colors = arguments || [];
         this._nextIndex = 0;
         this.clone = function(){
-            var clone = new Spectrum(this._colors);
+            var clone = new Spectrum();
             clone._colors = this._colors;
+            clone._nextIndex = 0;
             return clone;
         };
 
@@ -412,9 +421,9 @@
         dot.fill = color || "red";
     }
 
-    function getPoints(line, resolution){
+    function getPoints(line, resolution, excluded){
         // Returns an array of `resolution` points
-        // evenly spaced along `line`.
+        // evenly spaced along `line`, excluding points in `excluded`.
         // TODO: test with Polygons
         // TODO: extend Two.Polygon with this
         var points = [];
@@ -434,80 +443,90 @@
             points.push(curPoint);
         }
 
+        // Remove excluded points
+        points = points.filter(function(point){
+            return !_.any(excluded, function (exPoint) {
+                return exPoint.equals(point);
+            });
+        });
+
         return points;
     }
 
     function getAllPoints(spines, opts){
         var points = [];
+
         for(var i = 0; i<spines.length; i++){
-            var newPoints = getPoints(spines[i], opts.resolution);
-            if (points.length && points[points.length-1].equals(newPoints[0])){
-                newPoints.shift();
+            var excluded,
+                newPoints;
+            if (opts.curveType == CurveType.Star){
+                excluded = [CENTER];
+                newPoints = getPoints(spines[i], opts.resolution, excluded);
+                points.push(newPoints);
             }
-            points = points.concat(newPoints);
-        }
 
-        // If the shape is closed
-        if(points[0].equals(points[points.length-1])){
-            points.pop();
-        }
-
-        // If the shape is a star, remove the center
-        if(!opts.inward){
-            return points.filter(function(point){
-                return !point.equals(opts.center);
-            });
+            else{
+                excluded = (points.length > 1) ? [_.first(points), _.last(points)] : [];
+                newPoints = getPoints(spines[i], opts.resolution, excluded);
+                points = points.concat(newPoints);
+            }
         }
 
         return points;
     }
 
-    function _connectDots(arr1, arr2) {
+    function _connectDots(spineA, spineB, shave) {
         // Given 2 equal-sized arrays of points,
         // connect them (draw lines) in order.
-        var group = new Two.Group(),
-            len = arr1.length;
-        if (arr1.length != arr2.length) {
+        var group = two.makeGroup(),
+            maxIndex = spineA.length - shave - 1;
+        if (spineA.length != spineB.length) {
+            debugLog("ERROR: mismatched spine resolutions!");
             return group;
         }
-        for(var i=0; i<len; i++){
-            var line = drawLine(arr1[i], arr2[i]);
+        for(var i=0; i<=maxIndex; i++){
+            var a = spineA[maxIndex-i],
+                b = spineB[i],
+                line = drawLine(a, b);
             line.addTo(group);
         }
         return group;
     }
 
-    function stitch(line1, line2, resolution){
-        // "Stitch" a curve between the two lines given,
-        // with `resolution` lines in the curve.
-        var line1Points = getPoints(line1, resolution),
-            line2Points = getPoints(line2, resolution),
-            stitches = _connectDots(line1Points, line2Points);
+    function stitchOutward(spinePoints, shave){
+        // "Stitch" a curve between the given arrays of points,
+        // not using the `shave` number of points at the end (used for layering)
+        var group = two.makeGroup();
+        for(var i=0; i<spinePoints.length; i++){
+            var spineA = spinePoints[i],
+                spineB = spinePoints[(i+1) % spinePoints.length];
+            group.add(_connectDots(spineA, spineB, shave));
+        }
 
-        return stitches;
+        return group;
     }
 
     function _followCurve(points, separation){
         // Takes an array of points and draws a line from
         // each point to the one `separation` ahead of it.
-        var group = new Two.Group(),
+        var group = two.makeGroup(),
             len = points.length;
         for(var i=0; i<len; i++){
             var pointA = points[(len - separation + i) % len],
-                pointB = points[i];
-            drawLine(pointA, pointB).addTo(group);
+                pointB = points[i],
+                line = drawLine(pointA, pointB);
+            line.addTo(group);
         }
         return group;
     }
 
-    function stitchContinuous(points, resolution, separation, inward){
+    function stitchInward(points, resolution, separation){
         // "Stitch" a continuous curve between the list of lines given,
         // with `resolution` points per line, and a given number of
         // points of `separation`
 
         separation = round(separation || 0);
-        var buffer = (inward) ? 1 : 0;
-        return _followCurve(points, resolution + separation + buffer);
+        return _followCurve(points, resolution + separation + 1);
 
     }
 
