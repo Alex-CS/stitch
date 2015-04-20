@@ -57,20 +57,20 @@
 
         var options = {
             resolution: 32,
-            numVertices: 4,
-            layerCount: 4,
-            layerSepFactor: 1,
-            width: w/4,
-            height: h/2,
+            numVertices: 6,
+            layerCount: 1,
+            layerSepFactor: 1.5,
+            width: w,
+            height: h,
             startAngle: 1/4,
             spectrum: new Spectrum(new Color(100, 100, 255, 1.0),
                                    new Color(255, 127, 100, .5)),
             center: curveConfig().center
         };
 
-        //drawRectCurve(options);
+        drawRectCurve(options);
         //drawStarCurve(options);
-        drawMultipleCurves(4, 1/8, h/4, drawRectCurve, options);
+        //drawMultipleCurves(4, 1/8, h/4, drawRectCurve, options);
 
         //drawStarCurve({
         //    numVertices: 8,
@@ -110,8 +110,8 @@
     }
 
     function Point(x, y){
-        this.x = x || 0;
-        this.y = y || 0;
+        this.x = round(x) || 0;
+        this.y = round(y) || 0;
         this.equals = function(p2) {
             return p2.x === this.x && p2.y === this.y;
         };
