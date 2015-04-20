@@ -77,9 +77,8 @@
         };
 
         //drawRectCurve(options);
-        //drawStarCurve(options);
+        drawStarCurve(_.defaults({width: w, height: h, resolution: 64, spectrum: options.spectrum.clone().flip()}, options));
         drawMultipleCurves(4, 1/8, root2*h/4, drawStarCurve, options);
-
         //drawStarCurve({
         //    numVertices: 8,
         //    resolution: 32,
@@ -296,8 +295,13 @@
         this.blu = blue || 0;
         this.alf = alpha || 1.0;
         this.attrList = [this.red, this.grn, this.blu, this.alf];
+
         this.rgbaStr = function(){
             return rgba(this.red, this.grn, this.blu, this.alf)
+        };
+
+        this.clone = function(){
+            return new Color(this.red, this.grn, this.blu, this.alf);
         };
 
         this.toString = function(){
@@ -344,20 +348,22 @@
     function Spectrum(){
         // TODO: test plotting through more than 2 initial colors
 
-        this._colors = arguments || [];
+        this._colors = _.toArray(arguments) || [];
         this._nextIndex = 0;
         this.clone = function(){
             var clone = new Spectrum();
-            clone._colors = this._colors;
+            clone._colors = this._colors.map(function(color){
+                return color.clone();
+            });
             clone._nextIndex = 0;
             return clone;
         };
 
         this.firstColor = function(){
-            return this._colors[0];
+            return _.first(this._colors);
         };
         this.lastColor = function(){
-            return this._colors[this._colors.length-1];
+            return _.last(this._colors);
         };
         this.nextColor = function(){
             // Returns the next color in the sequence
@@ -384,6 +390,13 @@
             this._colors = newColors;
             return this;
         };
+
+        this.flip = function(){
+            // Reverse the spectrum
+            this._colors.reverse();
+            this._nextIndex = 0;
+            return this;
+        }
     }
 
     function rgba(r, g, b, a){
