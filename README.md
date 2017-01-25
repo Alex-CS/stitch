@@ -1,18 +1,27 @@
-# Stitch
-A curve stitching application built with [Two.js](https://jonobr1.github.io/two.js/)
+# stitch
 
-## What is curve stitching?
-  Curve Stitching ([Google is your friend](https://www.google.com/search?q=curve-stitching)) aka "[string art](https://en.wikipedia.org/wiki/String_art)" is a mathematical art form in which the artist creates curves through the intersection of several straight lines. 
-The more lines that are used, the smoother a curve looks, as well as increasing the "gradient" effect caused by the greater density of lines near the curve itself.
+> A curve-stitching application
 
-| 8-line square curve | 128-line square curve |
-|:----:|:----:|
-| [TODO: IMAGE] | [TODO: IMAGE] |
+## Build Setup
 
-## Installation
+``` bash
+# install dependencies
+npm install
 
-## Vocabulary
+# serve with hot reload at localhost:8080
+npm run dev
 
-## API Documentation
+# build for production with minification
+npm run build
 
-## Who built it?
+# run unit tests
+npm run unit
+
+# run e2e tests
+npm run e2e
+
+# run all tests
+npm test
+```
+
+For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
