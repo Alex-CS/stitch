@@ -1,41 +1,52 @@
-import _first from 'lodash/first';
-import _last from 'lodash/last';
-import _some from 'lodash/some';
+import _flatten from 'lodash/flatten';
+import _isNumber from 'lodash/isNumber';
+import _range from 'lodash/range';
+import _without from 'lodash/without';
+import _uniq from 'lodash/uniq';
 
 import { CurveType, Point } from './classes';
 
-// Math shortcuts
-export const round = Math.round;
-export const floor = Math.floor;
-export const sqrt = Math.sqrt;
-export const pi = Math.PI;
 
 // Calculated constants
-export const root2 = sqrt(2);
-export const root3 = sqrt(3);
+export const root2 = Math.sqrt(2);
+export const root3 = Math.sqrt(3);
 export const CENTER = new Point(0, 0);
 
 /**
+ * Build an array by running `callback` for each number from `start` to `end`
+ *
+ * @param {number} start - The number to start from
+ * @param {number} end - The number to iterate up to (not including)
+ * @param {Function} callback - The function to run on each number
+ * @returns {Array}
+ */
+export function mapInRange(start, callback, end) {
+  return _range(start, end).map(callback);
+}
+
+/**
  * Converts a number of revolutions into radians (1 rev = 2pi radians)
+ *
  * @param {number} rev
  * @returns {number}
  */
 export function revToRad(rev) {
-  return 2 * pi * rev;
+  return 2 * Math.PI * rev;
 }
 
 /**
  * Get the Point that is `radius` distance from `center` at `angle`
+ *
  * @param {number} angle
  * @param {number|Point} radius
  * @param {Point} center
  * @returns {Point}
  */
 export function getPositions(angle, radius, center = CENTER) {
-  radius = (typeof radius === 'number') ? { x: radius, y: radius } : radius;
+  const dist = (_isNumber(radius)) ? { x: radius, y: radius } : radius;
   return new Point(
-    center.x + (Math.cos(revToRad(angle)) * radius.x),
-    center.y + (Math.sin(revToRad(angle)) * radius.y)
+    center.x + (Math.cos(revToRad(angle)) * dist.x),
+    center.y + (Math.sin(revToRad(angle)) * dist.y)
   );
 }
 
@@ -50,73 +61,70 @@ export function getPositions(angle, radius, center = CENTER) {
  */
 export function rotateAbout(cen, poly, angle, radius) {
   // TODO: extend Two.Polygon with this
-  poly.rotation = (poly.rotation + angle) % (2 * pi);
+  poly.rotation = (poly.rotation + angle) % (2 * Math.PI);
   var pos = getPositions(poly.rotation, radius, cen);
   poly.translation.x = cen.x + (pos.x / 2);
   poly.translation.y = cen.y + (pos.y / 2);
 }
 
-export function pointStr(vector) {
-  // TODO: extend Two.Vector with this
-  return `(${vector.x}, ${vector.y})`;
-}
-
+/**
+ * Take a Two.Vector positioned relative to center,
+ * and change it to be relative to top-left corner
+ *
+ * @param {Point} point
+ * @param trans
+ */
 export function decenter(point, trans) {
-  // Take a Two.Vector positioned relative to center,
-  // and change it to be relative to top-left corner
   // TODO: extend Two.Vector with this
   return point.clone().set(trans.x - point.x, trans.y + point.y);
 }
 
-export function getPoints(line, resolution, excluded) {
-  // Returns an array of `resolution` points
-  // evenly spaced along `line`, excluding points in `excluded`.
+/**
+ * Returns an array of `resolution` points evenly spaced along `line`,
+ * excluding points in `excluded`.
+ *
+ * @param {Two.Polygon} line
+ * @param {number} resolution - The number of intermediate points to include
+ * @param {Point[]} excluded - Points to skip
+ * @returns {Point[]}
+ */
+export function getPoints(line, resolution, excluded = []) {
   // TODO: test with Polygons
   // TODO: extend Two.Polygon with this
-  var points = [];
 
-  var vertexA = line.startPoint,
-    vertexB = line.endPoint,
-    rangeX = vertexB.x - vertexA.x,
-    rangeY = vertexB.y - vertexA.y,
-    stepX = rangeX / resolution,
-    stepY = rangeY / resolution;
+  const vertexA = line.startPoint;
+  const vertexB = line.endPoint;
+  const rangeX = vertexB.x - vertexA.x;
+  const rangeY = vertexB.y - vertexA.y;
+  const stepX = rangeX / resolution;
+  const stepY = rangeY / resolution;
 
-  for (var stepNum = 0; stepNum <= resolution; stepNum++) {
-    var curX = vertexA.x + stepNum * stepX,
-      curY = vertexA.y + stepNum * stepY,
-      curPoint = new Point(curX, curY);
+  const range = mapInRange((stepNum) => {
+    const x = vertexA.x + (stepNum * stepX);
+    const y = vertexA.y + (stepNum * stepY);
+    const curPoint = new Point(x, y);
     // plot(curPoint);
-    points.push(curPoint);
-  }
-
-  // Remove excluded points
-  points = points.filter(function (point) {
-    return !_some(excluded, function (exPoint) {
-      return exPoint.equals(point);
-    });
+    return curPoint;
   });
 
-  return points;
+  return _without(range, ...excluded);
 }
 
+/**
+ * Get all the points along each spine in an array of them
+ *
+ * @param {Two.Polygon[]} spines
+ * @param {object} opts
+ * @returns {Array}
+ */
 export function getAllPoints(spines, opts) {
-  var points = [];
-
-  for (var i = 0; i < spines.length; i++) {
-    var excluded,
-      newPoints;
-    if (opts.curveType === CurveType.Star) {
-      excluded = [CENTER];
-      newPoints = getPoints(spines[i], opts.resolution, excluded);
-      points.push(newPoints);
-    } else {
-      excluded = (points.length > 1) ? [_first(points), _last(
-          points)] : [];
-      newPoints = getPoints(spines[i], opts.resolution, excluded);
-      points = points.concat(newPoints);
-    }
+  if (opts.curveType === CurveType.Star) {
+    return spines.map(
+      spine => getPoints(spine, opts.resolution, [CENTER])
+    );
   }
-
-  return points;
+  const nestedPoints = spines.map(
+    spine => getPoints(spine, opts.resolution)
+  );
+  return _uniq(_flatten(nestedPoints));
 }

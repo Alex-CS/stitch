@@ -21,6 +21,14 @@ export class Point {
   }
 
   /**
+   * Create a new point with the same coordinates
+   * @returns {Point}
+   */
+  clone() {
+    return new Point(this.x, this.y);
+  }
+
+  /**
    * Compare to another Point-like object
    * @param {Point} p2
    * @returns {boolean}
@@ -178,4 +186,33 @@ export class Spectrum {
     this._nextIndex = 0;
     return this;
   }
+}
+
+export class CurveConfig {
+
+  constructor({
+    numVertices = 4,
+    resolution = 2,
+    layerCount = 1,
+    layerSepFactor = 1,
+    width = 800,
+    height = 800,
+    center = new Point(400, 400),
+    startAngle = 0,
+    showSpines = false,
+    spectrum = new Spectrum(new Color()),
+  }, curveType) {
+    this.curveType = curveType;
+    this.numVertices = numVertices;
+    this.resolution = resolution;
+    this.layerCount = layerCount;
+    this.layerSepFactor = layerSepFactor;
+    this.width = width;
+    this.height = height;
+    this.center = center.clone();
+    this.startAngle = startAngle;
+    this.showSpines = showSpines;
+    this.spectrum = spectrum.clone();
+  }
+
 }
