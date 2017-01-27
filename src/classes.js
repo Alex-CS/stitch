@@ -1,6 +1,9 @@
 import _first from 'lodash/first';
+import _isNumber from 'lodash/isNumber';
 import _last from 'lodash/last';
+import _without from 'lodash/without';
 
+import { mapInRange, revToRad } from './utils';
 
 export const CurveType = {
   Polygon: 'Polygon',
@@ -15,9 +18,31 @@ export function rgba(r, g, b, a) {
 
 export class Point {
 
-  constructor(x = 0, y = 0) {
+  /**
+   * @constructor
+   * @param {Number} [x]
+   * @param {Number} [y]
+   */
+  constructor(x = 0, y) {
     this.x = Math.round(x);
-    this.y = Math.round(y);
+    this.y = Math.round(y || x);
+  }
+
+  /**
+   * Get the Point that is `radius` distance from this point at `angle`
+   *
+   * @param {number} angle
+   * @param {number|Point} radius
+   * @returns {Point}
+   */
+  getRelativePoint(angle, radius) {
+    const dist = (_isNumber(radius)) ? new Point(radius) : radius;
+    const xDistance = Math.cos(revToRad(angle)) * dist.x;
+    const yDistance = Math.sin(revToRad(angle)) * dist.y;
+    return new Point(
+      this.x + xDistance,
+      this.y + yDistance
+    );
   }
 
   /**
@@ -46,6 +71,45 @@ export class Point {
    */
   toString() {
     return `(${this.x}, ${this.y})`;
+  }
+}
+
+export class Line {
+  /**
+   * @constructor
+   * @param {Point} start
+   * @param {Point} end
+   */
+  constructor(start, end) {
+    this.start = start;
+    this.end = end;
+  }
+
+  /**
+   * Returns an array of `resolution` points evenly spaced along this line,
+   * excluding points in `excluded`.
+   *
+   * @param {number} resolution - The number of intermediate points to include
+   * @param {Point[]} excluded - Points to skip
+   * @returns {Point[]}
+   */
+  getPoints(resolution, excluded = []) {
+    const rangeX = this.end.x - this.start.x;
+    const rangeY = this.end.y - this.start.y;
+    const stepX = rangeX / resolution;
+    const stepY = rangeY / resolution;
+
+    const range = mapInRange(resolution, (stepNum) => {
+      const x = this.start.x + (stepNum * stepX);
+      const y = this.start.y + (stepNum * stepY);
+      return new Point(x, y);
+    });
+
+    return _without(range, ...excluded);
+  }
+
+  toString() {
+    return `${this.start} -> ${this.end}`;
   }
 }
 
@@ -190,6 +254,20 @@ export class Spectrum {
 
 export class CurveConfig {
 
+  /**
+   * @constructor
+   * @param {number} numVertices
+   * @param {number} resolution
+   * @param {number} layerCount
+   * @param {number} layerSepFactor
+   * @param {number} width
+   * @param {number} height
+   * @param {Point} center
+   * @param {number} startAngle
+   * @param {boolean} showSpines
+   * @param {Spectrum} spectrum
+   * @param {string} curveType
+   */
   constructor({
     numVertices = 4,
     resolution = 2,
@@ -213,6 +291,7 @@ export class CurveConfig {
     this.startAngle = startAngle;
     this.showSpines = showSpines;
     this.spectrum = spectrum.clone();
+    this.points = null;
   }
 
 }

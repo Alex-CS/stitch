@@ -1,5 +1,5 @@
 import _flatten from 'lodash/flatten';
-import _isNumber from 'lodash/isNumber';
+import _isFunction from 'lodash/isFunction';
 import _range from 'lodash/range';
 import _without from 'lodash/without';
 import _uniq from 'lodash/uniq';
@@ -16,11 +16,14 @@ export const CENTER = new Point(0, 0);
  * Build an array by running `callback` for each number from `start` to `end`
  *
  * @param {number} start - The number to start from
- * @param {number} end - The number to iterate up to (not including)
+ * @param {number} [end] - The number to iterate up to (not including)
  * @param {Function} callback - The function to run on each number
  * @returns {Array}
  */
-export function mapInRange(start, callback, end) {
+export function mapInRange(start, end, callback) {
+  if (_isFunction(end)) {
+    return _range(start).map(end);
+  }
   return _range(start, end).map(callback);
 }
 
@@ -35,22 +38,6 @@ export function revToRad(rev) {
 }
 
 /**
- * Get the Point that is `radius` distance from `center` at `angle`
- *
- * @param {number} angle
- * @param {number|Point} radius
- * @param {Point} center
- * @returns {Point}
- */
-export function getPositions(angle, radius, center = CENTER) {
-  const dist = (_isNumber(radius)) ? { x: radius, y: radius } : radius;
-  return new Point(
-    center.x + (Math.cos(revToRad(angle)) * dist.x),
-    center.y + (Math.sin(revToRad(angle)) * dist.y)
-  );
-}
-
-/**
  * Rotates a Two.Polygon about a point, "orbiting" that point.
  *
  * Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
@@ -62,7 +49,7 @@ export function getPositions(angle, radius, center = CENTER) {
 export function rotateAbout(cen, poly, angle, radius) {
   // TODO: extend Two.Polygon with this
   poly.rotation = (poly.rotation + angle) % (2 * Math.PI);
-  var pos = getPositions(poly.rotation, radius, cen);
+  var pos = cen.getRelativePoint(poly.rotation, radius);
   poly.translation.x = cen.x + (pos.x / 2);
   poly.translation.y = cen.y + (pos.y / 2);
 }
@@ -99,7 +86,7 @@ export function getPoints(line, resolution, excluded = []) {
   const stepX = rangeX / resolution;
   const stepY = rangeY / resolution;
 
-  const range = mapInRange((stepNum) => {
+  const range = mapInRange(resolution, (stepNum) => {
     const x = vertexA.x + (stepNum * stepX);
     const y = vertexA.y + (stepNum * stepY);
     const curPoint = new Point(x, y);
@@ -113,18 +100,18 @@ export function getPoints(line, resolution, excluded = []) {
 /**
  * Get all the points along each spine in an array of them
  *
- * @param {Two.Polygon[]} spines
- * @param {object} opts
- * @returns {Array}
+ * @param {Line[]} spines
+ * @param {CurveConfig} opts
+ * @returns {Point[]}
  */
 export function getAllPoints(spines, opts) {
   if (opts.curveType === CurveType.Star) {
     return spines.map(
-      spine => getPoints(spine, opts.resolution, [CENTER])
+      spine => spine.getPoints(opts.resolution, [CENTER])
     );
   }
   const nestedPoints = spines.map(
-    spine => getPoints(spine, opts.resolution)
+    spine => spine.getPoints(opts.resolution)
   );
   return _uniq(_flatten(nestedPoints));
 }

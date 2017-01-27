@@ -1,5 +1,7 @@
 <template>
   <div id="app">
+    <svg :width="size" :height="size">
+    </svg>
   </div>
 </template>
 
@@ -8,6 +10,11 @@
 export default {
   name: 'app',
   components: {
+  },
+  data() {
+    return {
+      size: '800'
+    };
   },
 };
 </script>
