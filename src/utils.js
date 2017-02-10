@@ -1,22 +1,16 @@
 import _flatten from 'lodash/flatten';
 import _isFunction from 'lodash/isFunction';
 import _range from 'lodash/range';
-import _without from 'lodash/without';
 import _uniq from 'lodash/uniq';
 
 import { CurveType, Point } from './classes';
 
-
-// Calculated constants
-export const root2 = Math.sqrt(2);
-export const root3 = Math.sqrt(3);
-export const CENTER = new Point(0, 0);
-
 /**
  * Build an array by running `callback` for each number from `start` to `end`
+ * If the second argument is a function, the first argument is used as `end`
  *
- * @param {number} start - The number to start from
- * @param {number} [end] - The number to iterate up to (not including)
+ * @param {number} [start] - The number to start from
+ * @param {number} end - The number to iterate up to (not including)
  * @param {Function} callback - The function to run on each number
  * @returns {Array}
  */
@@ -67,47 +61,16 @@ export function decenter(point, trans) {
 }
 
 /**
- * Returns an array of `resolution` points evenly spaced along `line`,
- * excluding points in `excluded`.
- *
- * @param {Two.Polygon} line
- * @param {number} resolution - The number of intermediate points to include
- * @param {Point[]} excluded - Points to skip
- * @returns {Point[]}
- */
-export function getPoints(line, resolution, excluded = []) {
-  // TODO: test with Polygons
-  // TODO: extend Two.Polygon with this
-
-  const vertexA = line.startPoint;
-  const vertexB = line.endPoint;
-  const rangeX = vertexB.x - vertexA.x;
-  const rangeY = vertexB.y - vertexA.y;
-  const stepX = rangeX / resolution;
-  const stepY = rangeY / resolution;
-
-  const range = mapInRange(resolution, (stepNum) => {
-    const x = vertexA.x + (stepNum * stepX);
-    const y = vertexA.y + (stepNum * stepY);
-    const curPoint = new Point(x, y);
-    // plot(curPoint);
-    return curPoint;
-  });
-
-  return _without(range, ...excluded);
-}
-
-/**
  * Get all the points along each spine in an array of them
  *
  * @param {Line[]} spines
- * @param {CurveConfig} opts
+ * @param {Curve} opts
  * @returns {Point[]}
  */
 export function getAllPoints(spines, opts) {
   if (opts.curveType === CurveType.Star) {
     return spines.map(
-      spine => spine.getPoints(opts.resolution, [CENTER])
+      spine => spine.getPoints(opts.resolution, [Point.origin])
     );
   }
   const nestedPoints = spines.map(

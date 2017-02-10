@@ -1,4 +1,5 @@
 var config = require('../config');
+var FriendlyErrors = require('friendly-errors-webpack-plugin');
 var webpack = require('webpack');
 var merge = require('webpack-merge');
 var utils = require('./utils');

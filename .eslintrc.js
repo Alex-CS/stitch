@@ -26,6 +26,9 @@ module.exports = {
     }],
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
-    'no-underscore-dangle': 0
+    'no-param-reassign': [2, { "props": false }],
+    'no-underscore-dangle': 0,
+    'import/prefer-default-export': 0,
+    'class-methods-use-this': 0
   }
 }

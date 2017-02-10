@@ -1,7 +1,12 @@
 import _first from 'lodash/first';
+import _flatten from 'lodash/flatten';
+import _floor from 'lodash/floor';
+import _forEach from 'lodash/forEach';
 import _isNumber from 'lodash/isNumber';
 import _last from 'lodash/last';
+import _round from 'lodash/round';
 import _without from 'lodash/without';
+import _uniq from 'lodash/uniq';
 
 import { mapInRange, revToRad } from './utils';
 
@@ -28,11 +33,18 @@ export class Point {
     this.y = Math.round(y || x);
   }
 
+  static get origin() {
+    if (!Point._origin) {
+      Point._origin = new Point(0);
+    }
+    return Point._origin;
+  }
+
   /**
    * Get the Point that is `radius` distance from this point at `angle`
    *
    * @param {number} angle
-   * @param {number|Point} radius
+   * @param {number|Object} radius
    * @returns {Point}
    */
   getRelativePoint(angle, radius) {
@@ -113,6 +125,68 @@ export class Line {
   }
 }
 
+export class Group {
+
+  /**
+   * An arbitrary collection of Points or Lines that all share attributes
+   * @constructor
+   * @param {Point[]|Line[]} [members]
+   * @param {Object} [attributes]
+   */
+  constructor(members = [], attributes = {}) {
+    this.members = Array.from(members);
+    this._attributes = Object.assign({}, attributes);
+  }
+
+  get attributes() {
+    return Object.assign({}, this._attributes);
+  }
+
+  set attributes(newAttributes) {
+    _forEach(newAttributes, (value, key) => {
+      this.setAttr(key, value);
+    });
+  }
+
+  /**
+   * Set an attribute to all members
+   * @param {String} attrName
+   * @param {*} attrValue
+   */
+  setAttr(attrName, attrValue) {
+    this._attributes[attrName] = attrValue;
+    // this.members.forEach((member) => {
+    //   member[attrName] = attrValue;
+    // });
+  }
+
+  forEach(callback) {
+    this.members.forEach(callback);
+  }
+
+  map(callback) {
+    return new Group(this.members.map(callback), this.attributes);
+  }
+
+  /**
+   * Create a Group from an array
+   * @param {Array} array
+   * @returns {Group}
+   */
+  static from(array) {
+    return new Group(array);
+  }
+
+  /**
+   * Turn an array of arrays into an array of Groups
+   * @param {Array[]} arrays
+   * @return {Group[]}
+   */
+  static fromEach(arrays) {
+    return arrays.map(array => Group.from(array));
+  }
+}
+
 export class Color {
 
   constructor(red = 0, green = 0, blue = 0, alpha = 1) {
@@ -167,17 +241,16 @@ export class Color {
    * @returns {Color[]}
    */
   stepsToward(otherColor, resolution) {
-    const colors = [];
     const colorStep = this.distanceTo(otherColor).scaleDown(resolution);
 
     // Handle all the colors between the start and end
-    for (let i = 1; i < resolution; i++) {
+    const colors = mapInRange(1, resolution, (i) => {
       const red = this.red + (colorStep.red * i);
       const green = this.grn + (colorStep.grn * i);
       const blue = this.blu + (colorStep.blu * i);
       const alpha = this.alf + (colorStep.alf * i);
-      colors.push(new Color(red, green, blue, alpha));
-    }
+      return new Color(red, green, blue, alpha);
+    });
     colors.unshift(this.clone());
     colors.push(otherColor.clone());
     return colors;
@@ -252,21 +325,34 @@ export class Spectrum {
   }
 }
 
-export class CurveConfig {
+export class Curve {
+
+  defaults = {
+    numVertices: 4,
+    resolution: 2,
+    layerCount: 1,
+    layerSepFactor: 1,
+    width: 800,
+    height: 800,
+    center: { x: 400, y: 400 },
+    startAngle: 0,
+    showSpines: false,
+    spectrum: new Spectrum(new Color()),
+  };
 
   /**
    * @constructor
-   * @param {number} numVertices
-   * @param {number} resolution
-   * @param {number} layerCount
-   * @param {number} layerSepFactor
-   * @param {number} width
-   * @param {number} height
-   * @param {Point} center
-   * @param {number} startAngle
-   * @param {boolean} showSpines
-   * @param {Spectrum} spectrum
-   * @param {string} curveType
+   * @param {number} [numVertices] The number of vertices in this shape
+   * @param {number} [resolution] The number of points per spine
+   * @param {number} [layerCount] The number of layers to draw
+   * @param {number} [layerSepFactor] How many points to separate each layer by
+   * @param {number} [width] The size in the x dimension
+   * @param {number} [height] The size in the y dimension
+   * @param {Point} [center] The point to center the curve on
+   * @param {number} [startAngle] The rotation angle of the shape
+   * @param {boolean} [showSpines] Whether to render the spines with the curve
+   * @param {Spectrum} [spectrum] The spectrum of colors to go through
+   * @param {string} [curveType]
    */
   constructor({
     numVertices = 4,
@@ -279,7 +365,7 @@ export class CurveConfig {
     startAngle = 0,
     showSpines = false,
     spectrum = new Spectrum(new Color()),
-  }, curveType) {
+  }, curveType = CurveType.Other) {
     this.curveType = curveType;
     this.numVertices = numVertices;
     this.resolution = resolution;
@@ -294,4 +380,242 @@ export class CurveConfig {
     this.points = null;
   }
 
+  /**
+   * The radial distance from the center in the x and y dimensions
+   * @returns {{x: number, y: number}}
+   */
+  get radius() {
+    if (!this._radius) {
+      this._radius = {
+        x: this.width / 2,
+        y: this.height / 2,
+      };
+    }
+    return this._radius;
+  }
+
+
+  /**
+   * Draw a line from each Point in `points` to the one `separation` ahead of it.
+   *
+   * @private
+   * @param {Point[]} points
+   * @param {number} separation
+   * @returns {Line[]}
+   */
+  _followCurve(points, separation) {
+    const len = points.length;
+    return points.map((pointB, i) => {
+      const indexA = ((len - separation) + i) % len;
+      const pointA = points[indexA];
+      return new Line(pointA, pointB);
+    });
+  }
+
+  /**
+   * "Stitch" a continuous curve between the list of lines given,
+   * with `resolution` points per line, and a given number of points of `separation`
+   *
+   * @param {Point[]} points
+   * @param {number} resolution
+   * @param {number} [separation]
+   * @returns {Line[]}
+   */
+  _stitchInward(points, resolution, separation = 0) {
+    const followDistance = _round(resolution + separation + 1);
+    return this._followCurve(points, followDistance);
+  }
+
+  /**
+   * TODO
+   *
+   * @param points
+   * @param layerRatio
+   * @returns {Line[][]}
+   */
+  getLayers(points, layerRatio) {
+    const { resolution, layerCount, layerSepFactor } = this;
+    return mapInRange(this.layerCount, (i) => {
+      // TODO: figure out & explain this math
+      const separation = ((layerCount - i) * layerRatio * layerSepFactor) % points.length / 2;
+      return this._stitchInward(points, resolution, separation);
+    });
+  }
+
+  /**
+   * Do all the work of stitching the spines together
+   *
+   * @returns {Group}
+   */
+  stitch() {
+    const spines = this.getSpines();
+    const { resolution, layerCount } = this;
+    const spectrum = this.spectrum.segmentColors(layerCount);
+
+    const points = this.points || this.getAllPoints(spines);
+
+    // Layering constants
+    const layerRatio = _floor(resolution / layerCount);
+
+    const layers = Group.fromEach(this.getLayers(points, layerRatio));
+    layers.forEach((layer) => {
+      layer.setAttr('stroke', spectrum.nextColor().rgbaStr());
+    });
+    const spineGroup = Group.from(spines);
+    if (!this.showSpines) {
+      spineGroup.setAttr('stroke', rgba(0, 0, 0, 0));
+    }
+    layers.unshift(spineGroup);
+    const group = Group.from(layers);
+
+    // Move the group to the right place
+    group.setAttr('translation', this.center.clone());
+    group.setAttr('rotation', revToRad(this.startAngle));
+
+    return group;
+  }
+
+  /**
+   * The "spines" between which the curve will be stitched
+   * @returns {Array}
+   */
+  getSpines() {
+    return [];
+  }
+
+  /**
+   * Get all the points along each spine in an array of them
+   *
+   * @param {Line[]|Group<Line>} spines
+   * @returns {Point[]}
+   */
+  getAllPoints(spines) {
+    const nestedPoints = spines.map(
+      spine => spine.getPoints(this.resolution)
+    );
+    return _uniq(_flatten(nestedPoints));
+  }
+
+}
+
+class RectangleCurve extends Curve {
+
+  constructor(config) {
+    super(config, CurveType.Polygon);
+  }
+
+  getSpines() {
+    const vertCount = this.numVertices;
+    const vertices = [Point.origin.getRelativePoint(0, this.radius)];
+
+    const spines = mapInRange(1, vertCount, (i) => {
+      const point = Point.origin.getRelativePoint(i / vertCount, this.radius);
+      vertices.push(point);
+      return new Line(vertices[i - 1], point);
+    });
+
+    spines.push(new Line(vertices[vertices.length - 1], vertices[0]));
+
+    return spines;
+  }
+}
+
+class StarCurve extends Curve {
+
+  constructor(config) {
+    super(config, CurveType.Star);
+  }
+
+  /**
+   * Given 2 equal-sized arrays of points, connect them (draw lines) in order.
+   *
+   * @private
+   * @param {Point[]} spineA
+   * @param {Point[]} spineB
+   * @param {number} shave
+   * @returns {Line[]}
+   */
+  _bridgeSpines(spineA, spineB, shave) {
+    const maxIndex = spineA.length - shave - 1;
+    if (spineA.length !== spineB.length) {
+      return [];
+    }
+    const _connectPointsByIndex = (i) => {
+      const a = spineA[maxIndex - i];
+      const b = spineB[i];
+      return new Line(a, b);
+    };
+    return mapInRange(maxIndex, _connectPointsByIndex);
+  }
+
+  /**
+   * "Stitch" a curve between the given arrays of points,
+   * not using the `shave` number of points at the end (used for layering)
+   *
+   * @param {Point[][]} spines
+   * @param {number} shave
+   * @returns {Line[][]}
+   */
+  _stitchOutward(spines, shave) {
+    function connectAlongSpine(spineA, i) {
+      const spineB = spines[(i + 1) % spines.length];
+      return this._bridgeSpines(spineA, spineB, _round(shave));
+    }
+
+    return spines.map(connectAlongSpine);
+  }
+
+  getLayers(points, layerRatio) {
+    const { resolution, layerCount, layerSepFactor } = this;
+    return mapInRange(layerCount, (i) => {
+      // TODO: figure out & explain this math
+      const shave = (i * layerSepFactor * layerRatio) % resolution * (3 / 4);
+      return this._stitchOutward(points, shave);
+    });
+  }
+
+  getSpines() {
+    // TODO: explain why this is different than rect
+    const starPointNum = this.numVertices;
+
+    // rotate through all the angles drawing a spine for each
+    const spines = mapInRange(starPointNum, (i) => {
+      const tipPoint = Point.origin.getRelativePoint(i / starPointNum, this.radius);
+
+      return new Line(Point.origin, tipPoint);
+    });
+
+    return new Group(spines);
+  }
+
+  getAllPoints(spines) {
+    return spines.map(
+      spine => spine.getPoints(this.resolution, [Point.origin])
+    );
+  }
+}
+
+class EllipseCurve extends Curve {
+
+  constructor(config) {
+    super(config, CurveType.Ellipse);
+    this.inward = true;
+  }
+
+  getSpines() {
+    const vertices = [Point.origin.getRelativePoint(0, this.radius)];
+    const vertCount = this.resolution * this.numVertices;
+
+    const spines = mapInRange(vertCount, (i) => {
+      const point = Point.origin.getRelativePoint(i / vertCount, this.radius);
+      const spine = new Line(vertices[i - 1], point);
+      vertices.push(point);
+      return spine;
+    });
+    spines.push(new Line(_last(vertices), _first(vertices)));
+
+    this.points = vertices;
+
+    return new Group(spines);
+  }
 }
