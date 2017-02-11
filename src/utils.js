@@ -43,7 +43,7 @@ export function revToRad(rev) {
 export function rotateAbout(cen, poly, angle, radius) {
   // TODO: extend Two.Polygon with this
   poly.rotation = (poly.rotation + angle) % (2 * Math.PI);
-  var pos = cen.getRelativePoint(poly.rotation, radius);
+  const pos = cen.getRelativePoint(poly.rotation, radius);
   poly.translation.x = cen.x + (pos.x / 2);
   poly.translation.y = cen.y + (pos.y / 2);
 }
@@ -64,7 +64,7 @@ export function decenter(point, trans) {
  * Get all the points along each spine in an array of them
  *
  * @param {Line[]} spines
- * @param {Curve} opts
+ * @param {BaseCurve} opts
  * @returns {Point[]}
  */
 export function getAllPoints(spines, opts) {

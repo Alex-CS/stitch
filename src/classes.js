@@ -28,9 +28,9 @@ export class Point {
    * @param {Number} [x]
    * @param {Number} [y]
    */
-  constructor(x = 0, y) {
+  constructor(x = 0, y = 0) {
     this.x = Math.round(x);
-    this.y = Math.round(y || x);
+    this.y = Math.round(y);
   }
 
   static get origin() {
@@ -121,7 +121,7 @@ export class Line {
   }
 
   toString() {
-    return `${this.start} -> ${this.end}`;
+    return `${this.start}->${this.end}`;
   }
 }
 
@@ -168,6 +168,10 @@ export class Group {
     return new Group(this.members.map(callback), this.attributes);
   }
 
+  toString() {
+    return 'Group';
+  }
+
   /**
    * Create a Group from an array
    * @param {Array} array
@@ -196,8 +200,8 @@ export class Color {
     this.alf = alpha;
   }
 
-  rgbaStr() {
-    return rgba(this.red, this.grn, this.blu, this.alf);
+  toRGBAString() {
+    return `rgba(${this.red},${this.grn},${this.blu},${this.alf})`;
   }
 
   clone() {
@@ -205,7 +209,7 @@ export class Color {
   }
 
   toString() {
-    return `Color (${this.red}, ${this.grn}, ${this.blu}, ${this.alf})`;
+    return `Color (${this.red},${this.grn},${this.blu},${this.alf})`;
   }
 
   /**
@@ -259,16 +263,15 @@ export class Color {
 
 export class Spectrum {
 
-  constructor(...args) {
+  constructor(color1, color2) {
     // TODO: test plotting through more than 2 initial colors
 
-    debugger;
-    this._colors = Array.from(args) || [];
+    this._colors = [color1, color2 || color1] || [new Color(0, 0, 0)];
     this._nextIndex = 0;
   }
 
   clone() {
-    return new Spectrum(this._colors.map(color => color.clone()));
+    return new Spectrum(...this._colors.map(color => color.clone()));
   }
 
   /**
@@ -289,7 +292,7 @@ export class Spectrum {
 
   /**
    * Get the next color in the sequence.
-   * Will repeat through colors if _nextIndex is greater
+   * Will repeat through colors if `_nextIndex` is greater
    * than the number of colors.
    * @returns {Color}
    */
@@ -323,9 +326,15 @@ export class Spectrum {
     this._nextIndex = 0;
     return this;
   }
+
+  toString() {
+    return `Spectrum [${this._colors}]`;
+  }
 }
 
-export class Curve {
+
+/* eslint-disable no-mixed-operators */
+export class BaseCurve {
 
   defaults = {
     numVertices: 4,
@@ -335,7 +344,7 @@ export class Curve {
     width: 800,
     height: 800,
     center: { x: 400, y: 400 },
-    startAngle: 0,
+    rotation: 0,
     showSpines: false,
     spectrum: new Spectrum(new Color()),
   };
@@ -349,7 +358,7 @@ export class Curve {
    * @param {number} [width] The size in the x dimension
    * @param {number} [height] The size in the y dimension
    * @param {Point} [center] The point to center the curve on
-   * @param {number} [startAngle] The rotation angle of the shape
+   * @param {number} [rotation] The rotation angle of the shape
    * @param {boolean} [showSpines] Whether to render the spines with the curve
    * @param {Spectrum} [spectrum] The spectrum of colors to go through
    * @param {string} [curveType]
@@ -362,7 +371,7 @@ export class Curve {
     width = 800,
     height = 800,
     center = new Point(400, 400),
-    startAngle = 0,
+    rotation = 0,
     showSpines = false,
     spectrum = new Spectrum(new Color()),
   }, curveType = CurveType.Other) {
@@ -373,10 +382,10 @@ export class Curve {
     this.layerSepFactor = layerSepFactor;
     this.width = width;
     this.height = height;
-    this.center = center.clone();
-    this.startAngle = startAngle;
+    this.center = center;
+    this.rotation = rotation;
     this.showSpines = showSpines;
-    this.spectrum = spectrum.clone();
+    this.spectrum = spectrum;
     this.points = null;
   }
 
@@ -448,8 +457,8 @@ export class Curve {
    * @returns {Group}
    */
   stitch() {
-    const spines = this.getSpines();
     const { resolution, layerCount } = this;
+    const spines = this.getSpines();
     const spectrum = this.spectrum.segmentColors(layerCount);
 
     const points = this.points || this.getAllPoints(spines);
@@ -459,28 +468,17 @@ export class Curve {
 
     const layers = Group.fromEach(this.getLayers(points, layerRatio));
     layers.forEach((layer) => {
-      layer.setAttr('stroke', spectrum.nextColor().rgbaStr());
+      const nextColor = spectrum.nextColor();
+      if (nextColor && nextColor.toRGBAString) {
+        layer.setAttr('stroke', nextColor.toRGBAString());
+      }
     });
-    const spineGroup = Group.from(spines);
-    if (!this.showSpines) {
-      spineGroup.setAttr('stroke', rgba(0, 0, 0, 0));
+    if (this.showSpines) {
+      const spineGroup = Group.from(spines);
+      spineGroup.setAttr('stroke', rgba(0, 0, 0, 1));
+      layers.unshift(spineGroup);
     }
-    layers.unshift(spineGroup);
-    const group = Group.from(layers);
-
-    // Move the group to the right place
-    group.setAttr('translation', this.center.clone());
-    group.setAttr('rotation', revToRad(this.startAngle));
-
-    return group;
-  }
-
-  /**
-   * The "spines" between which the curve will be stitched
-   * @returns {Array}
-   */
-  getSpines() {
-    return [];
+    return Group.from(layers);
   }
 
   /**
@@ -496,14 +494,27 @@ export class Curve {
     return _uniq(_flatten(nestedPoints));
   }
 
+  /**
+   * The "spines" between which the curve will be stitched
+   * @abstract
+   * @returns {Array}
+   */
+  getSpines() {
+    throw Error('This must be implemented in a child class');
+  }
+
 }
 
-class RectangleCurve extends Curve {
+export class PolygonCurve extends BaseCurve {
 
   constructor(config) {
     super(config, CurveType.Polygon);
   }
 
+  /**
+   * Get the edges of the polygon
+   * @return {Line[]}
+   */
   getSpines() {
     const vertCount = this.numVertices;
     const vertices = [Point.origin.getRelativePoint(0, this.radius)];
@@ -520,7 +531,7 @@ class RectangleCurve extends Curve {
   }
 }
 
-class StarCurve extends Curve {
+export class StarCurve extends BaseCurve {
 
   constructor(config) {
     super(config, CurveType.Star);
@@ -595,11 +606,10 @@ class StarCurve extends Curve {
   }
 }
 
-class EllipseCurve extends Curve {
+export class EllipseCurve extends BaseCurve {
 
   constructor(config) {
     super(config, CurveType.Ellipse);
-    this.inward = true;
   }
 
   getSpines() {

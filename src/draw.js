@@ -100,7 +100,7 @@ function doStitching(spines, opts) {
         layer = stitchInward(points, resolution, separation);
         break;
     }
-    layer.stroke = spectrum.nextColor().rgbaStr();
+    layer.stroke = spectrum.nextColor().toRGBAString();
     group.add(layer);
   }
 
@@ -362,8 +362,6 @@ function test() {
   // const startAngle = 1/8;
   // const rad = ellOpts.height / 2;
   // drawMultipleCurves(8, 1/8, ellOpts.height/2, drawEllipseCurve, ellOpts);
-
-
 }
 
 two.appendTo(document.getElementById('stitch-canvas'));
