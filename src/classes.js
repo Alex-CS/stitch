@@ -111,7 +111,7 @@ export class Line {
     const stepX = rangeX / resolution;
     const stepY = rangeY / resolution;
 
-    const range = mapInRange(resolution, (stepNum) => {
+    const range = mapInRange(1, resolution + 1, (stepNum) => {
       const x = this.start.x + (stepNum * stepX);
       const y = this.start.y + (stepNum * stepY);
       return new Point(x, y);
@@ -146,6 +146,10 @@ export class Group {
     _forEach(newAttributes, (value, key) => {
       this.setAttr(key, value);
     });
+  }
+
+  get size() {
+    return this.members.length;
   }
 
   /**
@@ -385,7 +389,7 @@ export class BaseCurve {
     this.center = center;
     this.rotation = rotation;
     this.showSpines = showSpines;
-    this.spectrum = spectrum;
+    this.spectrum = spectrum.clone();
     this.points = null;
   }
 
@@ -403,6 +407,65 @@ export class BaseCurve {
     return this._radius;
   }
 
+  /**
+   * Do all the work of stitching the spines together
+   *
+   * @returns {Group}
+   */
+  stitch() {
+    const { resolution, layerCount } = this;
+    const spines = this.getSpines();
+    const spectrum = this.spectrum.segmentColors(layerCount);
+
+    this.points = this.points || this.getAllPoints(spines);
+
+    // Layering constant
+    // TODO: tweak this
+    const layerRatio = _floor(resolution / layerCount);
+
+    const layers = Group.fromEach(this.getLayers(this.points, layerRatio));
+    layers.forEach((layer) => {
+      const nextColor = spectrum.nextColor();
+      if (nextColor && nextColor.toRGBAString) {
+        layer.setAttr('stroke', nextColor.toRGBAString());
+      }
+    });
+    if (this.showSpines) {
+      const spineGroup = Group.from(spines);
+      spineGroup.setAttr('stroke', rgba(0, 0, 0, 1));
+      layers.unshift(spineGroup);
+    }
+    return Group.from(layers);
+  }
+
+  // Methods that need to be implemented by children
+  /* eslint-disable no-unused-vars */
+
+  /**
+   * Get all the points along each spine in an array of them
+   *
+   * @abstract
+   * @param {Line[]|Line[][]} spines
+   * @returns {Point[]}
+   */
+  getAllPoints(spines) {
+    throw Error('This must be implemented in a child class');
+  }
+
+  /**
+   * The "spines" between which the curve will be stitched
+   * @abstract
+   * @returns {Line[]}
+   */
+  getSpines() {
+    throw Error('This must be implemented in a child class');
+  }
+
+  /* eslint-enable no-unused-vars */
+
+}
+
+class BaseInwardCurve extends BaseCurve {
 
   /**
    * Draw a line from each Point in `points` to the one `separation` ahead of it.
@@ -438,53 +501,24 @@ export class BaseCurve {
   /**
    * TODO
    *
-   * @param points
-   * @param layerRatio
+   * @param {Point[]} points
+   * @param {Number} layerRatio
    * @returns {Line[][]}
    */
   getLayers(points, layerRatio) {
     const { resolution, layerCount, layerSepFactor } = this;
     return mapInRange(this.layerCount, (i) => {
       // TODO: figure out & explain this math
-      const separation = ((layerCount - i) * layerRatio * layerSepFactor) % points.length / 2;
+      const layerNum = layerCount - i;
+      const separation = (layerNum * layerRatio * layerSepFactor) % points.length / 2;
       return this._stitchInward(points, resolution, separation);
     });
   }
 
   /**
-   * Do all the work of stitching the spines together
-   *
-   * @returns {Group}
-   */
-  stitch() {
-    const { resolution, layerCount } = this;
-    const spines = this.getSpines();
-    const spectrum = this.spectrum.segmentColors(layerCount);
-
-    const points = this.points || this.getAllPoints(spines);
-
-    // Layering constants
-    const layerRatio = _floor(resolution / layerCount);
-
-    const layers = Group.fromEach(this.getLayers(points, layerRatio));
-    layers.forEach((layer) => {
-      const nextColor = spectrum.nextColor();
-      if (nextColor && nextColor.toRGBAString) {
-        layer.setAttr('stroke', nextColor.toRGBAString());
-      }
-    });
-    if (this.showSpines) {
-      const spineGroup = Group.from(spines);
-      spineGroup.setAttr('stroke', rgba(0, 0, 0, 1));
-      layers.unshift(spineGroup);
-    }
-    return Group.from(layers);
-  }
-
-  /**
    * Get all the points along each spine in an array of them
    *
-   * @param {Line[]|Group<Line>} spines
+   * @param {Line[]} spines
    * @returns {Point[]}
    */
   getAllPoints(spines) {
@@ -493,19 +527,9 @@ export class BaseCurve {
     );
     return _uniq(_flatten(nestedPoints));
   }
-
-  /**
-   * The "spines" between which the curve will be stitched
-   * @abstract
-   * @returns {Array}
-   */
-  getSpines() {
-    throw Error('This must be implemented in a child class');
-  }
-
 }
 
-export class PolygonCurve extends BaseCurve {
+export class PolygonCurve extends BaseInwardCurve {
 
   constructor(config) {
     super(config, CurveType.Polygon);
@@ -547,6 +571,7 @@ export class StarCurve extends BaseCurve {
    * @returns {Line[]}
    */
   _bridgeSpines(spineA, spineB, shave) {
+    // console.info(`spineA: ${spineA}, spineB: ${spineB}, shave: ${shave}`);
     const maxIndex = spineA.length - shave - 1;
     if (spineA.length !== spineB.length) {
       return [];
@@ -556,33 +581,44 @@ export class StarCurve extends BaseCurve {
       const b = spineB[i];
       return new Line(a, b);
     };
-    return mapInRange(maxIndex, _connectPointsByIndex);
+    const lines = mapInRange(maxIndex + 1, _connectPointsByIndex);
+    // console.info(`_bridgeSpines:\n ${lines.map(line => `  ${line}\n`)}`);
+    return lines;
   }
 
   /**
    * "Stitch" a curve between the given arrays of points,
    * not using the `shave` number of points at the end (used for layering)
    *
-   * @param {Point[][]} spines
-   * @param {number} shave
-   * @returns {Line[][]}
+   * @param {Point[][]} points
+   * @param {Number} shave
+   * @returns {Line[]}
    */
-  _stitchOutward(spines, shave) {
-    function connectAlongSpine(spineA, i) {
-      const spineB = spines[(i + 1) % spines.length];
+  _stitchOutward(points, shave) {
+    const connectAlongSpine = (spineA, i) => {
+      const spineB = points[(i + 1) % points.length];
       return this._bridgeSpines(spineA, spineB, _round(shave));
-    }
+    };
 
-    return spines.map(connectAlongSpine);
+    const lines = _flatten(points.map(connectAlongSpine));
+    // console.info(`_stitchOutward:\n ${lines.map(line => `  ${line}\n`)}`);
+    return lines;
   }
 
+  /**
+   *
+   * @param {Point[][]} points
+   * @param {Number} layerRatio
+   * @return {Line[][]}
+   */
   getLayers(points, layerRatio) {
     const { resolution, layerCount, layerSepFactor } = this;
-    return mapInRange(layerCount, (i) => {
+    const layers = mapInRange(layerCount, (i) => {
       // TODO: figure out & explain this math
-      const shave = (i * layerSepFactor * layerRatio) % resolution * (3 / 4);
+      const shave = (i * layerSepFactor * layerRatio) % resolution/* (3 / 4)*/;
       return this._stitchOutward(points, shave);
     });
+    return layers;
   }
 
   getSpines() {
@@ -590,13 +626,11 @@ export class StarCurve extends BaseCurve {
     const starPointNum = this.numVertices;
 
     // rotate through all the angles drawing a spine for each
-    const spines = mapInRange(starPointNum, (i) => {
+    return mapInRange(starPointNum, (i) => {
       const tipPoint = Point.origin.getRelativePoint(i / starPointNum, this.radius);
 
       return new Line(Point.origin, tipPoint);
     });
-
-    return new Group(spines);
   }
 
   getAllPoints(spines) {
@@ -606,7 +640,7 @@ export class StarCurve extends BaseCurve {
   }
 }
 
-export class EllipseCurve extends BaseCurve {
+export class EllipseCurve extends BaseInwardCurve {
 
   constructor(config) {
     super(config, CurveType.Ellipse);

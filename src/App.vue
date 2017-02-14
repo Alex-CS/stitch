@@ -1,15 +1,14 @@
 <template>
   <div id="app">
-    <svg :width="size" :height="size" :style="{ width: size, height: size, }">
-      <g :transform="curveTransformation" class="curve">
-        <template v-for="layer in polyLayers.members">
-          <g :stroke="layer.attributes.stroke">
-            <template v-for="line in layer.members">
-              <s-line :line="line" />
-            </template>
-          </g>
-        </template>
-      </g>
+    <svg :width="size" :height="size">
+      <!--<curve-->
+        <!--:transform="curveTransformation"-->
+        <!--:group="polyLayers"-->
+      <!--/>-->
+      <curve
+        :transform="curveTransformation"
+        :group="starLayers"
+      />
     </svg>
   </div>
 </template>
@@ -19,43 +18,55 @@
     Color,
     Point,
     PolygonCurve,
+    StarCurve,
     Spectrum,
   } from './classes';
-  import SLine from './components/SLine';
+  import SCircle from './components/SCircle';
+  import Curve from './components/Curve';
 
   export default {
     name: 'app',
     components: {
-      SLine,
+      SCircle,
+      Curve,
     },
     data() {
       const size = 800;
-      const blue = new Color(0, 127, 255);
-      const green = new Color(0, 255, 0);
+      const blue = new Color(0, 127, 255, 0.75);
+      const green = new Color(0, 255, 63);
       return {
         size,
-        resolution: 16,
-        numVertices: 6,
-        layerCount: 3,
-        layerSepFactor: 3,
-        width: size,
-        height: size,
-        rotation: 0,
-        showSpines: false,
-        spectrum: new Spectrum(blue, green),
-        center: new Point(size / 2, size / 2),
+        options: {
+          resolution: 16,
+          numVertices: 4,
+          layerCount: 2,
+          layerSepFactor: 1,
+          width: size * (3 / 4),
+          height: size * (3 / 4),
+          rotation: 1 / 4, // TODO This doesn't do anything so far
+          showSpines: true,
+          spectrum: new Spectrum(blue, green),
+          center: new Point(size / 2, size / 2),
+        },
       };
     },
     computed: {
       polyCurve() {
-        return new PolygonCurve(this);
+        return new PolygonCurve(this.options);
       },
       polyLayers() {
         return this.polyCurve.stitch();
       },
+      starCurve() {
+        return new StarCurve(this.options);
+      },
+      starLayers() {
+        const layers = this.starCurve.stitch();
+        return layers;
+      },
       curveTransformation() {
-        const rotation = 0; // this.rotation;
-        const { x, y } = this.center;
+        const rotation = this.options.rotation;
+        const { x, y } = this.options.center;
         return (
           `translate(${x} ${y}) rotate(${360 * rotation})`
         );
@@ -66,7 +77,13 @@
 </script>
 
 <style>
-  #app svg {
-    margin: auto;
+  body {
+    margin: 0;
+  }
+  #app {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 </style>
