@@ -1,9 +1,9 @@
 <template>
   <g :transform="transform" class="curve">
-    <template v-for="layer in group.members">
+    <template v-for="(layer, layerNum) in group.members">
       <g :stroke="layer.attributes.stroke" class="layer">
-        <template v-for="line in layer.members">
-          <s-line :line="line"/>
+        <template v-for="(line, index) in layer.members">
+          <s-line :line="line" :title="`${layerNum}-${index}`"/>
         </template>
       </g>
     </template>

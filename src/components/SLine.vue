@@ -5,6 +5,7 @@
     :y1="startPoint.y"
     :x2="endPoint.x"
     :y2="endPoint.y"
+    :title="title"
   />
 </template>
 
@@ -17,6 +18,7 @@
       line: Line,
       point1: Point,
       point2: Point,
+      title: String,
     },
     data() {
       const startPoint = this.line ? this.line.start : this.point1;

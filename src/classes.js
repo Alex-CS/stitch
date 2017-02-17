@@ -1,12 +1,12 @@
-import _first from 'lodash/first';
-import _flatten from 'lodash/flatten';
-import _floor from 'lodash/floor';
-import _forEach from 'lodash/forEach';
-import _isNumber from 'lodash/isNumber';
-import _last from 'lodash/last';
-import _round from 'lodash/round';
-import _without from 'lodash/without';
-import _uniq from 'lodash/uniq';
+import first from 'lodash/first';
+import flatten from 'lodash/flatten';
+import floor from 'lodash/floor';
+import forEach from 'lodash/forEach';
+import isNumber from 'lodash/isNumber';
+import last from 'lodash/last';
+import round from 'lodash/round';
+import without from 'lodash/without';
+import uniq from 'lodash/uniq';
 
 import { mapInRange, revToRad } from './utils';
 
@@ -48,7 +48,7 @@ export class Point {
    * @returns {Point}
    */
   getRelativePoint(angle, radius) {
-    const dist = (_isNumber(radius)) ? new Point(radius) : radius;
+    const dist = (isNumber(radius)) ? new Point(radius) : radius;
     const xDistance = Math.cos(revToRad(angle)) * dist.x;
     const yDistance = Math.sin(revToRad(angle)) * dist.y;
     return new Point(
@@ -117,7 +117,7 @@ export class Line {
       return new Point(x, y);
     });
 
-    return _without(range, ...excluded);
+    return without(range, ...excluded);
   }
 
   toString() {
@@ -143,7 +143,7 @@ export class Group {
   }
 
   set attributes(newAttributes) {
-    _forEach(newAttributes, (value, key) => {
+    forEach(newAttributes, (value, key) => {
       this.setAttr(key, value);
     });
   }
@@ -283,7 +283,7 @@ export class Spectrum {
    * @returns {Color}
    */
   firstColor() {
-    return _first(this._colors);
+    return first(this._colors);
   }
 
   /**
@@ -291,7 +291,7 @@ export class Spectrum {
    * @returns {Color}
    */
   lastColor() {
-    return _last(this._colors);
+    return last(this._colors);
   }
 
   /**
@@ -420,7 +420,7 @@ export class BaseCurve {
 
     // Layering constant
     // TODO: tweak this
-    const layerRatio = _floor(resolution / layerCount) * layerSepFactor;
+    const layerRatio = floor(resolution / layerCount) * layerSepFactor;
 
     const layers = Group.fromEach(this.getLayers(this.points, layerRatio));
     layers.forEach((layer) => {
@@ -504,7 +504,7 @@ class BaseInwardCurve extends BaseCurve {
    * @returns {Line[]}
    */
   _stitchInward(points, resolution, separation = 0) {
-    const followDistance = _round(resolution + separation + 1);
+    const followDistance = round(resolution + separation + 1);
     return this._followCurve(points, followDistance);
   }
 
@@ -535,7 +535,7 @@ class BaseInwardCurve extends BaseCurve {
     const nestedPoints = spines.map(
       spine => spine.getPoints(this.resolution)
     );
-    return _uniq(_flatten(nestedPoints));
+    return uniq(flatten(nestedPoints));
   }
 }
 
@@ -607,10 +607,10 @@ export class StarCurve extends BaseCurve {
   _stitchOutward(points, shave) {
     const connectAlongSpine = (spineA, i) => {
       const spineB = points[(i + 1) % points.length];
-      return this._bridgeSpines(spineA, spineB, _round(shave));
+      return this._bridgeSpines(spineA, spineB, round(shave));
     };
 
-    const lines = _flatten(points.map(connectAlongSpine));
+    const lines = flatten(points.map(connectAlongSpine));
     // console.info(`_stitchOutward:\n ${lines.map(line => `  ${line}\n`)}`);
     return lines;
   }
@@ -660,16 +660,16 @@ export class EllipseCurve extends BaseInwardCurve {
     const vertices = [Point.origin.getRelativePoint(0, this.radius)];
     const vertCount = this.resolution * this.numVertices;
 
-    const spines = mapInRange(vertCount, (i) => {
+    const spines = mapInRange(1, vertCount, (i) => {
       const point = Point.origin.getRelativePoint(i / vertCount, this.radius);
       const spine = new Line(vertices[i - 1], point);
       vertices.push(point);
       return spine;
     });
-    spines.push(new Line(_last(vertices), _first(vertices)));
+    spines.push(new Line(last(vertices), first(vertices)));
 
     this.points = vertices;
 
-    return new Group(spines);
+    return spines;
   }
 }
