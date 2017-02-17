@@ -3,11 +3,11 @@
     <svg :width="size" :height="size">
       <!--<curve-->
         <!--:transform="curveTransformation"-->
-        <!--:group="polyLayers"-->
+        <!--:group="starLayers"-->
       <!--/>-->
       <curve
         :transform="curveTransformation"
-        :group="starLayers"
+        :group="polyLayers"
       />
     </svg>
   </div>
@@ -37,14 +37,14 @@
       return {
         size,
         options: {
-          resolution: 16,
+          resolution: 32,
           numVertices: 4,
-          layerCount: 2,
+          layerCount: 3,
           layerSepFactor: 1,
           width: size * (3 / 4),
           height: size * (3 / 4),
           rotation: 1 / 4, // TODO This doesn't do anything so far
-          showSpines: true,
+          showSpines: false,
           spectrum: new Spectrum(blue, green),
           center: new Point(size / 2, size / 2),
         },

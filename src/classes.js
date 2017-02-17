@@ -337,7 +337,6 @@ export class Spectrum {
 }
 
 
-/* eslint-disable no-mixed-operators */
 export class BaseCurve {
 
   defaults = {
@@ -413,7 +412,7 @@ export class BaseCurve {
    * @returns {Group}
    */
   stitch() {
-    const { resolution, layerCount } = this;
+    const { resolution, layerCount, layerSepFactor } = this;
     const spines = this.getSpines();
     const spectrum = this.spectrum.segmentColors(layerCount);
 
@@ -421,7 +420,7 @@ export class BaseCurve {
 
     // Layering constant
     // TODO: tweak this
-    const layerRatio = _floor(resolution / layerCount);
+    const layerRatio = _floor(resolution / layerCount) * layerSepFactor;
 
     const layers = Group.fromEach(this.getLayers(this.points, layerRatio));
     layers.forEach((layer) => {
@@ -440,6 +439,17 @@ export class BaseCurve {
 
   // Methods that need to be implemented by children
   /* eslint-disable no-unused-vars */
+
+  /**
+   * Get each layer
+   *
+   * @param {Point[]} points
+   * @param {Number} layerRatio
+   * @return {Line[][]}
+   */
+  getLayers(points, layerRatio) {
+    throw Error('This must be implemented in a child class');
+  }
 
   /**
    * Get all the points along each spine in an array of them
@@ -506,12 +516,12 @@ class BaseInwardCurve extends BaseCurve {
    * @returns {Line[][]}
    */
   getLayers(points, layerRatio) {
-    const { resolution, layerCount, layerSepFactor } = this;
+    const { resolution, layerCount } = this;
     return mapInRange(this.layerCount, (i) => {
       // TODO: figure out & explain this math
       const layerNum = layerCount - i;
-      const separation = (layerNum * layerRatio * layerSepFactor) % points.length / 2;
-      return this._stitchInward(points, resolution, separation);
+      const separation = (layerNum * layerRatio) % points.length;
+      return this._stitchInward(points, resolution, separation / 2);
     });
   }
 
@@ -612,10 +622,10 @@ export class StarCurve extends BaseCurve {
    * @return {Line[][]}
    */
   getLayers(points, layerRatio) {
-    const { resolution, layerCount, layerSepFactor } = this;
+    const { resolution, layerCount } = this;
     const layers = mapInRange(layerCount, (i) => {
       // TODO: figure out & explain this math
-      const shave = (i * layerSepFactor * layerRatio) % resolution/* (3 / 4)*/;
+      const shave = (i * layerRatio) % resolution/* (3 / 4)*/;
       return this._stitchOutward(points, shave);
     });
     return layers;
