@@ -1,9 +1,5 @@
-import _flatten from 'lodash/flatten';
 import _isFunction from 'lodash/isFunction';
 import _range from 'lodash/range';
-import _uniq from 'lodash/uniq';
-
-import { CurveType, Point } from './classes';
 
 /**
  * Build an array by running `callback` for each number from `start` to `end`
@@ -22,16 +18,6 @@ export function mapInRange(start, end, callback) {
 }
 
 /**
- * Converts a number of revolutions into radians (1 rev = 2pi radians)
- *
- * @param {number} rev
- * @returns {number}
- */
-export function revToRad(rev) {
-  return 2 * Math.PI * rev;
-}
-
-/**
  * Rotates a Two.Polygon about a point, "orbiting" that point.
  *
  * Derived from this example: http://code.tutsplus.com/tutorials/drawing-with-twojs--net-32024
@@ -46,35 +32,4 @@ export function rotateAbout(cen, poly, angle, radius) {
   const pos = cen.getRelativePoint(poly.rotation, radius);
   poly.translation.x = cen.x + (pos.x / 2);
   poly.translation.y = cen.y + (pos.y / 2);
-}
-
-/**
- * Take a Two.Vector positioned relative to center,
- * and change it to be relative to top-left corner
- *
- * @param {Point} point
- * @param trans
- */
-export function decenter(point, trans) {
-  // TODO: extend Two.Vector with this
-  return point.clone().set(trans.x - point.x, trans.y + point.y);
-}
-
-/**
- * Get all the points along each spine in an array of them
- *
- * @param {Line[]} spines
- * @param {BaseCurve} opts
- * @returns {Point[]}
- */
-export function getAllPoints(spines, opts) {
-  if (opts.curveType === CurveType.Star) {
-    return spines.map(
-      spine => spine.getPoints(opts.resolution, [Point.origin])
-    );
-  }
-  const nestedPoints = spines.map(
-    spine => spine.getPoints(opts.resolution)
-  );
-  return _uniq(_flatten(nestedPoints));
 }
