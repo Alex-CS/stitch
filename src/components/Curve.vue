@@ -3,7 +3,7 @@
     <template v-for="(layer, layerNum) in layers.members">
       <g :stroke="layer.attributes.stroke" class="layer">
         <template v-for="(line, index) in layer.members">
-          <s-line :line="line" :title="`${layerNum}-${index}`"/>
+          <s-line :line="line" :title="makeTitle(layerNum, index)"/>
         </template>
       </g>
     </template>
@@ -11,25 +11,10 @@
 </template>
 
 <script type="text/babel">
-  import { CURVE_TYPES } from '../constants';
   import {
-    EllipseCurve,
-    PolygonCurve,
-    StarCurve,
+    makeCurve,
   } from '../classes';
   import SLine from './SLine';
-
-  function makeCurve(curveType, options) {
-    switch (curveType) {
-      case CURVE_TYPES.Ellipse:
-        return new EllipseCurve(options);
-      case CURVE_TYPES.Star:
-        return new StarCurve(options);
-      case CURVE_TYPES.Polygon:
-      default:
-        return new PolygonCurve(options);
-    }
-  }
 
   export default {
     name: 'curve',
@@ -41,12 +26,13 @@
       curveType: String,
     },
     data() {
-      const curve = makeCurve(this.curveType, this.options);
       return {
-        curve,
       };
     },
     computed: {
+      curve() {
+        return makeCurve(this.curveType, this.options);
+      },
       layers() {
         return this.curve.stitch();
       },
@@ -56,6 +42,11 @@
         return (
           `translate(${x} ${y}) rotate(${360 * rotation})`
         );
+      },
+    },
+    methods: {
+      makeTitle(layerNum, index) {
+        return `${this.curveType}-layer${layerNum}-line${index}`;
       },
     },
   };

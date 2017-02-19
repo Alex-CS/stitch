@@ -5,6 +5,7 @@ import last from 'lodash/last';
 import round from 'lodash/round';
 import uniq from 'lodash/uniq';
 
+import { CURVE_TYPES } from '../constants';
 import { mapInRange } from '../utils';
 import { rgba } from './Color';
 import Group from './Group';
@@ -333,5 +334,17 @@ export class EllipseCurve extends BaseInwardCurve {
     this.points = vertices;
 
     return spines;
+  }
+}
+
+export function makeCurve(curveType, options) {
+  switch (curveType) {
+    case CURVE_TYPES.Elli:
+      return new EllipseCurve(options);
+    case CURVE_TYPES.Star:
+      return new StarCurve(options);
+    case CURVE_TYPES.Poly:
+    default:
+      return new PolygonCurve(options);
   }
 }

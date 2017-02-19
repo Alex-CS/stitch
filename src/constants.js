@@ -1,7 +1,7 @@
 export const CURVE_TYPES = {
-  Polygon: 'Polygon',
+  Poly: 'Polygon',
   Star: 'Star',
-  Ellipse: 'Ellipse',
+  Elli: 'Ellipse',
   Other: 'Other',
 };
 

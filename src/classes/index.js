@@ -3,6 +3,7 @@ export {
   EllipseCurve,
   PolygonCurve,
   StarCurve,
+  makeCurve,
 } from './Curve';
 export { default as Group } from './Group';
 export { default as Line } from './Line';
