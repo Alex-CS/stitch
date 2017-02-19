@@ -4,16 +4,11 @@
       <multi-curve
         :options="options"
         :curve-type="curveType"
-        :reps="4"
-        :radius="size/4"
-        :initial="2/16"
+        :reps="reps"
+        :radius="radius"
+        :initial="initial"
       />
     </svg>
-    <select v-model="curveType">
-      <option :value="CURVE_TYPES.Poly">Polygon</option>
-      <option :value="CURVE_TYPES.Star">Star</option>
-      <option :value="CURVE_TYPES.Elli">Ellipse</option>
-    </select>
   </div>
 </template>
 
@@ -35,20 +30,23 @@
       SCircle,
     },
     data() {
-      const size = 800;
+      const size = 600;
       const startColor = new Color(0, 127, 255);
       const endColor = new Color(255, 0, 127, 0.6);
       return {
         CURVE_TYPES,
         size,
         curveType: CURVE_TYPES.Star,
+        reps: 4,
+        radius: size / 4,
+        initial: 1 / 16,
         options: {
           resolution: 32,
           numVertices: 4,
           layerCount: 4,
           layerSepFactor: 1,
           width: size,
-          height: size,
+          height: size / 2,
           rotation: 1 / 8,
           showSpines: false,
           colors: [startColor, endColor],
