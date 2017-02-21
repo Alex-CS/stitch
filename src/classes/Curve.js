@@ -313,15 +313,15 @@ export class StarCurve extends BaseCurve {
 
     // rotate through all the angles drawing a spine for each
     return mapInRange(numVertices, (i) => {
-      const tipPoint = Point.origin.getRelativePoint(i / numVertices, this.radius);
+      const tipPoint = this.center.getRelativePoint(i / numVertices, this.radius);
 
-      return new Line(Point.origin, tipPoint);
+      return new Line(this.center, tipPoint);
     });
   }
 
   getAllPoints(spines) {
     return spines.map(
-      spine => spine.getPoints(this.resolution, [Point.origin])
+      spine => spine.getPoints(this.resolution, [this.center])
     );
   }
 }
