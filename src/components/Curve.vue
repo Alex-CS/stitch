@@ -37,10 +37,9 @@
         return this.curve.stitch();
       },
       transform() {
-        const { rotation, center } = this.options;
-        const { x, y } = center;
+        const { rotation } = this.options;
         return (
-          `translate(${x} ${y}) rotate(${360 * rotation})`
+          `rotate(${360 * rotation})`
         );
       },
     },

@@ -1,7 +1,5 @@
-import first from 'lodash/first';
 import flatten from 'lodash/flatten';
 import floor from 'lodash/floor';
-import last from 'lodash/last';
 import round from 'lodash/round';
 import uniq from 'lodash/uniq';
 
@@ -30,25 +28,25 @@ export class BaseCurve {
 
   /**
    * @constructor
-   * @param {number} [numVertices] - The number of vertices in this shape
-   * @param {number} [resolution] - The number of points per spine
+   * @param {number} numVertices - The number of vertices in this shape
+   * @param {number} resolution - The number of points per spine
+   * @param {number} width - The size in the x dimension
+   * @param {number} height - The size in the y dimension
+   * @param {Point|{x: number, y: number}} [center] - The point to center the curve on
    * @param {number} [layerCount] - The number of layers to draw
    * @param {number} [layerSepFactor] - How many points to separate each layer by
-   * @param {number} [width] - The size in the x dimension
-   * @param {number} [height] - The size in the y dimension
    * @param {number} [rotation] - The rotation angle of the shape
    * @param {boolean} [showSpines] - Whether to render the spines with the curve
-   * @param {Point|{x: number, y: number}} [center] - The point to center the curve on
    * @param {Color[]} [colors] - The colors to create a spectrum between
    */
   constructor({
-    numVertices = 4,
-    resolution = 2,
+    numVertices,
+    resolution,
+    width,
+    height,
+    center = null,
     layerCount = 1,
     layerSepFactor = 1,
-    width = 800,
-    height = 800,
-    center = null,
     rotation = 0,
     showSpines = false,
     colors = [],
@@ -63,6 +61,7 @@ export class BaseCurve {
     this.showSpines = showSpines;
     this.spectrum = new Spectrum(...colors);
     this.center = center ? Point.from(center) : Point.from(this.radius);
+
     this.points = null;
   }
 
@@ -156,8 +155,8 @@ export class BaseInwardCurve extends BaseCurve {
    * Draw a line from each Point in `points` to the one `separation` ahead of it.
    *
    * @private
-   * @param {Point[]} points
-   * @param {number} separation
+   * @param {Point[]} points - The points to connect
+   * @param {number} separation - How many points to separate by
    * @returns {Line[]}
    */
   _followCurve(points, separation) {
@@ -171,11 +170,10 @@ export class BaseInwardCurve extends BaseCurve {
 
   /**
    * "Stitch" a continuous curve between the list of lines given,
-   * with `resolution` points per line, and a given number of points of `separation`
    *
-   * @param {Point[]} points
-   * @param {number} resolution
-   * @param {number} [separation]
+   * @param {Point[]} points - The points to connect
+   * @param {number} resolution - The number of points to create per line
+   * @param {number} [separation] - How many points to separate by
    * @returns {Line[]}
    */
   _stitchInward(points, resolution, separation = 0) {
@@ -184,10 +182,10 @@ export class BaseInwardCurve extends BaseCurve {
   }
 
   /**
-   * TODO
+   * Get the layers of the curve
    *
-   * @param {Point[]} points
-   * @param {number} layerRatio
+   * @param {Point[]} points - The points in the curve
+   * @param {number} layerRatio - How much to separate each layer by
    * @returns {Line[][]}
    */
   getLayers(points, layerRatio) {
@@ -201,9 +199,9 @@ export class BaseInwardCurve extends BaseCurve {
   }
 
   /**
-   * Get all the points along each spine in an array of them
+   * Divide each spine into `this.resolution` points
    *
-   * @param {Line[]} spines
+   * @param {Line[]} spines - The lines that define the backbone of the curve
    * @returns {Point[]}
    */
   getAllPoints(spines) {
@@ -218,21 +216,32 @@ export class PolygonCurve extends BaseInwardCurve {
 
   /**
    * Get the edges of the polygon
+   *
    * @return {Line[]}
    */
   getSpines() {
     const { numVertices } = this;
-    const vertices = [Point.origin.getRelativePoint(0, this.radius)];
+    const vertices = mapInRange(numVertices,
+      i => this.center.getRelativePoint(i / numVertices, this.radius)
+    );
 
-    const spines = mapInRange(1, numVertices, (i) => {
-      const point = Point.origin.getRelativePoint(i / numVertices, this.radius);
-      vertices.push(point);
-      return new Line(vertices[i - 1], point);
-    });
+    return vertices.map(
+      (vertex, i) => new Line(vertex, vertices[(i + 1) % numVertices])
+    );
+  }
+}
 
-    spines.push(new Line(vertices[vertices.length - 1], vertices[0]));
+export class EllipseCurve extends BaseInwardCurve {
 
-    return spines;
+  getSpines() {
+    const pointCount = this.resolution * this.numVertices;
+    this.points = mapInRange(pointCount,
+      i => this.center.getRelativePoint(i / pointCount, this.radius)
+    );
+
+    return this.points.map(
+      (point, i) => new Line(point, this.points[(i + 1) % pointCount])
+    );
   }
 }
 
@@ -314,26 +323,6 @@ export class StarCurve extends BaseCurve {
     return spines.map(
       spine => spine.getPoints(this.resolution, [Point.origin])
     );
-  }
-}
-
-export class EllipseCurve extends BaseInwardCurve {
-
-  getSpines() {
-    const vertices = [Point.origin.getRelativePoint(0, this.radius)];
-    const vertCount = this.resolution * this.numVertices;
-
-    const spines = mapInRange(1, vertCount, (i) => {
-      const point = Point.origin.getRelativePoint(i / vertCount, this.radius);
-      const spine = new Line(vertices[i - 1], point);
-      vertices.push(point);
-      return spine;
-    });
-    spines.push(new Line(last(vertices), first(vertices)));
-
-    this.points = vertices;
-
-    return spines;
   }
 }
 
