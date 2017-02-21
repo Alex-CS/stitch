@@ -43,7 +43,7 @@ export default class Point {
    * @param {number|{x: number, y: number}} radius
    * @returns {Point}
    */
-  getRelativePoint(rotation, radius) {
+  getRelativePoint(rotation, radius = 0) {
     const dist = !isNumber(radius) ? radius : new Point(radius, radius);
     const angle = rotation * RADIANS_PER_TURN;
     const xDistance = Math.cos(angle) * dist.x;
@@ -59,10 +59,12 @@ export default class Point {
    *
    * @param {number} [x] - How much to move it horizontally
    * @param {number} [y] - How much to move it vertically
+   * @return {Point} - The point after translation (for chaining)
    */
   translate(x = 0, y = 0) {
-    this.x = this.x - x;
+    this.x = this.x + x;
     this.y = this.y + y;
+    return this;
   }
 
   /**

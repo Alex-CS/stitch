@@ -1,5 +1,5 @@
 <template>
-  <g :transform="transform" class="curve">
+  <g class="curve">
     <template v-for="(layer, layerNum) in layers.members">
       <g :stroke="layer.attributes.stroke" class="layer">
         <template v-for="(line, index) in layer.members">
@@ -41,9 +41,9 @@
       transform() {
         // FIXME: Get rid of this mess by consuming rotation in the Curve class
         const { rotation, center } = this.options;
-        const translation = `${center.x} ${center.y}`;
+        const translation = this.translation || `${center.x} ${center.y}`;
         return (
-          `rotate(${360 * (rotation)} ${translation})`
+          `rotate(${360 * (this.rotation || rotation)} ${translation})`
         );
       },
     },

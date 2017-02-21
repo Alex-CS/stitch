@@ -1,13 +1,13 @@
 <template>
   <div id="app">
     <svg :width="size" :height="size">
-      <multi-curve
-        :options="options"
-        :curve-type="curveType"
-        :reps="reps"
-        :radius="radius"
-        :initial="initial"
-      />
+      <!--<multi-curve-->
+        <!--:options="options"-->
+        <!--:curve-type="curveType"-->
+        <!--:reps="reps"-->
+        <!--:radius="radius"-->
+        <!--:initial="initial"-->
+      <!--/>-->
       <curve
         :options="options"
         :curve-type="curveType"
@@ -40,17 +40,17 @@
       return {
         CURVE_TYPES,
         size,
-        curveType: CURVE_TYPES.Star,
+        curveType: CURVE_TYPES.Elli,
         reps: 4,
         radius: size / 8,
         initial: 0 / 16,
         options: {
-          resolution: 8,
+          resolution: 16,
           numVertices: 4,
           layerCount: 1,
           layerSepFactor: 1,
-          width: size / 4,
-          height: size / 4,
+          width: size / 2,
+          height: size / 2,
           rotation: 2 / 16,
           showSpines: false,
           colors: [startColor, endColor],

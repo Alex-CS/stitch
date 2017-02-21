@@ -86,8 +86,10 @@ export class BaseCurve {
    * @returns {Group}
    */
   stitch() {
+    console.time(`${this.constructor.name}#stitch()`);
     const { resolution, layerCount, layerSepFactor } = this;
     const spines = this.getSpines();
+    // TODO: move the color stuff outside of stitch
     const spectrum = this.spectrum.segmentColors(layerCount);
 
     this.points = this.points || this.getAllPoints(spines);
@@ -108,7 +110,18 @@ export class BaseCurve {
       spineGroup.setAttr('stroke', rgba(0, 0, 0, 1));
       layers.unshift(spineGroup);
     }
+    console.timeEnd(`${this.constructor.name}#stitch()`);
     return Group.from(layers);
+  }
+
+  /**
+   * Get a point relative to the center of the shape
+   *
+   * @param {number} rotation - The rotation of the point
+   * @return {Point}
+   */
+  getSpinePoint(rotation) {
+    return this.center.getRelativePoint(rotation, this.radius);
   }
 
   // Methods that need to be implemented by children
@@ -222,7 +235,7 @@ export class PolygonCurve extends BaseInwardCurve {
   getSpines() {
     const { numVertices } = this;
     const vertices = mapInRange(numVertices,
-      i => this.center.getRelativePoint(i / numVertices, this.radius)
+      i => this.getSpinePoint(i / numVertices)
     );
 
     return vertices.map(
@@ -236,7 +249,7 @@ export class EllipseCurve extends BaseInwardCurve {
   getSpines() {
     const pointCount = this.resolution * this.numVertices;
     this.points = mapInRange(pointCount,
-      i => this.center.getRelativePoint(i / pointCount, this.radius)
+      i => this.getSpinePoint(i / pointCount)
     );
 
     return this.points.map(
@@ -245,7 +258,7 @@ export class EllipseCurve extends BaseInwardCurve {
   }
 }
 
-export class StarCurve extends BaseCurve {
+export class BaseOutwardCurve extends BaseCurve {
 
   /**
    * Given 2 equal-sized arrays of points, connect them (draw lines) in order.
@@ -307,22 +320,26 @@ export class StarCurve extends BaseCurve {
     return layers;
   }
 
+  getAllPoints(spines) {
+    return spines.map(
+      spine => spine.getPoints(this.resolution, [this.center])
+    );
+  }
+
+}
+
+export class StarCurve extends BaseOutwardCurve {
+
   getSpines() {
     // TODO: explain why this is different than rect
     const { numVertices } = this;
 
     // rotate through all the angles drawing a spine for each
     return mapInRange(numVertices, (i) => {
-      const tipPoint = this.center.getRelativePoint(i / numVertices, this.radius);
+      const tipPoint = this.getSpinePoint(i / numVertices);
 
       return new Line(this.center, tipPoint);
     });
-  }
-
-  getAllPoints(spines) {
-    return spines.map(
-      spine => spine.getPoints(this.resolution, [this.center])
-    );
   }
 }
 
