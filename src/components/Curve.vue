@@ -24,6 +24,8 @@
     props: {
       options: Object,
       curveType: String,
+      rotation: Number,
+      translation: String,
     },
     data() {
       return {
@@ -37,9 +39,11 @@
         return this.curve.stitch();
       },
       transform() {
-        const { rotation } = this.options;
+        // FIXME: Get rid of this mess by consuming rotation in the Curve class
+        const { rotation, center } = this.options;
+        const translation = `${center.x} ${center.y}`;
         return (
-          `rotate(${360 * rotation})`
+          `rotate(${360 * (rotation)} ${translation})`
         );
       },
     },
