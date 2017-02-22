@@ -1,9 +1,12 @@
 <template>
   <g class="curve">
-    <template v-for="(layer, layerNum) in layers.members">
-      <g :stroke="layer.attributes.stroke" class="layer">
-        <template v-for="(line, index) in layer.members">
-          <s-line :line="line" :title="makeTitle(layerNum, index)"/>
+    <template v-for="(layer, layerIndex) in layers.members">
+      <g :stroke="`rgba(0, 0, 0, ${getOpacity(layerIndex)})`" class="layer">
+        <template v-for="(line, index) in layer">
+          <s-line :line="line"
+                  :title="makeTitle(layerIndex, index)"
+                  :stroke="getColor(layerIndex, index)"
+          />
         </template>
       </g>
     </template>
@@ -11,7 +14,9 @@
 </template>
 
 <script type="text/babel">
+  import invokeMap from 'lodash/invokeMap';
   import {
+    Spectrum,
     makeCurve,
   } from '../classes';
   import SLine from './SLine';
@@ -26,9 +31,11 @@
       curveType: String,
       rotation: Number,
       translation: String,
+      colors: Array,
     },
     data() {
       return {
+        spectrum: new Spectrum(...this.colors),
       };
     },
     computed: {
@@ -46,10 +53,28 @@
           `rotate(${360 * (this.rotation || rotation)} ${translation})`
         );
       },
+      layerSpectra() {
+        if (!this.layers || !this.colors) {
+          return [];
+        }
+        return this.layers.members.map((layer) => {
+          const newSpectrum = this.spectrum.clone();
+          newSpectrum.segmentColors(layer.length);
+          return invokeMap(newSpectrum.colors, 'toRGBAString');
+        });
+      },
     },
     methods: {
       makeTitle(layerNum, index) {
         return `${this.curveType}-layer${layerNum}-line${index}`;
+      },
+      getColor(indexOfLayer, indexInLayer) {
+        return this.layerSpectra[indexOfLayer][indexInLayer];
+      },
+      getOpacity(index) {
+        const range = 0.6;
+        const min = 0.4;
+        return parseFloat(((range / (index + 1)) + min).toFixed(3));
       },
     },
   };

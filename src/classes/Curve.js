@@ -5,11 +5,9 @@ import uniq from 'lodash/uniq';
 
 import { CURVE_TYPES } from '../constants';
 import { mapInRange } from '../utils';
-import { rgba } from './Color';
 import Group from './Group';
 import Line from './Line';
 import Point from './Point';
-import Spectrum from './Spectrum';
 
 export class BaseCurve {
 
@@ -37,7 +35,6 @@ export class BaseCurve {
    * @param {number} [layerSepFactor] - How many points to separate each layer by
    * @param {number} [rotation] - The rotation angle of the shape
    * @param {boolean} [showSpines] - Whether to render the spines with the curve
-   * @param {Color[]} [colors] - The colors to create a spectrum between
    */
   constructor({
     numVertices,
@@ -49,7 +46,6 @@ export class BaseCurve {
     layerSepFactor = 1,
     rotation = 0,
     showSpines = false,
-    colors = [],
   }) {
     this.numVertices = numVertices;
     this.resolution = resolution;
@@ -59,7 +55,6 @@ export class BaseCurve {
     this.height = height;
     this.rotation = rotation;
     this.showSpines = showSpines;
-    this.spectrum = new Spectrum(...colors);
     this.center = center ? Point.from(center) : Point.from(this.radius);
 
     this.points = null;
@@ -89,8 +84,6 @@ export class BaseCurve {
     console.time(`${this.constructor.name}#stitch()`);
     const { resolution, layerCount, layerSepFactor } = this;
     const spines = this.getSpines();
-    // TODO: move the color stuff outside of stitch
-    const spectrum = this.spectrum.segmentColors(layerCount);
 
     this.points = this.points || this.getAllPoints(spines);
 
@@ -98,17 +91,9 @@ export class BaseCurve {
     // TODO: tweak this
     const layerRatio = floor((resolution / layerCount) * layerSepFactor);
 
-    const layers = Group.fromEach(this.getLayers(this.points, layerRatio));
-    layers.forEach((layer) => {
-      const nextColor = spectrum.nextColor();
-      if (nextColor && nextColor.toRGBAString) {
-        layer.setAttr('stroke', nextColor.toRGBAString());
-      }
-    });
+    const layers = this.getLayers(this.points, layerRatio);
     if (this.showSpines) {
-      const spineGroup = Group.from(spines);
-      spineGroup.setAttr('stroke', rgba(0, 0, 0, 1));
-      layers.unshift(spineGroup);
+      layers.unshift(spines);
     }
     console.timeEnd(`${this.constructor.name}#stitch()`);
     return Group.from(layers);

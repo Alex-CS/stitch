@@ -8,21 +8,33 @@ export default class Color {
 
   constructor(red = 0, green = 0, blue = 0, alpha = 1) {
     this.red = red;
-    this.grn = green;
-    this.blu = blue;
-    this.alf = alpha;
+    this.green = green;
+    this.blue = blue;
+    this.alpha = alpha;
+  }
+
+  /**
+   * Create a new Color from a color-like object
+   * @param {number} red
+   * @param {number} green
+   * @param {number} blue
+   * @param {number} alpha
+   * @return {Color}
+   */
+  static from({ red, green, blue, alpha }) {
+    return new Color(red, green, blue, alpha);
   }
 
   clone() {
-    return new Color(this.red, this.grn, this.blu, this.alf);
+    return new Color(this.red, this.green, this.blue, this.alpha);
   }
 
   toRGBAString() {
-    return `rgba(${this.red},${this.grn},${this.blu},${this.alf})`;
+    return `rgba(${this.red},${this.green},${this.blue},${this.alpha})`;
   }
 
   toString() {
-    return `Color (${this.red},${this.grn},${this.blu},${this.alf})`;
+    return `Color (${this.red},${this.green},${this.blue},${this.alpha})`;
   }
 
   /**
@@ -32,9 +44,9 @@ export default class Color {
    */
   scaleDown(factor) {
     this.red = Math.round(this.red / factor);
-    this.grn = Math.round(this.grn / factor);
-    this.blu = Math.round(this.blu / factor);
-    this.alf /= factor;
+    this.green = Math.round(this.green / factor);
+    this.blue = Math.round(this.blue / factor);
+    this.alpha /= factor;
     return this;
   }
 
@@ -45,14 +57,14 @@ export default class Color {
    */
   distanceTo(otherColor) {
     const rDist = otherColor.red - this.red;
-    const gDist = otherColor.grn - this.grn;
-    const bDist = otherColor.blu - this.blu;
-    const aDist = otherColor.alf - this.alf;
+    const gDist = otherColor.green - this.green;
+    const bDist = otherColor.blue - this.blue;
+    const aDist = otherColor.alpha - this.alpha;
     return new Color(rDist, gDist, bDist, aDist);
   }
 
   /**
-   * Get the array of all the colors between this and `otherColor`
+   * Get the array of `resolution` colors between this and `otherColor`
    * @param {Color} otherColor
    * @param {number} resolution
    * @returns {Color[]}
@@ -63,12 +75,11 @@ export default class Color {
     // Handle all the colors between the start and end
     const colors = mapInRange(1, resolution, (i) => {
       const red = this.red + (colorStep.red * i);
-      const green = this.grn + (colorStep.grn * i);
-      const blue = this.blu + (colorStep.blu * i);
-      const alpha = this.alf + (colorStep.alf * i);
+      const green = this.green + (colorStep.green * i);
+      const blue = this.blue + (colorStep.blue * i);
+      const alpha = this.alpha + (colorStep.alpha * i);
       return new Color(red, green, blue, alpha);
     });
-    colors.unshift(this.clone());
     colors.push(otherColor.clone());
     return colors;
   }

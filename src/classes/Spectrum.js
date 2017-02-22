@@ -13,7 +13,17 @@ export default class Spectrum {
   }
 
   clone() {
-    return new Spectrum(...this._colors.map(color => color.clone()));
+    return new Spectrum(...this.colors);
+  }
+
+  /**
+   * Get copies of all the colors
+   * @property
+   * @readonly
+   * @return {Color[]}
+   */
+  get colors() {
+    return this._colors.map(color => color.clone());
   }
 
   /**
@@ -47,7 +57,7 @@ export default class Spectrum {
   /**
    * Add `resolution` colors between each existing color in the spectrum
    * @param {number} resolution
-   * @returns {Spectrum}
+   * @returns {Spectrum} TODO return a new Spectrum rather than mutating
    */
   segmentColors(resolution) {
     if (this._colors.length < 2) {
@@ -57,7 +67,8 @@ export default class Spectrum {
 
     const start = this.firstColor();
     const end = this.lastColor();
-    this._colors = start.stepsToward(end, resolution);
+    const colors = start.stepsToward(end, parseInt(resolution / 2, 10));
+    this._colors = [start, ...colors, ...colors.reverse()];
 
     return this;
   }
