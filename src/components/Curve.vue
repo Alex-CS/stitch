@@ -1,12 +1,9 @@
 <template>
-  <g class="curve">
+  <g class="curve" :transform="transform">
     <template v-for="(layer, layerIndex) in layers.members">
-      <g :stroke="`rgba(0, 0, 0, ${getOpacity(layerIndex)})`" class="layer">
+      <g class="layer" :stroke-opacity="getOpacity(layerIndex)">
         <template v-for="(line, index) in layer">
-          <s-line :line="line"
-                  :title="makeTitle(layerIndex, index)"
-                  :stroke="getColor(layerIndex, index)"
-          />
+          <s-line :line="line" :stroke="getColor(layerIndex, index)"/>
         </template>
       </g>
     </template>
@@ -14,7 +11,6 @@
 </template>
 
 <script type="text/babel">
-  import invokeMap from 'lodash/invokeMap';
   import {
     Spectrum,
     makeCurve,
@@ -57,10 +53,15 @@
         if (!this.layers || !this.colors) {
           return [];
         }
-        return this.layers.members.map((layer) => {
-          const newSpectrum = this.spectrum.clone();
-          newSpectrum.segmentColors(layer.length);
-          return invokeMap(newSpectrum.colors, 'toRGBAString');
+        const layerCount = this.options.layerCount;
+        return this.layers.members.map((layer, layerIndex) => {
+          const len = layer.length;
+          const colors = this.spectrum.clone().segmentColors(len).colors;
+          const layerShift = ((layerIndex + 1) / layerCount) * len;
+          return colors.map((color, i) => {
+            const shiftedColor = colors[Math.floor(i + 1 + layerShift) % len];
+            return shiftedColor.toRGBAString();
+          });
         });
       },
     },

@@ -47,6 +47,16 @@
                max="64">
         <span>{{ options.resolution }}</span>
       </div>
+      <div>
+        <label>rotation</label>
+        <input type="range"
+               v-model="options.rotation"
+               min="0"
+               max="1"
+               :step="1/8"
+        >
+        <span>{{ options.rotation * 360 }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -82,9 +92,9 @@
         colors: [startColor, endColor],
         options: {
           resolution: 16,
-          numVertices: 4,
-          layerCount: 3,
-          layerSepFactor: 1,
+          numVertices: 6,
+          layerCount: 6,
+          layerSepFactor: 6,
           width: size,
           height: size,
           rotation: 2 / 16,
