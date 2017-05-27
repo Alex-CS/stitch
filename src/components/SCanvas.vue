@@ -44,10 +44,12 @@
   import { Point, Line } from '../classes';
 
   const DEFAULT_INNER_RADIUS = 2;
+  // The space to leave between the edge of the grid and the outer points
+  // as a multiple of the space between the grid points
   const DEFAULT_GUTTER_WIDTH = 0.5;
 
   export default {
-    name: 'grid-canvas',
+    name: 's-canvas',
     components: {
       SLine,
     },
@@ -58,15 +60,10 @@
       size: Number,
       // Whether to show the dots or not
       hideDots: Boolean,
-      // The space to leave between the edge of the grid and the outer points
-      // as a multiple of the space between the grid points
-      gutterWidth: {
-        type: Number,
-        default: DEFAULT_GUTTER_WIDTH,
-      },
     },
     data() {
       return {
+        gutterWidth: DEFAULT_GUTTER_WIDTH,
         width: this.size,
         height: this.size,
         selected: null,
@@ -230,10 +227,6 @@
     &.active {
       #{$prop}: $active-color;
     }
-  }
-
-  svg {
-    border: $default-color 1px solid;
   }
 
   circle {

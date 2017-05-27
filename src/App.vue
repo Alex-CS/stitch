@@ -9,7 +9,7 @@
         <!--:initial="initial"-->
       <!--/>-->
     <!--</svg>-->
-    <grid-canvas :resolution="20" :size="600"/>
+    <s-canvas :resolution="20" :size="600"/>
     <div class="controls">
       <!--<div>-->
         <!--<label>layerCount</label>-->
@@ -65,7 +65,7 @@
   import Curve from './components/Curve';
   import MultiCurve from './components/MultiCurve';
   import SCircle from './components/SCircle';
-  import GridCanvas from './components/GridCanvas';
+  import SCanvas from './components/SCanvas';
 
   export default {
     name: 'app',
@@ -73,7 +73,7 @@
       Curve,
       MultiCurve,
       SCircle,
-      GridCanvas,
+      SCanvas,
     },
     data() {
       const size = 600;
