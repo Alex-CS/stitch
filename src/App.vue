@@ -1,19 +1,20 @@
 <template>
   <div id="app">
-    <svg :width="size" :height="size">
-      <!--<multi-curve-->
+    <!--<svg :width="size" :height="size">-->
+      <!--&lt;!&ndash;<multi-curve&ndash;&gt;-->
+        <!--&lt;!&ndash;:options="options"&ndash;&gt;-->
+        <!--&lt;!&ndash;:curve-type="curveType"&ndash;&gt;-->
+        <!--&lt;!&ndash;:reps="reps"&ndash;&gt;-->
+        <!--&lt;!&ndash;:radius="radius"&ndash;&gt;-->
+        <!--&lt;!&ndash;:initial="initial"&ndash;&gt;-->
+      <!--&lt;!&ndash;/>&ndash;&gt;-->
+      <!--<curve-->
         <!--:options="options"-->
         <!--:curve-type="curveType"-->
-        <!--:reps="reps"-->
-        <!--:radius="radius"-->
-        <!--:initial="initial"-->
+        <!--:colors="colors"-->
       <!--/>-->
-      <curve
-        :options="options"
-        :curve-type="curveType"
-        :colors="colors"
-      />
-    </svg>
+    <!--</svg>-->
+    <grid-canvas :resolution="10" :size="400"></grid-canvas>
     <div class="controls">
       <div>
         <label>layerCount</label>
@@ -69,6 +70,7 @@
   import Curve from './components/Curve';
   import MultiCurve from './components/MultiCurve';
   import SCircle from './components/SCircle';
+  import GridCanvas from './components/GridCanvas';
 
   export default {
     name: 'app',
@@ -76,6 +78,7 @@
       Curve,
       MultiCurve,
       SCircle,
+      GridCanvas,
     },
     data() {
       const size = 600;
