@@ -1,26 +1,50 @@
 <template>
   <svg :width="width" :height="height">
-    <template v-for="row in rows">
-      <template v-for="point in row">
-        <circle r="3"
-                :class="{ active: isSelected(point) }"
-                :cx="point.x"
-                :cy="point.y"
-                v-on:click="select(point)">
-          <!-- TODO: need some affordance for less precise clicks -->
-        </circle>
+    <g id="circles">
+      <template v-for="point in gridDots">
+        <circle
+          :class="{
+            active: isSelected(point),
+          }"
+          :cx="point.x"
+          :cy="point.y"
+          :r="dotRadius"
+          :stroke-width="dotStrokeWidth"
+          @click.stop="select(point)"
+        />
+        <!-- TODO Add hover event that makes the inner circle bigger -->
+    </template>
+    </g> <!-- end #circles -->
+
+    <g id="lines">
+      <template v-for="(line, i) in lines">
+        <s-line
+          :class="{ active: i === lines.length - 1 }"
+          :line="line"
+        />
       </template>
-    </template>
-    <template v-for="line, i in lines">
-      <s-line :line="line" :class="{ active: i === lines.length - 1 }"/>
-    </template>
+    </g> <!-- end #lines -->
   </svg>
 </template>
 
+<!-- NOTES:
+  *  Clarification of point terminology:
+  *  - A _point_ is a 0-dimension shape at given coordinates
+  *  - _Point_ is a javascript class that describes _point_s.
+  *    *A* Point is an instance of such.
+  *  - A _circle_ is a two-dimensional shape with a _point_ at its center
+  *  - A _dot_ is a small circle to visually represent its center
+-->
+
 <script>
+  import _flatMap from 'lodash/flatMap';
+  import _range from 'lodash/range';
+
   import SLine from './SLine';
   import { Point, Line } from '../classes';
-  import { mapInRange } from '../utils';
+
+  const DEFAULT_INNER_RADIUS = 2;
+  const DEFAULT_GUTTER_WIDTH = 0.5;
 
   export default {
     name: 'grid-canvas',
@@ -28,8 +52,18 @@
       SLine,
     },
     props: {
+      // How many dots to show per row/column
       resolution: Number,
+      // How big the canvas should be
       size: Number,
+      // Whether to show the dots or not
+      hideDots: Boolean,
+      // The space to leave between the edge of the grid and the outer points
+      // as a multiple of the space between the grid points
+      gutterWidth: {
+        type: Number,
+        default: DEFAULT_GUTTER_WIDTH,
+      },
     },
     data() {
       return {
@@ -40,23 +74,117 @@
       };
     },
     computed: {
-      rows() {
-        // FIXME There's gotta be a better way to get the points than this nested thing
-        return mapInRange(this.resolution, i => (
-          mapInRange(this.resolution, j => ({
-            x: this.getX(j),
-            y: this.getY(i),
-          }))
-        ));
+      gridDots() {
+        // FIXME There's gotta be a better way to get points
+        return _flatMap(_range(this.resolution),
+          yIndex => _range(this.resolution).map(
+            xIndex => this.getPosition(xIndex, yIndex)
+          ));
+        // for (const yIndex = 0; yIndex < this.resolution; yIndex++) {
+        //   for (const xIndex = 0; xIndex < this.resolution; xIndex++)) {
+        //     yield this.getPosition(xIndex, yIndex);
+        //   }
+        // }
+      },
+
+      gridSize() {
+        // The distance between adjacent points
+        const getGridSpace = (max) => {
+          // Adjustment factor to keep points evenly-spaced regardless of margin
+          // `2 * this.gutterWidth` because there's gutter on both sides
+          // `- 1` TODO
+          const spaceFactor = (2 * this.gutterWidth) - 1;
+          return max / (this.resolution + spaceFactor);
+        };
+
+        return {
+          x: getGridSpace(this.width),
+          y: getGridSpace(this.height),
+        };
+      },
+
+      /**
+       * The radius of the inner circle that isn't covered by the stroke.
+       *
+       * @property
+       * @return {Number}
+       */
+      innerRadius() {
+        return this.hideDots ? 0 : DEFAULT_INNER_RADIUS;
+      },
+
+      /**
+       * The radius of each dot's SVG circle.
+       *
+       * This number is more implicitly than explicitly relevant.
+       * @see `dotStrokeWidth` and `outerRadius`
+       * I did the math for those first in order to solve for this,
+       * so it may be easier to understand this by reading them first.
+       *
+       * We want `outerRadius` to be half of `gridSize`, so:
+       * Let r = dotRadius, r_ = innerRadius, w = dotStrokeWidth.
+       *   gridSize = 2 * outerRadius = 2 * (r + w/2)
+       *   gridSize = 2r + w = 2r + (2r - 2r_)
+       *   4r = gridSize + 2r_
+       *   r = (gridSize + 2r_) / 4
+       *
+       * @property
+       * @return {Number}
+       */
+      dotRadius() {
+        const gridSize = Math.min(this.gridSize.x, this.gridSize.y);
+        // We want `outerRadius` to be half of gridSize, so:
+        // gridSize = 2 * outerRadius = 2 * (r + w/2)
+        // gridSize = 2r + (w = 2r - 2r_)
+        // gridSize = 2r + 2r - 2r_
+        // gridSize + 2r_ = 4r
+        // (gridSize + 2r_) / 4 = r
+        const innerDiameter = 2 * this.innerRadius;
+        return (gridSize + innerDiameter) / 4;
+      },
+
+      /**
+       * The width of the 'stroke' (aka border) of each dot.
+       *
+       * SVG stroke-width, `w`, is half outside the shape and half inside.
+       * So the inner radius, `r_`, of the inner circle is (r_ = r - w/2).
+       * => (r = r_ + w/2)
+       * => (2r = 2r_ + w)
+       * => (w = 2r - 2r_)
+       *
+       * @property
+       * @return {Number}
+       */
+      dotStrokeWidth() {
+        return (2 * this.dotRadius) - (2 * this.innerRadius);
+      },
+
+      /**
+       * The final radius with stroke width included.
+       *
+       * This should be half the distance between two center points
+       * to prevent any overlap.
+       *
+       * @property
+       * @return {Number}
+       */
+      outerRadius() {
+        return this.dotRadius + (this.dotStrokeWidth / 2);
       },
     },
     methods: {
-      // '+ 1's are for spacing around edges
-      getX(i) {
-        return (this.width / (this.resolution + 1)) * (i + 1);
-      },
-      getY(i) {
-        return (this.height / (this.resolution + 1)) * (i + 1);
+      getPosition(xIndex, yIndex) {
+        const _getPos = (index, axis) => {
+          return this.gridSize[axis] * (index + this.gutterWidth);
+        };
+
+        // TODO: For some (probably good) reason,
+        // TODO: the Point constructor rounds its input,
+        // TODO: so it wouldn't work here
+        return {
+          x: _getPos(xIndex, 'x'),
+          y: _getPos(yIndex, 'y'),
+        };
       },
       isSelected(point) {
         if (this.selected) {
@@ -67,33 +195,55 @@
       select(point) {
         const { x, y } = point;
         // TODO order these better
-        if (this.isSelected(point)) {
-          // Deselect
-          console.log(`Deselect { x: ${x}, y: ${y} }`);
-          this.selected = null;
-        } else if (this.selected) {
-          // Draw line
-          this.lines.push(new Line(this.selected, point));
-          this.selected = null;
-        } else {
+        if (this.selected === null) {
           // Select first point
           console.log(`Select { x: ${x}, y: ${y} }`);
           this.selected = { x, y };
+        } else if (this.isSelected(point)) {
+          // Deselect
+          console.log(`Deselect { x: ${x}, y: ${y} }`);
+          this.selected = null;
+        } else {
+          // Draw line
+          this.lines.push(new Line(this.selected, point));
+          this.selected = null;
         }
       },
     },
   };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+  $default-color: #aaaaaa;
+  $active-color: royalblue;
+  $hover-color: darken($active-color, 10%);
+  $trans-props: .2s ease-in-out;
+
+  @mixin color-states($prop) {
+    transition: $prop $trans-props;
+    #{$prop}: $default-color;
+
+    &:hover {
+      #{$prop}: $hover-color;
+    }
+
+    &.active {
+      #{$prop}: $active-color;
+    }
+  }
+
+  svg {
+    border: $default-color 1px solid;
+  }
+
   circle {
-    fill: #aaaaaa;
+    @include color-states(fill);
     cursor: pointer;
+    stroke: white;
   }
+
   line {
-    stroke: #aaaaaa;
+    @include color-states(stroke);
   }
-  .active {
-    fill: royalblue;
-  }
+
 </style>

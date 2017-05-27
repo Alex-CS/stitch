@@ -1,67 +1,62 @@
 <template>
   <div id="app">
     <!--<svg :width="size" :height="size">-->
-      <!--&lt;!&ndash;<multi-curve&ndash;&gt;-->
-        <!--&lt;!&ndash;:options="options"&ndash;&gt;-->
-        <!--&lt;!&ndash;:curve-type="curveType"&ndash;&gt;-->
-        <!--&lt;!&ndash;:reps="reps"&ndash;&gt;-->
-        <!--&lt;!&ndash;:radius="radius"&ndash;&gt;-->
-        <!--&lt;!&ndash;:initial="initial"&ndash;&gt;-->
-      <!--&lt;!&ndash;/>&ndash;&gt;-->
-      <!--<curve-->
+      <!--<multi-curve-->
         <!--:options="options"-->
         <!--:curve-type="curveType"-->
-        <!--:colors="colors"-->
+        <!--:reps="reps"-->
+        <!--:radius="radius"-->
+        <!--:initial="initial"-->
       <!--/>-->
     <!--</svg>-->
-    <grid-canvas :resolution="10" :size="400"></grid-canvas>
+    <grid-canvas :resolution="20" :size="600"/>
     <div class="controls">
-      <div>
-        <label>layerCount</label>
-        <input type="range"
-               v-model="options.layerCount"
-               min="1"
-               max="8">
-        <span>{{ options.layerCount }}</span>
-      </div>
-      <div>
-        <label>layerSepFactor</label>
-        <input type="range"
-               v-model="options.layerSepFactor"
-               min="1"
-               max="8">
-        <span>{{ options.layerSepFactor }}</span>
-      </div>
-      <div>
-        <label>numVertices</label>
-        <input type="range"
-               v-model="options.numVertices"
-               min="3"
-               max="8">
-        <span>{{ options.numVertices }}</span>
-      </div>
-      <div>
-        <label>resolution</label>
-        <input type="range"
-               v-model="options.resolution"
-               min="4"
-               max="64">
-        <span>{{ options.resolution }}</span>
-      </div>
-      <div>
-        <label>rotation</label>
-        <input type="range"
-               v-model="options.rotation"
-               min="0"
-               max="1"
-               :step="1/8">
-        <span>{{ options.rotation * 360 }}</span>
-      </div>
+      <!--<div>-->
+        <!--<label>layerCount</label>-->
+        <!--<input type="range"-->
+               <!--v-model="options.layerCount"-->
+               <!--min="1"-->
+               <!--max="8">-->
+        <!--<span>{{ options.layerCount }}</span>-->
+      <!--</div>-->
+      <!--<div>-->
+        <!--<label>layerSepFactor</label>-->
+        <!--<input type="range"-->
+               <!--v-model="options.layerSepFactor"-->
+               <!--min="1"-->
+               <!--max="8">-->
+        <!--<span>{{ options.layerSepFactor }}</span>-->
+      <!--</div>-->
+      <!--<div>-->
+        <!--<label>numVertices</label>-->
+        <!--<input type="range"-->
+               <!--v-model="options.numVertices"-->
+               <!--min="3"-->
+               <!--max="8">-->
+        <!--<span>{{ options.numVertices }}</span>-->
+      <!--</div>-->
+      <!--<div>-->
+        <!--<label>resolution</label>-->
+        <!--<input type="range"-->
+               <!--v-model="options.resolution"-->
+               <!--min="4"-->
+               <!--max="64">-->
+        <!--<span>{{ options.resolution }}</span>-->
+      <!--</div>-->
+      <!--<div>-->
+        <!--<label>rotation</label>-->
+        <!--<input type="range"-->
+               <!--v-model="options.rotation"-->
+               <!--min="0"-->
+               <!--max="1"-->
+               <!--:step="1/8">-->
+        <!--<span>{{ options.rotation * 360 }}</span>-->
+      <!--</div>-->
     </div>
   </div>
 </template>
 
-<script type="text/babel">
+<script>
   import { CURVE_TYPES } from './constants';
   import {
     Color,
