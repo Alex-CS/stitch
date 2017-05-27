@@ -53,8 +53,7 @@
                v-model="options.rotation"
                min="0"
                max="1"
-               :step="1/8"
-        >
+               :step="1/8">
         <span>{{ options.rotation * 360 }}</span>
       </div>
     </div>
@@ -85,19 +84,19 @@
       return {
         CURVE_TYPES,
         size,
-        curveType: CURVE_TYPES.Poly,
+        curveType: CURVE_TYPES.Elli,
         reps: 4,
         radius: size / 8,
         initial: 0 / 16,
         colors: [startColor, endColor],
         options: {
-          resolution: 16,
+          resolution: 24,
           numVertices: 6,
-          layerCount: 6,
-          layerSepFactor: 6,
+          layerCount: 8,
+          layerSepFactor: 3,
           width: size,
           height: size,
-          rotation: 2 / 16,
+          rotation: 4 / 16,
           showSpines: false,
           center: new Point(size / 2, size / 2),
         },

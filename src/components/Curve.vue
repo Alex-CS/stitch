@@ -53,6 +53,7 @@
         if (!this.layers || !this.colors) {
           return [];
         }
+
         const layerCount = this.options.layerCount;
         return this.layers.members.map((layer, layerIndex) => {
           const len = layer.length;
@@ -73,9 +74,9 @@
         return this.layerSpectra[indexOfLayer][indexInLayer];
       },
       getOpacity(index) {
-        const range = 0.6;
         const min = 0.4;
-        return parseFloat(((range / (index + 1)) + min).toFixed(3));
+        const range = 1 - min;
+        return ((range / (index + 1)) + min);
       },
     },
   };

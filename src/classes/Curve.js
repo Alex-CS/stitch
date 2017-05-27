@@ -299,7 +299,7 @@ export class BaseOutwardCurve extends BaseCurve {
     const { resolution, layerCount } = this;
     const layers = mapInRange(layerCount, (i) => {
       // TODO: figure out & explain this math
-      const shave = (i * layerRatio) % resolution/* (3 / 4)*/;
+      const shave = ((i + 1) * layerRatio) % resolution/* (3 / 4)*/;
       return this._stitchOutward(points, shave);
     });
     return layers;
