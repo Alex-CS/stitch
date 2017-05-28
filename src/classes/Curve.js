@@ -204,7 +204,7 @@ export class BaseInwardCurve extends BaseCurve {
    */
   getAllPoints(spines) {
     const nestedPoints = spines.map(
-      spine => spine.getPoints(this.resolution)
+      spine => spine.getPoints(this.resolution),
     );
     return uniq(flatten(nestedPoints));
   }
@@ -220,11 +220,11 @@ export class PolygonCurve extends BaseInwardCurve {
   getSpines() {
     const { numVertices } = this;
     const vertices = mapInRange(numVertices,
-      i => this.getSpinePoint(i / numVertices)
+      i => this.getSpinePoint(i / numVertices),
     );
 
     return vertices.map(
-      (vertex, i) => new Line(vertex, vertices[(i + 1) % numVertices])
+      (vertex, i) => new Line(vertex, vertices[(i + 1) % numVertices]),
     );
   }
 }
@@ -234,11 +234,11 @@ export class EllipseCurve extends BaseInwardCurve {
   getSpines() {
     const pointCount = this.resolution * this.numVertices;
     this.points = mapInRange(pointCount,
-      i => this.getSpinePoint(i / pointCount)
+      i => this.getSpinePoint(i / pointCount),
     );
 
     return this.points.map(
-      (point, i) => new Line(point, this.points[(i + 1) % pointCount])
+      (point, i) => new Line(point, this.points[(i + 1) % pointCount]),
     );
   }
 }
@@ -307,7 +307,7 @@ export class BaseOutwardCurve extends BaseCurve {
 
   getAllPoints(spines) {
     return spines.map(
-      spine => spine.getPoints(this.resolution, [this.center])
+      spine => spine.getPoints(this.resolution, [this.center]),
     );
   }
 

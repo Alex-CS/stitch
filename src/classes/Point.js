@@ -50,7 +50,7 @@ export default class Point {
     const yDistance = Math.sin(angle) * dist.y;
     return new Point(
       this.x + xDistance,
-      this.y + yDistance
+      this.y + yDistance,
     );
   }
 

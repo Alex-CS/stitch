@@ -75,7 +75,7 @@
         // FIXME There's gotta be a better way to get points
         return _flatMap(_range(this.resolution),
           yIndex => _range(this.resolution).map(
-            xIndex => this.getPosition(xIndex, yIndex)
+            xIndex => this.getPosition(xIndex, yIndex),
           ));
         // for (const yIndex = 0; yIndex < this.resolution; yIndex++) {
         //   for (const xIndex = 0; xIndex < this.resolution; xIndex++)) {
