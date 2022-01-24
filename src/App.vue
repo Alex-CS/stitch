@@ -58,76 +58,76 @@
 </template>
 
 <script>
-  import { CURVE_TYPES } from './constants';
-  import {
-    Color,
-    Point,
-  } from './classes';
-  import StitchCanvas from './components/StitchCanvas.vue';
-  import StitchMultiCurve from './components/StitchMultiCurve';
+import { CURVE_TYPES } from './constants';
+import {
+  Color,
+  Point,
+} from './classes';
+import StitchCanvas from './components/StitchCanvas.vue';
+import StitchMultiCurve from './components/StitchMultiCurve';
 
-  export default {
-    name: 'app',
-    components: {
-      StitchCanvas,
-      StitchMultiCurve,
-    },
-    data() {
-      const size = 600;
-      const startColor = new Color(0, 127, 255);
-      const endColor = new Color(180, 0, 127);
-      return {
-        CURVE_TYPES,
-        size,
-        curveType: CURVE_TYPES.Elli,
-        reps: 4,
-        radius: size / 8,
-        initial: 0 / 16,
-        colors: [startColor, endColor],
-        options: {
-          resolution: 24,
-          numVertices: 6,
-          layerCount: 8,
-          layerSepFactor: 3,
-          width: size,
-          height: size,
-          rotation: 4 / 16,
-          showSpines: false,
-          center: new Point(size / 2, size / 2),
-        },
-      };
-    },
-    computed: {
-    },
-    methods: {
-    },
-  };
+export default {
+  name: 'app',
+  components: {
+    StitchCanvas,
+    StitchMultiCurve,
+  },
+  data() {
+    const size = 600;
+    const startColor = new Color(0, 127, 255);
+    const endColor = new Color(180, 0, 127);
+    return {
+      CURVE_TYPES,
+      size,
+      curveType: CURVE_TYPES.Elli,
+      reps: 4,
+      radius: size / 8,
+      initial: 0 / 16,
+      colors: [startColor, endColor],
+      options: {
+        resolution: 24,
+        numVertices: 6,
+        layerCount: 8,
+        layerSepFactor: 3,
+        width: size,
+        height: size,
+        rotation: 4 / 16,
+        showSpines: false,
+        center: new Point(size / 2, size / 2),
+      },
+    };
+  },
+  computed: {
+  },
+  methods: {
+  },
+};
 </script>
 
 <style lang="scss">
-  @import './assets/base.css';
+@import './assets/base.css';
 
-  body {
-    margin: 0;
-  }
-  #app {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding: 10px;
-  }
-  svg {
-    overflow: auto;
-  }
-  .controls {
-    align-self: flex-end;
-    display: flex;
-    flex-direction: column;
+body {
+  margin: 0;
+}
+#app {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 10px;
+}
+svg {
+  overflow: auto;
+}
+.controls {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
 
-    div {
-      text-align: end;
-    }
+  div {
+    text-align: end;
   }
+}
 </style>

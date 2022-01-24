@@ -11,51 +11,51 @@
 </template>
 
 <script>
-  import { mapInRange } from '../utils';
-  import {
-    Point,
-  } from '../classes';
-  import StitchCurve from './StitchCurve.vue';
+import { mapInRange } from '../utils';
+import {
+  Point,
+} from '../classes';
+import StitchCurve from './StitchCurve.vue';
 
-  export default {
-    name: 'StitchMultiCurve',
-    components: {
-      StitchCurve,
+export default {
+  name: 'StitchMultiCurve',
+  components: {
+    StitchCurve,
+  },
+  props: {
+    options: Object,
+    colors: Array,
+    curveType: String,
+    reps: Number,
+    radius: [Number, Point],
+    initial: {
+      type: Number,
+      default: 0,
     },
-    props: {
-      options: Object,
-      colors: Array,
-      curveType: String,
-      reps: Number,
-      radius: [Number, Point],
-      initial: {
-        type: Number,
-        default: 0,
-      },
+  },
+  data() {
+    return {
+    };
+  },
+  computed: {
+    allCurveOptions() {
+      const { options, reps, radius, initial } = this;
+      return mapInRange(reps, (i) => {
+        const rotation = (i / reps) + initial;
+        const center = options.center.getRelativePoint(rotation, radius);
+        const opts = {
+          ...options,
+          center,
+          resolution: options.resolution / 2,
+          rotation: options.rotation + rotation,
+          width: options.width / 2,
+          height: options.height / 2,
+        };
+        return opts;
+      });
     },
-    data() {
-      return {
-      };
-    },
-    computed: {
-      allCurveOptions() {
-        const { options, reps, radius, initial } = this;
-        return mapInRange(reps, (i) => {
-          const rotation = (i / reps) + initial;
-          const center = options.center.getRelativePoint(rotation, radius);
-          const opts = {
-            ...options,
-            center,
-            resolution: options.resolution / 2,
-            rotation: options.rotation + rotation,
-            width: options.width / 2,
-            height: options.height / 2,
-          };
-          return opts;
-        });
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style>

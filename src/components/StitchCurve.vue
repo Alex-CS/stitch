@@ -11,75 +11,75 @@
 </template>
 
 <script>
-  import {
-    Spectrum,
-    makeCurve,
-  } from '../classes';
-  import StitchLine from './StitchLine.vue';
+import {
+  Spectrum,
+  makeCurve,
+} from '../classes';
+import StitchLine from './StitchLine.vue';
 
-  export default {
-    name: 'StitchCurve',
-    components: {
-      StitchLine,
+export default {
+  name: 'StitchCurve',
+  components: {
+    StitchLine,
+  },
+  props: {
+    options: Object,
+    curveType: String,
+    rotation: Number,
+    translation: String,
+    colors: Array,
+  },
+  data() {
+    return {
+      spectrum: new Spectrum(...this.colors),
+    };
+  },
+  computed: {
+    curve() {
+      return makeCurve(this.curveType, this.options);
     },
-    props: {
-      options: Object,
-      curveType: String,
-      rotation: Number,
-      translation: String,
-      colors: Array,
+    layers() {
+      return this.curve.stitch();
     },
-    data() {
-      return {
-        spectrum: new Spectrum(...this.colors),
-      };
+    transform() {
+      // FIXME: Get rid of this mess by consuming rotation in the Curve class
+      const { rotation, center } = this.options;
+      const translation = this.translation || `${center.x} ${center.y}`;
+      return (
+        `rotate(${360 * (this.rotation || rotation)} ${translation})`
+      );
     },
-    computed: {
-      curve() {
-        return makeCurve(this.curveType, this.options);
-      },
-      layers() {
-        return this.curve.stitch();
-      },
-      transform() {
-        // FIXME: Get rid of this mess by consuming rotation in the Curve class
-        const { rotation, center } = this.options;
-        const translation = this.translation || `${center.x} ${center.y}`;
-        return (
-          `rotate(${360 * (this.rotation || rotation)} ${translation})`
-        );
-      },
-      layerSpectra() {
-        if (!this.layers || !this.colors) {
-          return [];
-        }
+    layerSpectra() {
+      if (!this.layers || !this.colors) {
+        return [];
+      }
 
-        const layerCount = this.options.layerCount;
-        return this.layers.members.map((layer, layerIndex) => {
-          const len = layer.length;
-          const colors = this.spectrum.clone().segmentColors(len).colors;
-          const layerShift = ((layerIndex + 1) / layerCount) * len;
-          return colors.map((color, i) => {
-            const shiftedColor = colors[Math.floor(i + 1 + layerShift) % len];
-            return shiftedColor.toRGBAString();
-          });
+      const layerCount = this.options.layerCount;
+      return this.layers.members.map((layer, layerIndex) => {
+        const len = layer.length;
+        const colors = this.spectrum.clone().segmentColors(len).colors;
+        const layerShift = ((layerIndex + 1) / layerCount) * len;
+        return colors.map((color, i) => {
+          const shiftedColor = colors[Math.floor(i + 1 + layerShift) % len];
+          return shiftedColor.toRGBAString();
         });
-      },
+      });
     },
-    methods: {
-      makeTitle(layerNum, index) {
-        return `${this.curveType}-layer${layerNum}-line${index}`;
-      },
-      getColor(indexOfLayer, indexInLayer) {
-        return this.layerSpectra[indexOfLayer][indexInLayer];
-      },
-      getOpacity(index) {
-        const min = 0.4;
-        const range = 1 - min;
-        return ((range / (index + 1)) + min);
-      },
+  },
+  methods: {
+    makeTitle(layerNum, index) {
+      return `${this.curveType}-layer${layerNum}-line${index}`;
     },
-  };
+    getColor(indexOfLayer, indexInLayer) {
+      return this.layerSpectra[indexOfLayer][indexInLayer];
+    },
+    getOpacity(index) {
+      const min = 0.4;
+      const range = 1 - min;
+      return ((range / (index + 1)) + min);
+    },
+  },
+};
 </script>
 
 <style>

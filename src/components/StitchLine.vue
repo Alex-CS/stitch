@@ -9,27 +9,27 @@
 </template>
 
 <script>
-  import { Point, Line } from '../classes';
+import { Point, Line } from '../classes';
 
-  export default {
-    name: 'StitchLine',
-    props: {
-      line: Line,
-      point1: Point,
-      point2: Point,
-    },
-    data() {
-      const startPoint = this.line ? this.line.start : this.point1;
-      const endPoint = this.line ? this.line.end : this.point2;
+export default {
+  name: 'StitchLine',
+  props: {
+    line: Line,
+    point1: Point,
+    point2: Point,
+  },
+  data() {
+    const startPoint = this.line ? this.line.start : this.point1;
+    const endPoint = this.line ? this.line.end : this.point2;
 
-      return {
-        startPoint,
-        endPoint,
-      };
-    },
-    methods: {
-    },
-  };
+    return {
+      startPoint,
+      endPoint,
+    };
+  },
+  methods: {
+  },
+};
 </script>
 
 <style>

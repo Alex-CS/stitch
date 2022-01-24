@@ -9,16 +9,16 @@
 </template>
 
 <script>
-  import { Point } from '../classes';
+import { Point } from '../classes';
 
-  export default {
-    name: 'StitchCircle',
-    props: {
-      radius: Number,
-      center: Point,
-      color: String,
-    },
-  };
+export default {
+  name: 'StitchCircle',
+  props: {
+    radius: Number,
+    center: Point,
+    color: String,
+  },
+};
 </script>
 
 <style>
