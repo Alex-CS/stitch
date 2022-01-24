@@ -10,7 +10,7 @@
   </g>
 </template>
 
-<script type="text/babel">
+<script>
   import { mapInRange } from '../utils';
   import {
     Point,

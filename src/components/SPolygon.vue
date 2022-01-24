@@ -2,7 +2,7 @@
   <polygon :points="points" fill="none"/>
 </template>
 
-<script type="text/babel">
+<script>
   export default {
     name: 's-polygon',
     props: {

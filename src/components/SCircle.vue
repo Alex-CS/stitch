@@ -8,7 +8,7 @@
   />
 </template>
 
-<script type="text/babel">
+<script>
   import { Point } from '../classes';
 
   export default {
