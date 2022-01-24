@@ -1,7 +1,11 @@
 <template>
   <g class="multi-curve">
     <template v-for="opts in allCurveOptions">
-      <curve :options="opts" :curve-type="curveType"/>
+      <curve
+        :options="opts"
+        :curve-type="curveType"
+        :colors="colors"
+      />
     </template>
   </g>
 </template>
@@ -20,6 +24,7 @@
     },
     props: {
       options: Object,
+      colors: Array,
       curveType: String,
       reps: Number,
       radius: [Number, Point],

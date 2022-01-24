@@ -7,6 +7,7 @@
         <!--:reps="reps"-->
         <!--:radius="radius"-->
         <!--:initial="initial"-->
+        <!--:colors="colors"-->
       <!--/>-->
     <!--</svg>-->
     <s-canvas :resolution="20" :size="600"/>

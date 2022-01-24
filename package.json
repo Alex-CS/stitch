@@ -2,7 +2,7 @@
   "name": "stitch",
   "version": "1.0.0",
   "description": "A curve-stitching application",
-  "author": "Alex Simonides <alexsimonides@gmail.com>",
+  "author": "Alex Simonides",
   "license": "ISC",
   "private": true,
   "scripts": {
