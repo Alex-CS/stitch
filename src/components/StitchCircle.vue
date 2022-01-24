@@ -12,7 +12,7 @@
   import { Point } from '../classes';
 
   export default {
-    name: 's-circle',
+    name: 'StitchCircle',
     props: {
       radius: Number,
       center: Point,

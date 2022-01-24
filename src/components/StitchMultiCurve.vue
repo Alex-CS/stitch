@@ -1,7 +1,7 @@
 <template>
   <g class="multi-curve">
     <template v-for="opts in allCurveOptions">
-      <curve
+      <StitchCurve
         :options="opts"
         :curve-type="curveType"
         :colors="colors"
@@ -15,12 +15,12 @@
   import {
     Point,
   } from '../classes';
-  import Curve from './Curve.vue';
+  import StitchCurve from './StitchCurve.vue';
 
   export default {
-    name: 'multi-curve',
+    name: 'StitchMultiCurve',
     components: {
-      Curve,
+      StitchCurve,
     },
     props: {
       options: Object,

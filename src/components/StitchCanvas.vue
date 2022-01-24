@@ -18,7 +18,7 @@
 
     <g id="lines">
       <template v-for="(line, i) in lines">
-        <s-line
+        <StitchLine
           :class="{ active: i === lines.length - 1 }"
           :line="line"
         />
@@ -41,7 +41,7 @@
   import _range from 'lodash/range';
 
   import { Point, Line } from '../classes';
-  import SLine from './SLine.vue';
+  import StitchLine from './StitchLine.vue';
 
   const DEFAULT_INNER_RADIUS = 2;
   // The space to leave between the edge of the grid and the outer points
@@ -51,7 +51,7 @@
   export default {
     name: 's-canvas',
     components: {
-      SLine,
+      StitchLine,
     },
     props: {
       // How many dots to show per row/column

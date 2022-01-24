@@ -12,7 +12,7 @@
   import { Point, Line } from '../classes';
 
   export default {
-    name: 's-line',
+    name: 'StitchLine',
     props: {
       line: Line,
       point1: Point,

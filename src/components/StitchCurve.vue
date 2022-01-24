@@ -3,7 +3,7 @@
     <template v-for="(layer, layerIndex) in layers.members">
       <g class="layer" :stroke-opacity="getOpacity(layerIndex)">
         <template v-for="(line, index) in layer">
-          <s-line :line="line" :stroke="getColor(layerIndex, index)"/>
+          <StitchLine :line="line" :stroke="getColor(layerIndex, index)" />
         </template>
       </g>
     </template>
@@ -15,12 +15,12 @@
     Spectrum,
     makeCurve,
   } from '../classes';
-  import SLine from './SLine.vue';
+  import StitchLine from './StitchLine.vue';
 
   export default {
-    name: 'curve',
+    name: 'StitchCurve',
     components: {
-      SLine,
+      StitchLine,
     },
     props: {
       options: Object,
