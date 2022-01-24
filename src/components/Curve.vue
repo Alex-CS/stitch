@@ -15,7 +15,7 @@
     Spectrum,
     makeCurve,
   } from '../classes';
-  import SLine from './SLine';
+  import SLine from './SLine.vue';
 
   export default {
     name: 'curve',

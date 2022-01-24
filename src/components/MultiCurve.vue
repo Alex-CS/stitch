@@ -15,7 +15,7 @@
   import {
     Point,
   } from '../classes';
-  import Curve from './Curve';
+  import Curve from './Curve.vue';
 
   export default {
     name: 'multi-curve',

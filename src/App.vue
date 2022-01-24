@@ -63,10 +63,10 @@
     Color,
     Point,
   } from './classes';
-  import Curve from './components/Curve';
-  import MultiCurve from './components/MultiCurve';
-  import SCircle from './components/SCircle';
-  import SCanvas from './components/SCanvas';
+  import Curve from './components/Curve.vue';
+  import MultiCurve from './components/MultiCurve.vue';
+  import SCircle from './components/SCircle.vue';
+  import SCanvas from './components/SCanvas.vue';
 
   export default {
     name: 'app',
