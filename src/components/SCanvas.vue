@@ -232,7 +232,7 @@
   circle {
     @include color-states(fill);
     cursor: pointer;
-    stroke: white;
+    stroke: var(--color-background);
   }
 
   line {

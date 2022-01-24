@@ -1,3 +1,4 @@
+// NOTE: This file is unused, just here for a historical example
 import _first from 'lodash/first';
 import _floor from 'lodash/floor';
 import _last from 'lodash/last';

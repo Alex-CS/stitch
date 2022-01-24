@@ -109,6 +109,8 @@
 </script>
 
 <style lang="scss">
+  @import './assets/base.css';
+
   body {
     margin: 0;
   }
