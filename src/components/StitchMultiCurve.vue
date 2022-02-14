@@ -1,12 +1,12 @@
 <template>
   <g class="multi-curve">
-    <template v-for="opts in allCurveOptions">
-      <StitchCurve
-        :options="opts"
-        :curve-type="curveType"
-        :colors="colors"
-      />
-    </template>
+    <StitchCurve
+      v-for="opts in allCurveOptions"
+      :key="opts"
+      :options="opts"
+      :curve-type="curveType"
+      :colors="colors"
+    />
   </g>
 </template>
 

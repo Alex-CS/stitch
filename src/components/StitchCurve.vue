@@ -1,12 +1,18 @@
 <template>
   <g class="curve" :transform="transform">
-    <template v-for="(layer, layerIndex) in layers.members">
-      <g class="layer" :stroke-opacity="getOpacity(layerIndex)">
-        <template v-for="(line, index) in layer">
-          <StitchLine :line="line" :stroke="getColor(layerIndex, index)" />
-        </template>
-      </g>
-    </template>
+    <g
+      v-for="(layer, layerIndex) in layers.members"
+      :key="layer"
+      class="layer"
+      :stroke-opacity="getOpacity(layerIndex)"
+    >
+      <StitchLine
+        v-for="(line, index) in layer"
+        :key="line"
+        :line="line"
+        :stroke="getColor(layerIndex, index)"
+      />
+    </g>
   </g>
 </template>
 

@@ -1,28 +1,28 @@
 <template>
   <svg :width="width" :height="height">
     <g id="circles">
-      <template v-for="point in gridDots">
-        <circle
-          :class="{
-            active: isSelected(point),
-          }"
-          :cx="point.x"
-          :cy="point.y"
-          :r="dotRadius"
-          :stroke-width="dotStrokeWidth"
-          @click.stop="select(point)"
-        />
-        <!-- TODO Add hover event that makes the inner circle bigger -->
-    </template>
+      <circle
+        v-for="point in gridDots"
+        :key="point.toString()"
+        :class="{
+          active: isSelected(point),
+        }"
+        :cx="point.x"
+        :cy="point.y"
+        :r="dotRadius"
+        :stroke-width="dotStrokeWidth"
+        @click.stop="select(point)"
+      />
+      <!-- TODO Add hover event that makes the inner circle bigger -->
     </g> <!-- end #circles -->
 
     <g id="lines">
-      <template v-for="(line, i) in lines">
-        <StitchLine
-          :class="{ active: i === lines.length - 1 }"
-          :line="line"
-        />
-      </template>
+      <StitchLine
+        v-for="(line, i) in lines"
+        :key="line.toString()"
+        :class="{ active: i === lines.length - 1 }"
+        :line="line"
+      />
     </g> <!-- end #lines -->
   </svg>
 </template>
