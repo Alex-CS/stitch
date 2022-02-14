@@ -1,21 +1,3 @@
-<template>
-  <g class="curve" :transform="transform">
-    <g
-      v-for="(layer, layerIndex) in layers.members"
-      :key="layer"
-      class="layer"
-      :stroke-opacity="getOpacity(layerIndex)"
-    >
-      <StitchLine
-        v-for="(line, index) in layer"
-        :key="line"
-        :line="line"
-        :stroke="getColor(layerIndex, index)"
-      />
-    </g>
-  </g>
-</template>
-
 <script>
 import {
   Spectrum,
@@ -89,6 +71,24 @@ export default {
   },
 };
 </script>
+
+<template>
+  <g class="curve" :transform="transform">
+    <g
+      v-for="(layer, layerIndex) in layers.members"
+      :key="layer"
+      class="layer"
+      :stroke-opacity="getOpacity(layerIndex)"
+    >
+      <StitchLine
+        v-for="(line, index) in layer"
+        :key="line"
+        :line="line"
+        :stroke="getColor(layerIndex, index)"
+      />
+    </g>
+  </g>
+</template>
 
 <style>
 </style>

@@ -1,7 +1,3 @@
-<template>
-  <polygon :points="points" fill="none"/>
-</template>
-
 <script>
 export default {
   name: 'StitchPolygon',
@@ -16,6 +12,10 @@ export default {
   },
 };
 </script>
+
+<template>
+  <polygon :points="points" fill="none" />
+</template>
 
 <style>
 </style>

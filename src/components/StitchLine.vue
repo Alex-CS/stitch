@@ -1,13 +1,3 @@
-<template>
-  <line
-    v-if="startPoint && endPoint"
-    :x1="startPoint.x"
-    :y1="startPoint.y"
-    :x2="endPoint.x"
-    :y2="endPoint.y"
-  />
-</template>
-
 <script>
 import {
   Point,
@@ -35,6 +25,16 @@ export default {
   },
 };
 </script>
+
+<template>
+  <line
+    v-if="startPoint && endPoint"
+    :x1="startPoint.x"
+    :y1="startPoint.y"
+    :x2="endPoint.x"
+    :y2="endPoint.y"
+  />
+</template>
 
 <style>
 </style>

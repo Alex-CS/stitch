@@ -1,62 +1,3 @@
-<template>
-  <div id="app">
-    <!--<svg :width="size" :height="size">
-      <StitchMultiCurve
-        :options="options"
-        :curve-type="curveType"
-        :reps="reps"
-        :radius="radius"
-        :initial="initial"
-        :colors="colors"
-      />
-    </svg>-->
-    <StitchCanvas :resolution="20" :size="600"/>
-    <div class="controls">
-      <!--<div>
-        <label>layerCount</label>
-        <input type="range"
-               v-model="options.layerCount"
-               min="1"
-               max="8">
-        <span>{{ options.layerCount }}</span>
-      </div>
-      <div>
-        <label>layerSepFactor</label>
-        <input type="range"
-               v-model="options.layerSepFactor"
-               min="1"
-               max="8">
-        <span>{{ options.layerSepFactor }}</span>
-      </div>
-      <div>
-        <label>numVertices</label>
-        <input type="range"
-               v-model="options.numVertices"
-               min="3"
-               max="8">
-        <span>{{ options.numVertices }}</span>
-      </div>
-      <div>
-        <label>resolution</label>
-        <input type="range"
-               v-model="options.resolution"
-               min="4"
-               max="64">
-        <span>{{ options.resolution }}</span>
-      </div>
-      <div>
-        <label>rotation</label>
-        <input type="range"
-               v-model="options.rotation"
-               min="0"
-               max="1"
-               :step="1/8">
-        <span>{{ options.rotation * 360 }}</span>
-      </div>-->
-    </div>
-  </div>
-</template>
-
 <script>
 import {
   Color,
@@ -105,6 +46,65 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div id="app">
+    <svg :width="size" :height="size">
+      <StitchMultiCurve
+        :options="options"
+        :curve-type="curveType"
+        :reps="reps"
+        :radius="radius"
+        :initial="initial"
+        :colors="colors"
+      />
+    </svg>
+    <!--<StitchCanvas :resolution="20" :size="600"/>-->
+    <div class="controls">
+      <!--<div>
+        <label>layerCount</label>
+        <input type="range"
+               v-model="options.layerCount"
+               min="1"
+               max="8">
+        <span>{{ options.layerCount }}</span>
+      </div>
+      <div>
+        <label>layerSepFactor</label>
+        <input type="range"
+               v-model="options.layerSepFactor"
+               min="1"
+               max="8">
+        <span>{{ options.layerSepFactor }}</span>
+      </div>
+      <div>
+        <label>numVertices</label>
+        <input type="range"
+               v-model="options.numVertices"
+               min="3"
+               max="8">
+        <span>{{ options.numVertices }}</span>
+      </div>
+      <div>
+        <label>resolution</label>
+        <input type="range"
+               v-model="options.resolution"
+               min="4"
+               max="64">
+        <span>{{ options.resolution }}</span>
+      </div>
+      <div>
+        <label>rotation</label>
+        <input type="range"
+               v-model="options.rotation"
+               min="0"
+               max="1"
+               :step="1/8">
+        <span>{{ options.rotation * 360 }}</span>
+      </div>-->
+    </div>
+  </div>
+</template>
 
 <style lang="scss">
 @import './assets/base.css';

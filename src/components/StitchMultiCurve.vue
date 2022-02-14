@@ -1,15 +1,3 @@
-<template>
-  <g class="multi-curve">
-    <StitchCurve
-      v-for="opts in allCurveOptions"
-      :key="opts"
-      :options="opts"
-      :curve-type="curveType"
-      :colors="colors"
-    />
-  </g>
-</template>
-
 <script>
 import {
   Point,
@@ -59,6 +47,18 @@ export default {
   },
 };
 </script>
+
+<template>
+  <g class="multi-curve">
+    <StitchCurve
+      v-for="opts in allCurveOptions"
+      :key="opts"
+      :options="opts"
+      :curve-type="curveType"
+      :colors="colors"
+    />
+  </g>
+</template>
 
 <style>
 </style>
