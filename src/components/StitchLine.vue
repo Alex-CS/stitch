@@ -9,7 +9,11 @@
 </template>
 
 <script>
-import { Point, Line } from '../classes';
+import {
+  Point,
+  Line,
+} from '@/classes';
+
 
 export default {
   name: 'StitchLine',

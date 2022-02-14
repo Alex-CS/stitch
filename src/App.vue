@@ -58,16 +58,18 @@
 </template>
 
 <script>
-import { CURVE_TYPES } from './constants';
 import {
   Color,
   Point,
-} from './classes';
+} from '@/classes';
+import { CURVE_TYPES } from '@/constants';
+
 import StitchCanvas from './components/StitchCanvas.vue';
-import StitchMultiCurve from './components/StitchMultiCurve';
+import StitchMultiCurve from './components/StitchMultiCurve.vue';
+
 
 export default {
-  name: 'app',
+  name: 'App',
   components: {
     StitchCanvas,
     StitchMultiCurve,

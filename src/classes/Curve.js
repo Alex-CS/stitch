@@ -3,11 +3,13 @@ import floor from 'lodash/floor';
 import round from 'lodash/round';
 import uniq from 'lodash/uniq';
 
-import { CURVE_TYPES } from '../constants';
-import { mapInRange } from '../utils';
+import { CURVE_TYPES } from '@/constants';
+import { mapInRange } from '@/utils';
+
 import Group from './Group';
 import Line from './Line';
 import Point from './Point';
+
 
 export class BaseCurve {
 

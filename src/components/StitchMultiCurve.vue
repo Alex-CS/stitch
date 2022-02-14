@@ -11,11 +11,13 @@
 </template>
 
 <script>
-import { mapInRange } from '../utils';
 import {
   Point,
-} from '../classes';
+} from '@/classes';
+import { mapInRange } from '@/utils';
+
 import StitchCurve from './StitchCurve.vue';
+
 
 export default {
   name: 'StitchMultiCurve',

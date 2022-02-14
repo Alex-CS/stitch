@@ -1,6 +1,9 @@
 import without from 'lodash/without';
-import { mapInRange } from '../utils';
+
+import { mapInRange } from '@/utils';
+
 import Point from './Point';
+
 
 export default class Line {
   /**

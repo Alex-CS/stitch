@@ -3,7 +3,8 @@ import isUndefined from 'lodash/isUndefined';
 
 import {
   RADIANS_PER_TURN,
-} from '../constants';
+} from '@/constants';
+
 
 export default class Point {
 

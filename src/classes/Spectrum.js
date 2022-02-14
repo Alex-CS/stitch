@@ -3,6 +3,7 @@ import last from 'lodash/last';
 
 import Color from './Color';
 
+
 export default class Spectrum {
 
   constructor(color1, color2) {

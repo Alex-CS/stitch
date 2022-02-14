@@ -1,8 +1,5 @@
-import { mapInRange } from '../utils';
+import { mapInRange } from '@/utils';
 
-export function rgba(r, g, b, a) {
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
 
 export default class Color {
 

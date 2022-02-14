@@ -40,8 +40,13 @@
 import _flatMap from 'lodash/flatMap';
 import _range from 'lodash/range';
 
-import { Point, Line } from '../classes';
+import {
+  Point,
+  Line,
+} from '@/classes';
+
 import StitchLine from './StitchLine.vue';
+
 
 const DEFAULT_INNER_RADIUS = 2;
 // The space to leave between the edge of the grid and the outer points

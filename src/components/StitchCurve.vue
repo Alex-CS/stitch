@@ -14,8 +14,10 @@
 import {
   Spectrum,
   makeCurve,
-} from '../classes';
+} from '@/classes';
+
 import StitchLine from './StitchLine.vue';
+
 
 export default {
   name: 'StitchCurve',

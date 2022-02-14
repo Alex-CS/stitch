@@ -9,7 +9,8 @@
 </template>
 
 <script>
-import { Point } from '../classes';
+import { Point } from '@/classes';
+
 
 export default {
   name: 'StitchCircle',

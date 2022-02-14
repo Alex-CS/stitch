@@ -1,6 +1,7 @@
 import _isFunction from 'lodash/isFunction';
 import _range from 'lodash/range';
 
+
 /**
  * Build an array by running `callback` for each number from `start` to `end`
  * If the second argument is a function, the first argument is used as `end`
@@ -17,6 +18,7 @@ export function mapInRange(start, end, callback) {
   return _range(start, end).map(callback);
 }
 
+// TODO: keeping this here just as an example for the math
 /**
  * Rotates a Two.Polygon about a point, "orbiting" that point.
  *
