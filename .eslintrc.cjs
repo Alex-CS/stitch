@@ -35,9 +35,10 @@ module.exports = {
     },
   },
 
-  // See the docs for a rule by going to https://eslint.org/docs/rules/<rule>
-  // For `import/<rule>`: https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/<rule>.md
-  // For `vue/<rule>`: https://eslint.vuejs.org/rules/<rule>.html
+  // See the docs for a rule by going to https://eslint.org/docs/rules/rule
+  // For `import/<rule>`: https://github.com/benmosher/eslint-plugin-import/blob/master/docs/rules/rule.md
+  // For `vue/<rule>`: https://eslint.vuejs.org/rules/rule.html
+  // For `@typescript-eslint/<rule>`: https://typescript-eslint.io/rules/rule
   rules: {
 
     // Disabled Rules ---------------------------------------------------------
@@ -85,21 +86,23 @@ module.exports = {
       'error',
       'beside',
     ],
-    'no-unused-vars': [
-      'error',
-      {
-        args: 'after-used',
-        argsIgnorePattern: '^\\w$', // Allow single-character unused args
-        ignoreRestSiblings: true,
-      },
-    ],
-    'lines-between-class-members': [
-      'error',
-      'always',
-      {
-        exceptAfterSingleLine: true,
-      },
-    ],
+    'no-unused-vars': 0, // NOTE: replaced by the typescript rule below
+    // 'no-unused-vars': [
+    //   'error',
+    //   {
+    //     args: 'after-used',
+    //     argsIgnorePattern: '^\\w$', // Allow single-character unused args
+    //     ignoreRestSiblings: true,
+    //   },
+    // ],
+    'lines-between-class-members': 0, // NOTE: replaced by the typescript rule below
+    // 'lines-between-class-members': [
+    //   'error',
+    //   'always',
+    //   {
+    //     exceptAfterSingleLine: true,
+    //   },
+    // ],
     'max-len': [
       'error',
       100, // length
@@ -261,6 +264,23 @@ module.exports = {
       {
         max: 2,
         maxEOF: 0, // Technically 1, but that's enforced by 'eol-last'
+      },
+    ],
+
+    // Typescript Rules -------------------------------------------------------
+    '@typescript-eslint/lines-between-class-members': [
+      'error',
+      'always',
+      {
+        exceptAfterSingleLine: true,
+      },
+    ],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        args: 'after-used',
+        argsIgnorePattern: '^\\w$', // Allow single-character unused args
+        ignoreRestSiblings: true,
       },
     ],
 

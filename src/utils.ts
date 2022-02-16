@@ -20,12 +20,15 @@ type ArrayIteratorCallback<ItemType, ResultType> = (
 export function mapInRange<ResultItem>(
   start: number,
   end: number | ArrayIteratorCallback<number, ResultItem>,
-  callback: ArrayIteratorCallback<number, ResultItem>,
-): Array<ResultItem> {
+  callback?: ArrayIteratorCallback<number, ResultItem>,
+): ResultItem[] {
   if (_isFunction(end)) {
     return _range(start).map(end);
   }
-  return _range(start, end).map(callback);
+  if (_isFunction(callback)) {
+    return _range(start, end).map(callback);
+  }
+  throw TypeError('callback must be provided as either the second or third argument');
 }
 
 /**

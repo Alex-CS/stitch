@@ -1,12 +1,15 @@
-import isNumber from 'lodash/isNumber';
-import isUndefined from 'lodash/isUndefined';
+import _isUndefined from 'lodash/isUndefined';
 
 import {
   RADIANS_PER_TURN,
 } from '@/constants';
 
 
+export type PointLike = Point | { x: number, y: number };
+
 export default class Point {
+  x: number;
+  y: number;
 
   /**
    * @constructor
@@ -21,9 +24,9 @@ export default class Point {
   /**
    * Create a new point from a point-like object
    *
-   * @param {Point|{x: number, y: number}} pointLike - Any object with x and y properties
+   * @param {PointLike} pointLike - Any object with x and y properties
    */
-  static from(pointLike) {
+  static from(pointLike: PointLike): Point {
     const { x, y } = pointLike;
     return new Point(x, y);
   }
@@ -33,19 +36,24 @@ export default class Point {
    *
    * @return {Point}
    */
-  static get origin() {
+  static get origin(): Point {
     return new Point(0, 0);
+  }
+
+  static isPointLike(candidate: any): candidate is PointLike {
+    return !_isUndefined(candidate?.x) && !_isUndefined(candidate?.y);
   }
 
   /**
    * Get the Point that is `radius` distance from this point at `rotation`
    *
-   * @param {number} rotation - The proportion of one full turn
-   * @param {number|{x: number, y: number}} radius
-   * @returns {Point}
+   * @param {number} rotation - The proportion of one full turn, i.e. `0.5` is 180 degrees
+   * @param {number|PointLike} radius - pass a number for circular rotation or a `PointLike` for elliptical
+   * @TODO: consider removing or spinning out the PointLike behavior?
+   * @return {Point}
    */
-  getRelativePoint(rotation, radius = 0) {
-    const dist = !isNumber(radius) ? radius : new Point(radius, radius);
+  getRelativePoint(rotation: number, radius: number | PointLike): Point {
+    const dist = Point.isPointLike(radius) ? radius : new Point(radius, radius);
     const angle = rotation * RADIANS_PER_TURN;
     const xDistance = Math.cos(angle) * dist.x;
     const yDistance = Math.sin(angle) * dist.y;
@@ -56,33 +64,20 @@ export default class Point {
   }
 
   /**
-   * Move the point
-   *
-   * @param {number} [x] - How much to move it horizontally
-   * @param {number} [y] - How much to move it vertically
-   * @return {Point} - The point after translation (for chaining)
-   */
-  translate(x = 0, y = 0) {
-    this.x = this.x + x;
-    this.y = this.y + y;
-    return this;
-  }
-
-  /**
    * Create a new point with the same coordinates
    * @returns {Point}
    */
-  clone() {
+  clone(): Point {
     return Point.from(this);
   }
 
   /**
    * Compare to another Point-like object
-   * @param {Point|{x: number, y: number}} p2 - The other point
+   * @param {PointLike} p2 - The other point
    * @returns {boolean}
    */
-  equals(p2) {
-    if (p2 && !isUndefined(p2.x) && !isUndefined(p2.y)) {
+  equals(p2: PointLike): boolean {
+    if (Point.isPointLike(p2)) {
       return p2.x === this.x && p2.y === this.y;
     }
     return false;
@@ -92,7 +87,7 @@ export default class Point {
    * Create a string in the form `(x, y)`
    * @returns {string}
    */
-  toString() {
+  toString(): string {
     return `(${this.x}, ${this.y})`;
   }
 }

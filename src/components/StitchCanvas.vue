@@ -151,9 +151,9 @@ export default {
         return this.gridSize[axis] * (index + this.gutterWidth);
       };
 
-      // TODO: For some (probably good) reason,
-      // TODO: the Point constructor rounds its input,
-      // TODO: so it wouldn't work here
+      // TODO: For some (probably good) reason, past Alex
+      // TODO: made the Point constructor rounds its input,
+      // TODO: which is why it can't be used here
       return {
         x: _getPos(xIndex, 'x'),
         y: _getPos(yIndex, 'y'),

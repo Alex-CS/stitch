@@ -17,7 +17,7 @@ export default {
     colors: Array,
     curveType: String,
     reps: Number,
-    radius: [Number, Point],
+    radius: Number,
     initial: {
       type: Number,
       default: 0,

@@ -1,17 +1,20 @@
-import without from 'lodash/without';
+import _without from 'lodash/without';
 
 import { mapInRange } from '@/utils';
 
 import Point from './Point';
 
 
-export default class Line {
+export default class Line implements Object {
+  start: Point;
+  end: Point;
+
   /**
    * @constructor
    * @param {Point} start
    * @param {Point} end
    */
-  constructor(start, end) {
+  constructor(start: Point, end: Point) {
     this.start = start;
     this.end = end;
   }
@@ -24,7 +27,7 @@ export default class Line {
    * @param {Point[]} excluded - Points to skip
    * @returns {Point[]}
    */
-  getPoints(resolution, excluded = []) {
+  getPoints(resolution: number, excluded: Point[] = []): Point[] {
     const rangeX = this.end.x - this.start.x;
     const rangeY = this.end.y - this.start.y;
     const stepX = rangeX / resolution;
@@ -36,10 +39,12 @@ export default class Line {
       return new Point(x, y);
     });
 
-    return without(range, ...excluded);
+    // FIXME: the exclusions won't work because the Point Objects don't match.
+    //  This will need some noodling to find the best solution
+    return _without(range, ...excluded);
   }
 
-  toString() {
+  toString(): string {
     return `${this.start}->${this.end}`;
   }
 }
