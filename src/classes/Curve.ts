@@ -1,19 +1,45 @@
-import flatten from 'lodash/flatten';
-import floor from 'lodash/floor';
-import round from 'lodash/round';
-import uniq from 'lodash/uniq';
+import _flatten from 'lodash/flatten';
+import _floor from 'lodash/floor';
+import _round from 'lodash/round';
+import _uniq from 'lodash/uniq';
 
 import { CURVE_TYPES } from '@/constants';
 import { mapInRange } from '@/utils';
 
 import Group from './Group';
 import Line from './Line';
-import Point from './Point';
+import Point, { type PointLike } from './Point';
 
 
-export class BaseCurve {
+interface ICurveOptions {
+  numVertices: number;
+  resolution: number;
+  width: number;
+  height: number;
+  center: Point | null;
+  layerCount: number;
+  layerSepFactor: number;
+  rotation: number;
+  showSpines: boolean;
+}
 
-  defaults = {
+/**
+ * @property {number} numVertices - The number of vertices in this shape
+ * @property {number} resolution - The number of points per spine
+ * @property {number} width - The size in the x dimension
+ * @property {number} height - The size in the y dimension
+ * @property {PointLike} [center] - The point to center the curve on
+ * @property {number} [layerCount] - The number of layers to draw
+ * @property {number} [layerSepFactor] - How many points to separate each layer by
+ * @property {number} [rotation] - The rotation angle of the shape
+ * @property {boolean} [showSpines] - Whether to render the spines with the curve
+ *
+ * @property {PointLike} radius - The radial distance from the center in the x and y dimensions
+ *
+ */
+export class BaseCurve<PointList extends Point[] | Point[][] = Point[] | Point[][]> {
+  // TODO: actually use these defaults for something
+  static defaults = {
     numVertices: 4,
     resolution: 2,
     layerCount: 1,
@@ -26,17 +52,22 @@ export class BaseCurve {
     spectrum: [],
   };
 
+  numVertices: number;
+  resolution: number;
+  layerCount: number;
+  layerSepFactor: number;
+  width: number;
+  height: number;
+  rotation: number;
+  showSpines: boolean;
+  center: Point;
+  radius: PointLike;
+
+  // Note: having `points` as a property may be a bigger headache than just passing it through the few places needed
+  protected points: PointList | null;
+
   /**
    * @constructor
-   * @param {number} numVertices - The number of vertices in this shape
-   * @param {number} resolution - The number of points per spine
-   * @param {number} width - The size in the x dimension
-   * @param {number} height - The size in the y dimension
-   * @param {Point|{x: number, y: number}} [center] - The point to center the curve on
-   * @param {number} [layerCount] - The number of layers to draw
-   * @param {number} [layerSepFactor] - How many points to separate each layer by
-   * @param {number} [rotation] - The rotation angle of the shape
-   * @param {boolean} [showSpines] - Whether to render the spines with the curve
    */
   constructor({
     numVertices,
@@ -48,33 +79,22 @@ export class BaseCurve {
     layerSepFactor = 1,
     rotation = 0,
     showSpines = false,
-  }) {
+  }: ICurveOptions) {
     this.numVertices = numVertices;
     this.resolution = resolution;
     this.layerCount = layerCount;
     this.layerSepFactor = layerSepFactor;
     this.width = width;
     this.height = height;
+    this.radius = {
+      x: this.width / 2,
+      y: this.height / 2,
+    };
     this.rotation = rotation;
     this.showSpines = showSpines;
-    this.center = center ? Point.from(center) : Point.from(this.radius);
+    this.center = Point.from(center ?? this.radius);
 
     this.points = null;
-  }
-
-  /**
-   * The radial distance from the center in the x and y dimensions
-   * @property
-   * @returns {{x: number, y: number}}
-   */
-  get radius() {
-    if (!this._radius) {
-      this._radius = {
-        x: this.width / 2,
-        y: this.height / 2,
-      };
-    }
-    return this._radius;
   }
 
   /**
@@ -82,16 +102,18 @@ export class BaseCurve {
    *
    * @returns {Group}
    */
-  stitch() {
+  stitch(): Group {
     console.time(`${this.constructor.name}#stitch()`);
     const { resolution, layerCount, layerSepFactor } = this;
     const spines = this.getSpines();
 
-    this.points = this.points || this.getAllPoints(spines);
+    if (this.points === null) {
+      this.points = this.getAllPoints(spines);
+    }
 
     // Layering constant
     // TODO: tweak this
-    const layerRatio = floor((resolution / layerCount) * layerSepFactor);
+    const layerRatio = _floor((resolution / layerCount) * layerSepFactor);
 
     const layers = this.getLayers(this.points, layerRatio);
     if (this.showSpines) {
@@ -107,21 +129,21 @@ export class BaseCurve {
    * @param {number} rotation - The rotation of the point
    * @return {Point}
    */
-  getSpinePoint(rotation) {
+  protected getSpinePoint(rotation: number): Point {
     return this.center.getRelativePoint(rotation, this.radius);
   }
 
   // Methods that need to be implemented by children
-  /* eslint-disable no-unused-vars */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
 
   /**
    * Get each layer
    *
-   * @param {Point[]} points
+   * @param {Point[] | Point[][]} points
    * @param {number} layerRatio
    * @return {Line[][]}
    */
-  getLayers(points, layerRatio) {
+  protected getLayers(points: PointList, layerRatio: number): Line[][] {
     throw Error('This must be implemented in a child class');
   }
 
@@ -130,9 +152,9 @@ export class BaseCurve {
    *
    * @abstract
    * @param {Line[]|Line[][]} spines
-   * @returns {Point[]}
+   * @returns {Point[] | Point[][]}
    */
-  getAllPoints(spines) {
+  protected getAllPoints(spines: Line[] | Line[][]): PointList {
     throw Error('This must be implemented in a child class');
   }
 
@@ -141,15 +163,18 @@ export class BaseCurve {
    * @abstract
    * @returns {Line[]}
    */
-  getSpines() {
+  protected getSpines(): Line[] {
     throw Error('This must be implemented in a child class');
   }
 
-  /* eslint-enable no-unused-vars */
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
 }
 
-export class BaseInwardCurve extends BaseCurve {
+/**
+ * Any curve where the spines are an enclosed shape. The stitching then occurs within that shape
+ */
+export class BaseInwardCurve extends BaseCurve<Point[]> {
 
   /**
    * Draw a line from each Point in `points` to the one `separation` ahead of it.
@@ -159,7 +184,7 @@ export class BaseInwardCurve extends BaseCurve {
    * @param {number} separation - How many points to separate by
    * @returns {Line[]}
    */
-  _followCurve(points, separation) {
+  private followCurve(points: Point[], separation: number): Line[] {
     const len = points.length;
     return points.map((pointB, i) => {
       const indexA = ((len - separation) + i) % len;
@@ -176,9 +201,9 @@ export class BaseInwardCurve extends BaseCurve {
    * @param {number} [separation] - How many points to separate by
    * @returns {Line[]}
    */
-  _stitchInward(points, resolution, separation = 0) {
-    const followDistance = round(resolution + separation + 1);
-    return this._followCurve(points, followDistance);
+  private stitchInward(points: Point[], resolution: number, separation = 0): Line[] {
+    const followDistance = _round(resolution + separation + 1);
+    return this.followCurve(points, followDistance);
   }
 
   /**
@@ -188,13 +213,13 @@ export class BaseInwardCurve extends BaseCurve {
    * @param {number} layerRatio - How much to separate each layer by
    * @returns {Line[][]}
    */
-  getLayers(points, layerRatio) {
+  protected getLayers(points: Point[], layerRatio: number): Line[][] {
     const { resolution, layerCount } = this;
     return mapInRange(this.layerCount, (i) => {
       // TODO: figure out & explain this math
       const layerNum = layerCount - i;
       const separation = (layerNum * layerRatio) % points.length;
-      return this._stitchInward(points, resolution, separation / 2);
+      return this.stitchInward(points, resolution, separation / 2);
     });
   }
 
@@ -204,11 +229,11 @@ export class BaseInwardCurve extends BaseCurve {
    * @param {Line[]} spines - The lines that define the backbone of the curve
    * @returns {Point[]}
    */
-  getAllPoints(spines) {
+  protected getAllPoints(spines: Line[]): Point[] {
     const nestedPoints = spines.map(
       spine => spine.getPoints(this.resolution),
     );
-    return uniq(flatten(nestedPoints));
+    return _uniq(_flatten(nestedPoints));
   }
 }
 
@@ -219,33 +244,41 @@ export class PolygonCurve extends BaseInwardCurve {
    *
    * @return {Line[]}
    */
-  getSpines() {
+  protected getSpines() {
     const { numVertices } = this;
     const vertices = mapInRange(numVertices,
       i => this.getSpinePoint(i / numVertices),
     );
 
-    return vertices.map(
-      (vertex, i) => new Line(vertex, vertices[(i + 1) % numVertices]),
-    );
+    return vertices.map((vertex, i) => (
+      new Line(vertex, vertices[(i + 1) % numVertices])
+    ));
   }
 }
 
 export class EllipseCurve extends BaseInwardCurve {
 
-  getSpines() {
+  /**
+   * Get all the points around the perimeter to use as "spines"
+   *
+   * @return {Line[]}
+   */
+  protected getSpines() {
     const pointCount = this.resolution * this.numVertices;
     this.points = mapInRange(pointCount,
       i => this.getSpinePoint(i / pointCount),
     );
 
-    return this.points.map(
-      (point, i) => new Line(point, this.points[(i + 1) % pointCount]),
-    );
+    return this.points.map((point, i, points) => (
+      new Line(point, points[(i + 1) % pointCount])
+    ));
   }
 }
 
-export class BaseOutwardCurve extends BaseCurve {
+/**
+ * Any curve where the spines radiate outward from the center and aren't enclosed
+ */
+export class BaseOutwardCurve extends BaseCurve<Point[][]> {
 
   /**
    * Given 2 equal-sized arrays of points, connect them (draw lines) in order.
@@ -256,19 +289,22 @@ export class BaseOutwardCurve extends BaseCurve {
    * @param {number} shave
    * @returns {Line[]}
    */
-  _bridgeSpines(spineA, spineB, shave) {
+  private bridgeSpines(spineA: Point[], spineB: Point[], shave: number): Line[] {
     // console.info(`spineA: ${spineA}, spineB: ${spineB}, shave: ${shave}`);
     const maxIndex = spineA.length - shave - 1;
     if (spineA.length !== spineB.length) {
       return [];
     }
-    const _connectPointsByIndex = (i) => {
+
+    // Connect the dots between the two spines,
+    // stepping backwards through `spineA` and forwards through `spineB`
+    // NOTE: This reverse order might be the biggest difference between inward & outward curves?
+    const lines = mapInRange(maxIndex + 1, function connectPointsByIndex(i) {
       const a = spineA[maxIndex - i];
       const b = spineB[i];
       return new Line(a, b);
-    };
-    const lines = mapInRange(maxIndex + 1, _connectPointsByIndex);
-    // console.info(`_bridgeSpines:\n ${lines.map(line => `  ${line}\n`)}`);
+    });
+    // console.info(`bridgeSpines:\n ${lines.map(line => `  ${line}\n`)}`);
     return lines;
   }
 
@@ -280,14 +316,14 @@ export class BaseOutwardCurve extends BaseCurve {
    * @param {number} shave
    * @returns {Line[]}
    */
-  _stitchOutward(points, shave) {
-    const connectAlongSpine = (spineA, i) => {
+  private stitchOutward(points: Point[][], shave: number): Line[] {
+    const connectAlongSpine = (spineA: Point[], i: number) => {
       const spineB = points[(i + 1) % points.length];
-      return this._bridgeSpines(spineA, spineB, round(shave));
+      return this.bridgeSpines(spineA, spineB, _round(shave));
     };
 
-    const lines = flatten(points.map(connectAlongSpine));
-    // console.info(`_stitchOutward:\n ${lines.map(line => `  ${line}\n`)}`);
+    const lines = _flatten(points.map(connectAlongSpine));
+    // console.info(`stitchOutward:\n ${lines.map(line => `  ${line}\n`)}`);
     return lines;
   }
 
@@ -297,27 +333,27 @@ export class BaseOutwardCurve extends BaseCurve {
    * @param {number} layerRatio
    * @return {Line[][]}
    */
-  getLayers(points, layerRatio) {
+  protected getLayers(points: Point[][], layerRatio: number): Line[][] {
     const { resolution, layerCount } = this;
     const layers = mapInRange(layerCount, (i) => {
       // TODO: figure out & explain this math
       const shave = ((i + 1) * layerRatio) % resolution/* (3 / 4)*/;
-      return this._stitchOutward(points, shave);
+      return this.stitchOutward(points, shave);
     });
     return layers;
   }
 
-  getAllPoints(spines) {
-    return spines.map(
-      spine => spine.getPoints(this.resolution, [this.center]),
-    );
+  protected getAllPoints(spines: Line[]): Point[][] {
+    return spines.map((spine) => (
+      spine.getPoints(this.resolution, [this.center])
+    ));
   }
 
 }
 
 export class StarCurve extends BaseOutwardCurve {
 
-  getSpines() {
+  protected getSpines(): Line[] {
     // TODO: explain why this is different than rect
     const { numVertices } = this;
 
@@ -330,7 +366,7 @@ export class StarCurve extends BaseOutwardCurve {
   }
 }
 
-export function makeCurve(curveType, options) {
+export function makeCurve(curveType: string, options: ICurveOptions): BaseCurve {
   switch (curveType) {
     case CURVE_TYPES.Elli:
       return new EllipseCurve(options);
