@@ -102,7 +102,7 @@ export class BaseCurve<PointList extends Point[] | Point[][] = Point[] | Point[]
    *
    * @returns {Group}
    */
-  stitch(): Group {
+  stitch(): Group<Line[]> {
     console.time(`${this.constructor.name}#stitch()`);
     const { resolution, layerCount, layerSepFactor } = this;
     const spines = this.getSpines();
