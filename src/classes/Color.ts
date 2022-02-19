@@ -1,45 +1,66 @@
 import { mapInRange } from '@/utils';
 
 
-export default class Color {
+export interface ColorLike {
+  red: number;
+  green: number;
+  blue: number;
+  alpha: number;
+}
 
-  constructor(red = 0, green = 0, blue = 0, alpha = 1) {
+/**
+ * @property {number} red - A number between 0 and 255 representing the RGB red value
+ * @property {number} green - A number between 0 and 255 representing the RGB green value
+ * @property {number} blue - A number between 0 and 255 representing the RGB blue value
+ * @property {number} alpha - A decimal between 0 and 1 representing the opacity
+ */
+export default class Color {
+  red: number;
+  green: number;
+  blue: number;
+  alpha: number;
+
+  static RGB_RANGE = {
+    min: 0,
+    max: 255,
+  };
+
+  static ALPHA_RANGE = {
+    min: 0,
+    max: 1,
+  };
+
+  constructor(red: number, green: number, blue: number, alpha = 1) {
     this.red = red;
     this.green = green;
     this.blue = blue;
     this.alpha = alpha;
   }
 
-  /**
-   * Create a new Color from a color-like object
-   * @param {number} red
-   * @param {number} green
-   * @param {number} blue
-   * @param {number} alpha
-   * @return {Color}
-   */
-  static from({ red, green, blue, alpha }) {
+  static from({ red, green, blue, alpha }: ColorLike): Color {
     return new Color(red, green, blue, alpha);
   }
 
-  clone() {
-    return new Color(this.red, this.green, this.blue, this.alpha);
+  clone(): Color {
+    return Color.from(this);
   }
 
-  toRGBAString() {
+  toRGBAString(): string {
     return `rgba(${this.red},${this.green},${this.blue},${this.alpha})`;
   }
 
-  toString() {
-    return `Color (${this.red},${this.green},${this.blue},${this.alpha})`;
+  toString(): string {
+    return `Color (${this.red}, ${this.green}, ${this.blue}, ${this.alpha})`;
   }
+
+  // NOTE: it's questionable whether the methods below really semantically _belong_ as instance methods...
 
   /**
    * Scale this Color closer to rgba(0,0,0,0) by `factor`
    * @param {number} factor
    * @returns {Color}
    */
-  scaleDown(factor) {
+  scaleDown(factor: number): Color {
     this.red = Math.round(this.red / factor);
     this.green = Math.round(this.green / factor);
     this.blue = Math.round(this.blue / factor);
@@ -52,7 +73,7 @@ export default class Color {
    * @param {Color} otherColor
    * @returns {Color}
    */
-  distanceTo(otherColor) {
+  distanceTo(otherColor: ColorLike): Color {
     const rDist = otherColor.red - this.red;
     const gDist = otherColor.green - this.green;
     const bDist = otherColor.blue - this.blue;
@@ -66,7 +87,7 @@ export default class Color {
    * @param {number} resolution
    * @returns {Color[]}
    */
-  stepsToward(otherColor, resolution) {
+  stepsToward(otherColor: Color, resolution: number): Color[] {
     const colorStep = this.distanceTo(otherColor).scaleDown(resolution);
 
     // Handle all the colors between the start and end
