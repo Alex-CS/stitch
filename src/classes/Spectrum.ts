@@ -1,19 +1,22 @@
-import first from 'lodash/first';
-import last from 'lodash/last';
+import _first from 'lodash/first';
+import _last from 'lodash/last';
 
 import Color from './Color';
 
 
 export default class Spectrum {
+  _colors: Color[];
+  _nextIndex: number;
 
-  constructor(color1, color2) {
+  constructor(...colors: Color[]) {
+    const [color1, color2] = colors;
     // TODO: test plotting through more than 2 initial colors
 
-    this._colors = [color1, color2 || color1] || [new Color(0, 0, 0)];
+    this._colors = [color1, color2 || color1];
     this._nextIndex = 0;
   }
 
-  clone() {
+  clone(): Spectrum {
     return new Spectrum(...this.colors);
   }
 
@@ -23,7 +26,7 @@ export default class Spectrum {
    * @readonly
    * @return {Color[]}
    */
-  get colors() {
+  get colors(): Color[] {
     return this._colors.map(color => color.clone());
   }
 
@@ -31,16 +34,16 @@ export default class Spectrum {
    * Get the first color in this Spectrum
    * @returns {Color}
    */
-  firstColor() {
-    return first(this._colors);
+  get firstColor(): Color {
+    return _first(this._colors) ?? Color.BLACK;
   }
 
   /**
    * Get the last color in this Spectrum
    * @returns {Color}
    */
-  lastColor() {
-    return last(this._colors);
+  get lastColor(): Color {
+    return _last(this._colors) ?? Color.BLACK;
   }
 
   /**
@@ -49,39 +52,39 @@ export default class Spectrum {
    * than the number of colors.
    * @returns {Color}
    */
-  nextColor() {
+  nextColor(): Color {
     const next = this._colors[this._nextIndex % this._colors.length];
     this._nextIndex += 1;
     return next;
   }
 
   /**
-   * Add `resolution` colors between each existing color in the spectrum
+   * Generate `resolution` colors, going from the Spectrum's first color to its last color and back again
    * @param {number} resolution
    * @returns {Spectrum} TODO return a new Spectrum rather than mutating
    */
-  segmentColors(resolution) {
+  segmentColors(resolution: number): Spectrum {
     if (this._colors.length < 2) {
       // You can't segment a single color
       return this;
     }
 
-    const start = this.firstColor();
-    const end = this.lastColor();
-    const colors = start.stepsToward(end, parseInt(resolution / 2, 10));
+    const start = this.firstColor;
+    const end = this.lastColor;
+    const colors = start.stepsToward(end, Math.floor(resolution / 2));
     this._colors = [start, ...colors, ...colors.reverse()];
 
     return this;
   }
 
-  reverse() {
+  reverse(): Spectrum {
     // Reverse the spectrum
     this._colors.reverse();
     this._nextIndex = 0;
     return this;
   }
 
-  toString() {
+  toString(): string {
     return `Spectrum [${this._colors}]`;
   }
 }

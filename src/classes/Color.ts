@@ -30,6 +30,10 @@ export default class Color {
     max: 1,
   };
 
+  static get BLACK() {
+    return new Color(0, 0, 0, 1);
+  }
+
   constructor(red: number, green: number, blue: number, alpha = 1) {
     this.red = red;
     this.green = green;
