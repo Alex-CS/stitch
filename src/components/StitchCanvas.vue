@@ -4,16 +4,22 @@
   *  - _Point_ is a javascript class that describes _point_s.
   *    *A* Point is an instance of such.
   *  - A _circle_ is a two-dimensional shape with a _point_ at its center
-  *  - A _dot_ is a small circle to visually represent its center
+  *  - A _dot_ is a small circle to visually represent a point
 -->
 
-<script>
+<script lang="ts">
 import _flatMap from 'lodash/flatMap';
 import _range from 'lodash/range';
 
 import {
+  defineComponent,
+} from 'vue';
+
+
+import {
   Point,
   Line,
+  type PointLike,
 } from '@/classes';
 
 import StitchLine from './StitchLine.vue';
@@ -24,16 +30,22 @@ const DEFAULT_INNER_RADIUS = 2;
 // as a multiple of the space between the grid points
 const DEFAULT_GUTTER_WIDTH = 0.5;
 
-export default {
+export default defineComponent({
   name: 'StitchCanvas',
   components: {
     StitchLine,
   },
   props: {
     // How many dots to show per row/column
-    resolution: Number,
+    resolution: {
+      type: Number,
+      required: true,
+    },
     // How big the canvas should be
-    size: Number,
+    size: {
+      type: Number,
+      required: true,
+    },
     // Whether to show the dots or not
     hideDots: Boolean,
   },
@@ -42,12 +54,12 @@ export default {
       gutterWidth: DEFAULT_GUTTER_WIDTH,
       width: this.size,
       height: this.size,
-      selected: null,
-      lines: [],
+      selected: null as PointLike | null,
+      lines: [] as Line[],
     };
   },
   computed: {
-    gridDots() {
+    gridDots(): PointLike[] {
       // FIXME There's gotta be a better way to get points
       return _flatMap(_range(this.resolution),
         yIndex => _range(this.resolution).map(
@@ -60,9 +72,9 @@ export default {
       // }
     },
 
-    gridSize() {
+    gridSize(): { x: number, y: number } { // TODO: `width` & `height` might be better
       // The distance between adjacent points
-      const getGridSpace = (max) => {
+      const getGridSpace = (max: number) => {
         // Adjustment factor to keep points evenly-spaced regardless of margin
         // `2 * this.gutterWidth` because there's gutter on both sides
         // `- 1` TODO
@@ -82,7 +94,7 @@ export default {
      * @property
      * @return {Number}
      */
-    innerRadius() {
+    innerRadius(): number {
       return this.hideDots ? 0 : DEFAULT_INNER_RADIUS;
     },
 
@@ -104,7 +116,7 @@ export default {
      * @property
      * @return {Number}
      */
-    dotRadius() {
+    dotRadius(): number {
       const gridSize = Math.min(this.gridSize.x, this.gridSize.y);
       // We want `outerRadius` to be half of gridSize, so:
       // gridSize = 2 * outerRadius = 2 * (r + w/2)
@@ -128,7 +140,7 @@ export default {
      * @property
      * @return {Number}
      */
-    dotStrokeWidth() {
+    dotStrokeWidth(): number {
       return (2 * this.dotRadius) - (2 * this.innerRadius);
     },
 
@@ -141,13 +153,13 @@ export default {
      * @property
      * @return {Number}
      */
-    outerRadius() {
+    outerRadius(): number {
       return this.dotRadius + (this.dotStrokeWidth / 2);
     },
   },
   methods: {
-    getPosition(xIndex, yIndex) {
-      const _getPos = (index, axis) => {
+    getPosition(xIndex: number, yIndex: number): PointLike {
+      const getPos = (index: number, axis: 'x' | 'y') => {
         return this.gridSize[axis] * (index + this.gutterWidth);
       };
 
@@ -155,17 +167,17 @@ export default {
       // TODO: made the Point constructor rounds its input,
       // TODO: which is why it can't be used here
       return {
-        x: _getPos(xIndex, 'x'),
-        y: _getPos(yIndex, 'y'),
+        x: getPos(xIndex, 'x'),
+        y: getPos(yIndex, 'y'),
       };
     },
-    isSelected(point) {
+    isSelected(point: PointLike): boolean {
       if (this.selected) {
         return Point.prototype.equals.call(this.selected, point);
       }
       return false;
     },
-    select(point) {
+    select(point: PointLike) {
       const { x, y } = point;
       // TODO order these better
       if (this.selected === null) {
@@ -178,12 +190,15 @@ export default {
         this.selected = null;
       } else {
         // Draw line
-        this.lines.push(new Line(this.selected, point));
+        this.lines.push(new Line(
+          Point.from(this.selected),
+          Point.from(point)),
+        );
         this.selected = null;
       }
     },
   },
-};
+});
 </script>
 
 <template>

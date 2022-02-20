@@ -10,6 +10,7 @@ export {
 } from './Line';
 export {
   default as Point,
+  type PointLike,
 } from './Point';
 export {
   default as Spectrum,
