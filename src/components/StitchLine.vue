@@ -1,11 +1,15 @@
-<script>
+<script lang="ts">
+import {
+  defineComponent,
+} from 'vue';
+
 import {
   Point,
   Line,
 } from '@/classes';
 
 
-export default {
+export default defineComponent({
   name: 'StitchLine',
   props: {
     line: Line,
@@ -13,17 +17,20 @@ export default {
     point2: Point,
   },
   data() {
-    const startPoint = this.line ? this.line.start : this.point1;
-    const endPoint = this.line ? this.line.end : this.point2;
+    const startPoint = this.line?.start ?? this.point1;
+    const endPoint = this.line?.end ?? this.point2;
+
+    if (!startPoint || !endPoint) {
+      console.warn('StitchLine will not render without two Points, or a Line!');
+      console.warn('Received:', this.$props);
+    }
 
     return {
       startPoint,
       endPoint,
     };
   },
-  methods: {
-  },
-};
+});
 </script>
 
 <template>
@@ -35,6 +42,3 @@ export default {
     :y2="endPoint.y"
   />
 </template>
-
-<style>
-</style>
