@@ -9,6 +9,7 @@ import {
   Spectrum,
   makeCurve,
   type ICurveOptionsStrict,
+  type SpectrumParams,
   type Curve,
   type Group,
   type Line,
@@ -40,7 +41,7 @@ export default defineComponent({
       default: '',
     },
     colors: {
-      type: Array as PropType<Color[]>,
+      type: Array as PropType<SpectrumParams>,
       default: () => [Color.BLACK],
     },
   },

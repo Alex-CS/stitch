@@ -4,6 +4,8 @@ import _last from 'lodash/last';
 import Color from './Color';
 
 
+export type SpectrumParams = ConstructorParameters<typeof Spectrum>;
+
 export default class Spectrum {
   _colors: Color[];
   _nextIndex: number;

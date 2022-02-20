@@ -1,34 +1,52 @@
-<script>
+<script lang="ts">
 import {
-  Point,
+  defineComponent,
+  type PropType,
+} from 'vue';
+
+import {
+  type ICurveOptionsStrict,
+  type SpectrumParams,
 } from '@/classes';
+import { CURVE_TYPES } from '@/constants';
 import { mapInRange } from '@/utils';
 
 import StitchCurve from './StitchCurve.vue';
 
 
-export default {
+export default defineComponent({
   name: 'StitchMultiCurve',
   components: {
     StitchCurve,
   },
   props: {
-    options: Object,
-    colors: Array,
-    curveType: String,
-    reps: Number,
-    radius: Number,
+    options: {
+      type: Object as PropType<ICurveOptionsStrict>,
+      required: true,
+    },
+    colors: {
+      type: Array as PropType<SpectrumParams>,
+      required: true,
+    },
+    curveType: {
+      type: String,
+      default: CURVE_TYPES.Star,
+    },
+    reps: {
+      type: Number,
+      default: 1,
+    },
+    radius: {
+      type: Number,
+      default: 0,
+    },
     initial: {
       type: Number,
       default: 0,
     },
   },
-  data() {
-    return {
-    };
-  },
   computed: {
-    allCurveOptions() {
+    allCurveOptions(): ICurveOptionsStrict[] {
       const { options, reps, radius, initial } = this;
       return mapInRange(reps, (i) => {
         const rotation = (i / reps) + initial;
@@ -45,7 +63,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <template>
