@@ -11,7 +11,7 @@ import Line from './Line';
 import Point, { type PointLike } from './Point';
 
 
-interface ICurveOptions {
+export interface ICurveOptions {
   numVertices: number;
   resolution: number;
   width: number;
@@ -22,6 +22,9 @@ interface ICurveOptions {
   rotation: number;
   showSpines: boolean;
 }
+export type ICurveOptionsStrict = ICurveOptions & { center: Point };
+
+export type Curve = BaseCurve<Point[] | Point[][]>;
 
 /**
  * @property {number} numVertices - The number of vertices in this shape
@@ -37,7 +40,7 @@ interface ICurveOptions {
  * @property {PointLike} radius - The radial distance from the center in the x and y dimensions
  *
  */
-export class BaseCurve<PointList extends Point[] | Point[][] = Point[] | Point[][]> {
+export class BaseCurve<PointList extends Point[] | Point[][]> {
   // TODO: actually use these defaults for something
   static defaults = {
     numVertices: 4,
@@ -366,7 +369,8 @@ export class StarCurve extends BaseOutwardCurve {
   }
 }
 
-export function makeCurve(curveType: string, options: ICurveOptions): BaseCurve {
+// TODO: There's probably a way for Typescript to be aware of specifically which class is returned
+export function makeCurve(curveType: string, options: ICurveOptions): Curve {
   switch (curveType) {
     case CURVE_TYPES.Elli:
       return new EllipseCurve(options);

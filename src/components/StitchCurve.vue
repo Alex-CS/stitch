@@ -1,23 +1,48 @@
-<script>
+<script lang="ts">
 import {
+  defineComponent,
+  type PropType,
+} from 'vue';
+
+import {
+  Color,
   Spectrum,
   makeCurve,
+  type ICurveOptionsStrict,
+  type Curve,
+  type Group,
+  type Line,
 } from '@/classes';
 
 import StitchLine from './StitchLine.vue';
 
 
-export default {
+export default defineComponent({
   name: 'StitchCurve',
   components: {
     StitchLine,
   },
   props: {
-    options: Object,
-    curveType: String,
-    rotation: Number,
-    translation: String,
-    colors: Array,
+    options: {
+      type: Object as PropType<ICurveOptionsStrict>,
+      required: true,
+    },
+    curveType: {
+      type: String,
+      required: true,
+    },
+    rotation: {
+      type: Number,
+      default: 0,
+    },
+    translation: {
+      type: String,
+      default: '',
+    },
+    colors: {
+      type: Array as PropType<Color[]>,
+      default: () => [Color.BLACK],
+    },
   },
   data() {
     return {
@@ -25,13 +50,13 @@ export default {
     };
   },
   computed: {
-    curve() {
+    curve(): Curve {
       return makeCurve(this.curveType, this.options);
     },
-    layers() {
+    layers(): Group<Line[]> {
       return this.curve.stitch();
     },
-    transform() {
+    transform(): string {
       // FIXME: Get rid of this mess by consuming rotation in the Curve class
       const { rotation, center } = this.options;
       const translation = this.translation || `${center.x} ${center.y}`;
@@ -39,7 +64,7 @@ export default {
         `rotate(${360 * (this.rotation || rotation)} ${translation})`
       );
     },
-    layerSpectra() {
+    layerSpectra(): string[][] {
       if (!this.layers || !this.colors) {
         return [];
       }
@@ -57,19 +82,19 @@ export default {
     },
   },
   methods: {
-    makeTitle(layerNum, index) {
+    makeTitle(layerNum: number, index: number): string {
       return `${this.curveType}-layer${layerNum}-line${index}`;
     },
-    getColor(indexOfLayer, indexInLayer) {
+    getColor(indexOfLayer: number, indexInLayer: number): string {
       return this.layerSpectra[indexOfLayer][indexInLayer];
     },
-    getOpacity(index) {
+    getOpacity(index: number): number {
       const min = 0.4;
       const range = 1 - min;
       return ((range / (index + 1)) + min);
     },
   },
-};
+});
 </script>
 
 <template>
