@@ -1,5 +1,9 @@
 <script lang="ts">
 import {
+  defineComponent,
+} from 'vue';
+
+import {
   Color,
   Point,
 } from '@/classes';
@@ -9,7 +13,7 @@ import StitchCanvas from './components/StitchCanvas.vue';
 import StitchMultiCurve from './components/StitchMultiCurve.vue';
 
 
-export default {
+export default defineComponent({
   name: 'App',
   components: {
     StitchCanvas,
@@ -45,7 +49,7 @@ export default {
   },
   methods: {
   },
-};
+});
 </script>
 
 <template>
