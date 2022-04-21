@@ -1,4 +1,4 @@
-import _isUndefined from 'lodash/isUndefined';
+import _isNumber from 'lodash/isNumber';
 
 import {
   RADIANS_PER_TURN,
@@ -21,6 +21,8 @@ export default class Point {
     this.y = Math.round(y);
   }
 
+  // Static methods -----------------------------------------------------------
+
   /**
    * Create a new point from a point-like object
    *
@@ -40,10 +42,21 @@ export default class Point {
     return new Point(0, 0);
   }
 
+  /**
+   * Determine if a given object is functionally a point
+   * @param candidate
+   * @returns {candidate is PointLike}
+   */
   static isPointLike(candidate: any): candidate is PointLike {
-    return !_isUndefined(candidate?.x) && !_isUndefined(candidate?.y);
+    return _isNumber(candidate?.x) && _isNumber(candidate?.y);
   }
 
+  /**
+   * Determine if two points occupy the same coordinates
+   * @param pointA
+   * @param pointB
+   * @returns {boolean}
+   */
   static areEqual(pointA: PointLike | any, pointB: PointLike | any): boolean {
     if (Point.isPointLike(pointA) && Point.isPointLike(pointB)) {
       return pointA.x === pointB.x
@@ -52,12 +65,20 @@ export default class Point {
     return false;
   }
 
+  /**
+   * Get the absolute distance between two points
+   * @param {PointLike} pointA
+   * @param {PointLike} pointB
+   * @returns {number}
+   */
   static distance(pointA: PointLike, pointB: PointLike): number {
     const xDist = Math.abs(pointB.x - pointA.x);
     const yDist = Math.abs(pointB.y - pointA.y);
 
     return Math.sqrt(xDist ** 2 + yDist ** 2);
   }
+
+  // Instance methods ---------------------------------------------------------
 
   /**
    * Get the Point that is `radius` distance from this point at `rotation`
