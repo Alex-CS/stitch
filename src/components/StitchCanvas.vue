@@ -54,17 +54,20 @@ export default defineComponent({
       gutterWidth: DEFAULT_GUTTER_WIDTH,
       width: this.size,
       height: this.size,
-      selected: null as PointLike | null,
+      selectedPoint: null as PointLike | null,
+      selectedLine: null as Line | null,
       lines: [] as Line[],
     };
   },
   computed: {
     gridDots(): PointLike[] {
       // FIXME There's gotta be a better way to get points
-      return _flatMap(_range(this.resolution),
-        yIndex => _range(this.resolution).map(
+      const range = _range(this.resolution);
+      return _flatMap(range,
+        yIndex => range.map(
           xIndex => this.getPosition(xIndex, yIndex),
-        ));
+        ),
+      );
       // for (const yIndex = 0; yIndex < this.resolution; yIndex++) {
       //   for (const xIndex = 0; xIndex < this.resolution; xIndex++)) {
       //     yield this.getPosition(xIndex, yIndex);
@@ -72,7 +75,8 @@ export default defineComponent({
       // }
     },
 
-    gridSize(): { x: number, y: number } { // TODO: `width` & `height` might be better
+    gridSize(): { x: number, y: number } {
+      // TODO: `width` & `height` might be better return names
       // The distance between adjacent points
       const getGridSpace = (max: number) => {
         // Adjustment factor to keep points evenly-spaced regardless of margin
@@ -159,9 +163,9 @@ export default defineComponent({
   },
   methods: {
     getPosition(xIndex: number, yIndex: number): PointLike {
-      const getPos = (index: number, axis: 'x' | 'y') => {
-        return this.gridSize[axis] * (index + this.gutterWidth);
-      };
+      const getPos = (index: number, axis: 'x' | 'y') => (
+        this.gridSize[axis] * (index + this.gutterWidth)
+      );
 
       // TODO: For some (probably good) reason, past Alex
       // TODO: made the Point constructor rounds its input,
@@ -171,30 +175,32 @@ export default defineComponent({
         y: getPos(yIndex, 'y'),
       };
     },
-    isSelected(point: PointLike): boolean {
-      if (this.selected) {
-        return Point.prototype.equals.call(this.selected, point);
+    isSelected(item: PointLike | Line): boolean {
+      if (Point.isPointLike(item)) {
+        return Point.areEqual(this.selectedPoint, item);
+      } else if (this.selectedLine) {
+        return Line.areEqual(this.selectedLine, item);
       }
       return false;
     },
-    select(point: PointLike) {
+    selectPoint(point: PointLike) {
       const { x, y } = point;
       // TODO order these better
-      if (this.selected === null) {
+      if (this.selectedPoint === null) {
         // Select first point
         console.log(`Select { x: ${x}, y: ${y} }`);
-        this.selected = { x, y };
+        this.selectedPoint = { x, y };
       } else if (this.isSelected(point)) {
         // Deselect
         console.log(`Deselect { x: ${x}, y: ${y} }`);
-        this.selected = null;
+        this.selectedPoint = null;
       } else {
         // Draw line
-        this.lines.push(new Line(
-          Point.from(this.selected),
-          Point.from(point)),
-        );
-        this.selected = null;
+        this.lines.push(Line.from({
+          start: this.selectedPoint,
+          end: point,
+        }));
+        this.selectedPoint = null;
       }
     },
   },
@@ -214,7 +220,7 @@ export default defineComponent({
         :cy="point.y"
         :r="dotRadius"
         :stroke-width="dotStrokeWidth"
-        @click.stop="select(point)"
+        @click.stop="selectPoint(point)"
       />
       <!-- TODO Add hover event that makes the inner circle bigger -->
     </g> <!-- end #circles -->
@@ -223,8 +229,9 @@ export default defineComponent({
       <StitchLine
         v-for="(line, i) in lines"
         :key="line.toString()"
-        :class="{ active: i === lines.length - 1 }"
+        :class="{ active: isSelected(line) }"
         :line="line"
+        @click="selectedLine = isSelected(line) ? null : line"
       />
     </g> <!-- end #lines -->
   </svg>

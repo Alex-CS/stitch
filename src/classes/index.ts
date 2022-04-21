@@ -7,6 +7,7 @@ export {
 } from './Group';
 export {
   default as Line,
+  type LineLike,
 } from './Line';
 export {
   default as Point,

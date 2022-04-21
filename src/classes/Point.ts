@@ -44,10 +44,25 @@ export default class Point {
     return !_isUndefined(candidate?.x) && !_isUndefined(candidate?.y);
   }
 
+  static areEqual(pointA: PointLike | any, pointB: PointLike | any): boolean {
+    if (Point.isPointLike(pointA) && Point.isPointLike(pointB)) {
+      return pointA.x === pointB.x
+        && pointA.y === pointB.y;
+    }
+    return false;
+  }
+
+  static distance(pointA: PointLike, pointB: PointLike): number {
+    const xDist = Math.abs(pointB.x - pointA.x);
+    const yDist = Math.abs(pointB.y - pointA.y);
+
+    return Math.sqrt(xDist ** 2 + yDist ** 2);
+  }
+
   /**
    * Get the Point that is `radius` distance from this point at `rotation`
    *
-   * @param {number} rotation - The proportion of one full turn, i.e. `0.5` is 180 degrees
+   * @param {number} rotation - The proportion of one full turn, i.e. `0.5` is 180 degrees TODO: "revolutions" might be a better term for this
    * @param {number|PointLike} radius - pass a number for circular rotation or a `PointLike` for elliptical
    * @TODO: consider removing or spinning out the PointLike behavior?
    * @return {Point}
@@ -77,10 +92,7 @@ export default class Point {
    * @returns {boolean}
    */
   equals(p2: PointLike): boolean {
-    if (Point.isPointLike(p2)) {
-      return p2.x === this.x && p2.y === this.y;
-    }
-    return false;
+    return Point.areEqual(this, p2);
   }
 
   /**
