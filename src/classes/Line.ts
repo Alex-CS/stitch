@@ -1,8 +1,13 @@
 import _without from 'lodash/without';
 
-import { mapInRange } from '@/utils';
+import {
+  mapInRange,
+} from '@/utils';
 
 import Point, { type PointLike } from './Point';
+import {
+  distance,
+} from './utils';
 
 
 export interface LineLike {
@@ -68,7 +73,7 @@ export default class Line {
    * @returns {number}
    */
   get length(): number {
-    return Point.distance(this.start, this.end);
+    return distance(this.start, this.end);
   }
 
   // Instance methods ---------------------------------------------------------

@@ -19,11 +19,14 @@ import {
 import {
   Point,
   Line,
+  stitch,
   type PointLike,
 } from '@/classes';
 
 import StitchLine from './StitchLine.vue';
 
+
+type CurveStitches = Line[];
 
 const DEFAULT_INNER_RADIUS = 2;
 // The space to leave between the edge of the grid and the outer points
@@ -57,6 +60,7 @@ export default defineComponent({
       selectedPoint: null as PointLike | null,
       selectedLine: null as Line | null,
       lines: [] as Line[],
+      stitches: [] as CurveStitches,
     };
   },
   computed: {
@@ -203,6 +207,32 @@ export default defineComponent({
         this.selectedPoint = null;
       }
     },
+    selectLine(line: Line) {
+      if (this.selectedLine === null) {
+        // Select first line
+        console.log(`Selected spine1: ${line}`);
+        this.selectedLine = line;
+      } else if (this.isSelected(line)) {
+        // Deselect
+        console.log(`Deselect spine1: ${line}`);
+        this.selectedLine = null;
+      } else {
+        // Stitch
+        console.log(`Stitching spine1: ${this.selectedLine}, spine2: ${line}`);
+
+        this.stitches.push(...this.getStitches(this.selectedLine, line));
+
+        this.selectedLine = null;
+      }
+    },
+    getStitches(lineA: Line, lineB: Line): CurveStitches {
+      // NOTE: This only works for horizontal and vertical lines
+      // Get the number of grid dots along this line to make it easier to eyeball if the lines are right
+      const dynamicResolution = lineB.length / (this.outerRadius * 2);
+      const stitchLines = stitch([lineA, lineB], dynamicResolution);
+
+      return stitchLines;
+    },
   },
 });
 </script>
@@ -227,13 +257,25 @@ export default defineComponent({
 
     <g id="lines">
       <StitchLine
-        v-for="(line, i) in lines"
+        v-for="(line) in lines"
         :key="line.toString()"
-        :class="{ active: isSelected(line) }"
+        :class="{
+          active: isSelected(line),
+        }"
         :line="line"
-        @click="selectedLine = isSelected(line) ? null : line"
+        class="spine"
+        @click="selectLine(line)"
       />
     </g> <!-- end #lines -->
+
+    <g id="stitches">
+      <StitchLine
+        v-for="(stitch) in stitches"
+        :key="stitch.toString()"
+        :line="stitch"
+        class="stitch"
+      />
+    </g> <!-- end #stitches -->
   </svg>
 </template>
 

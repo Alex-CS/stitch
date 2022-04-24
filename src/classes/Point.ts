@@ -34,15 +34,6 @@ export default class Point {
   }
 
   /**
-   * Get the (0,0) point
-   *
-   * @return {Point}
-   */
-  static get origin(): Point {
-    return new Point(0, 0);
-  }
-
-  /**
    * Determine if a given object is functionally a point
    * @param candidate
    * @returns {candidate is PointLike}
@@ -63,19 +54,6 @@ export default class Point {
         && pointA.y === pointB.y;
     }
     return false;
-  }
-
-  /**
-   * Get the absolute distance between two points
-   * @param {PointLike} pointA
-   * @param {PointLike} pointB
-   * @returns {number}
-   */
-  static distance(pointA: PointLike, pointB: PointLike): number {
-    const xDist = Math.abs(pointB.x - pointA.x);
-    const yDist = Math.abs(pointB.y - pointA.y);
-
-    return Math.sqrt(xDist ** 2 + yDist ** 2);
   }
 
   // Instance methods ---------------------------------------------------------

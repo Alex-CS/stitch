@@ -4,6 +4,9 @@ import _round from 'lodash/round';
 import _uniq from 'lodash/uniq';
 
 import { CURVE_TYPES } from '@/constants';
+import {
+  type Pair,
+} from '@/types/utility';
 import { mapInRange } from '@/utils';
 
 import Group from './Group';
@@ -25,6 +28,51 @@ export interface ICurveOptions {
 export type ICurveOptionsStrict = ICurveOptions & { center: Point };
 
 export type Curve = BaseCurve<Point[] | Point[][]>;
+export type LinePair = Pair<Line>;
+type Spine = Point[];
+type SpinePair = Pair<Spine>;
+
+/**
+ * Get the stitch endpoints along each line
+ * @param {LinePair} linePair
+ * @param {number} resolution
+ * @returns {SpinePair}
+ */
+function getSpinePoints(linePair: LinePair, resolution: number): SpinePair {
+  const [lineA, lineB] = linePair;
+  const spineAPoints: Point[] = lineA.getPoints(resolution);
+  const spineBPoints: Point[] = lineB.getPoints(resolution);
+
+  return [spineAPoints, spineBPoints];
+}
+
+/**
+ * Given two Spines, create the Lines stitching between them
+ * @param {Spine} spineA
+ * @param {Spine} spineB
+ * @returns {Line[]}
+ */
+function connectSpines(spineA: Spine, spineB: Spine): Line[] {
+  return spineA.map((pointA, index) => (
+    new Line(pointA, spineB[index])
+  ));
+}
+
+/**
+ * Given two lines, stitch them together
+ * @param {LinePair} spineLines
+ * @param {number} resolution
+ * @returns {Line[]}
+ */
+export function stitch(spineLines: LinePair, resolution: number): Line[] {
+
+  // Get `resolution` points along each line
+  const [spineA, spineB] = getSpinePoints(spineLines, resolution);
+
+  // Connect the points between two spineLines
+  return connectSpines(spineA, spineB);
+}
+
 
 /**
  * @property {number} numVertices - The number of vertices in this shape
@@ -38,7 +86,6 @@ export type Curve = BaseCurve<Point[] | Point[][]>;
  * @property {boolean} [showSpines] - Whether to render the spines with the curve
  *
  * @property {PointLike} radius - The radial distance from the center in the x and y dimensions
- *
  */
 export class BaseCurve<PointList extends Point[] | Point[][]> {
   // TODO: actually use these defaults for something
