@@ -17,3 +17,6 @@ export {
   default as Spectrum,
   type SpectrumParams,
 } from './Spectrum';
+export {
+  default as Vector,
+} from './Vector';

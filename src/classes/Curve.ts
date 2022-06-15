@@ -33,15 +33,53 @@ type Spine = Point[];
 type SpinePair = Pair<Spine>;
 
 /**
+ * Reorder the lines for aesthetics.
+ *
+ * Order the lines to make all stitches roughly the same length.
+ * In practice, where L1 and L2 are the correctly-ordered output lines, we want:
+ * - L1's `end` should be closer to L2's `start`
+ * - The distance between the two lines' `start` points should be roughly equal
+ *   to the distance between their `end` points (or at least closer than it would've been for any alternate arrangement)
+ *
+ * NOTE: This could probably be tweaked to also work for parallel mode if that's ever desired
+ *
+ * @param {LinePair} linePair
+ * @returns {LinePair} A modified line pair, or the original if no change was needed
+ */
+export function flipLines(linePair: LinePair): LinePair {
+  const intersectionPoint = Line.intersection(...linePair);
+
+  if (intersectionPoint === null) {
+    return linePair;
+  }
+  const [lineA, lineB] = linePair;
+  const closerEndOfA = intersectionPoint.closest(lineA.start, lineA.end);
+  const closerEndOfB = intersectionPoint.closest(lineB.start, lineB.end);
+
+  if (closerEndOfA === lineA.end && closerEndOfB === lineB.start) {
+    return linePair;
+  }
+
+  // Flip A if its `start` is closer to the intersection
+  // Flip B if its `end` is closer to the intersection
+  const newA = closerEndOfA === lineA.start ? Line.inverseOf(lineA) : lineA;
+  const newB = closerEndOfB === lineB.end ? Line.inverseOf(lineB) : lineB;
+
+  return [newA, newB];
+}
+
+/**
  * Get the stitch endpoints along each line
  * @param {LinePair} linePair
  * @param {number} resolution
  * @returns {SpinePair}
  */
 function getSpinePoints(linePair: LinePair, resolution: number): SpinePair {
-  const [lineA, lineB] = linePair;
+  const [lineA, lineB] = flipLines(linePair);
+  // TODO: the offset on B is really only necessary if lineA.end === lineB.start === intersectionPoint
+  //       If they don't, there could be one more spine point in each line
   const spineAPoints: Point[] = lineA.getPoints(resolution);
-  const spineBPoints: Point[] = lineB.getPoints(resolution);
+  const spineBPoints: Point[] = lineB.getPoints(resolution, 1);
 
   return [spineAPoints, spineBPoints];
 }
@@ -395,6 +433,7 @@ export class BaseOutwardCurve extends BaseCurve<Point[][]> {
 
   protected getAllPoints(spines: Line[]): Point[][] {
     return spines.map((spine) => (
+      // @ts-ignore TODO: fix this
       spine.getPoints(this.resolution, [this.center])
     ));
   }

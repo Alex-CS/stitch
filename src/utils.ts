@@ -1,5 +1,10 @@
 import _isFunction from 'lodash/isFunction';
+import _partition from 'lodash/partition';
 import _range from 'lodash/range';
+
+import {
+  type Pair,
+} from '@/types/utility';
 
 
 type ArrayIteratorCallback<ItemType, ResultType> = (
@@ -29,6 +34,34 @@ export function mapInRange<ResultItem>(
     return _range(start, end).map(callback);
   }
   throw TypeError('callback must be provided as either the second or third argument');
+}
+
+/**
+ * Given two items, determine which one matches a given function and which doesn't.
+ * If neither or both of them match, this will just return an empty array
+ *
+ * Note: Use this when:
+ *     (a) you've got exactly two items,
+ *     (b) there's some condition you can use to differentiate between them,
+ *     (c) you need both the matching and the non-matching one
+ *     If any of the above AREN'T true, there's better approaches (with clearer names)
+ *
+ * @template Item
+ * @param {Pair<Item>} items
+ * @param {(item: Item) => boolean} matchFn
+ * @returns {Pair<Item | null>}
+ */
+export function differentiate<Item>(
+  items: Pair<Item>,
+  matchFn: (item: Item) => boolean,
+): Pair<Item> | readonly [] {
+  const [matches, nonmatches] = _partition(items, matchFn);
+
+  // Only get results if there's exactly one match and one non-match
+  if (matches.length === 1 && nonmatches.length === 1) {
+    return [matches[0], nonmatches[0]];
+  }
+  return [];
 }
 
 /**

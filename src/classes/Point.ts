@@ -1,8 +1,13 @@
 import _isNumber from 'lodash/isNumber';
+import _minBy from 'lodash/minBy';
 
 import {
   RADIANS_PER_TURN,
 } from '@/constants';
+
+import {
+  distance,
+} from './utils';
 
 
 export type PointLike = Point | { x: number, y: number };
@@ -82,6 +87,16 @@ export default class Point {
       this.x + xDistance,
       this.y + yDistance,
     );
+  }
+
+  /**
+   * Find the point in a given set that is closest to this one
+   * @template P
+   * @param {P[]} otherPoints
+   * @returns {P | undefined}
+   */
+  closest<P extends PointLike>(...otherPoints: P[]): P | undefined {
+    return _minBy(otherPoints, (point) => distance(this, point));
   }
 
   /**
