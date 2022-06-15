@@ -61,16 +61,23 @@ export default class Point {
   /**
    * Get the Point that is `radius` distance from this point at `rotation`
    *
+   * Imagine that `radius` defines an ellipse centered on this point.
+   * This method gives you the point on the ellipse which is `rotation` revolutions
+   * _clockwise_ of the _"3:00"_ point on the ellipse.
+   *
+   * - Why clockwise of 3:00?
+   *   In the JS coordinate system, `(0, 0)` is the top-left corner of the page.
+   *   Which means that the positive-x/positive-y quadrant is down and to the right (aka 3:00-6:00)
+   *
    * @param {number} rotation - The proportion of one full turn, i.e. `0.5` is 180 degrees TODO: "revolutions" might be a better term for this
    * @param {number|PointLike} radius - pass a number for circular rotation or a `PointLike` for elliptical
-   * @TODO: consider removing or spinning out the PointLike behavior?
    * @return {Point}
    */
   getRelativePoint(rotation: number, radius: number | PointLike): Point {
-    const dist = Point.isPointLike(radius) ? radius : new Point(radius, radius);
+    const scale = Point.isPointLike(radius) ? radius : { x: radius, y: radius };
     const angle = rotation * RADIANS_PER_TURN;
-    const xDistance = Math.cos(angle) * dist.x;
-    const yDistance = Math.sin(angle) * dist.y;
+    const xDistance = Math.cos(angle) * scale.x;
+    const yDistance = Math.sin(angle) * scale.y;
     return new Point(
       this.x + xDistance,
       this.y + yDistance,
