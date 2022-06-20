@@ -1,5 +1,4 @@
 import {
-  differentiate,
   mapInRange,
 } from '@/utils';
 
@@ -13,6 +12,11 @@ import Vector from './Vector';
 export interface LineLike {
   start: PointLike,
   end: PointLike,
+}
+
+export interface EndpointInclusion {
+  includeStart: boolean,
+  includeEnd: boolean,
 }
 
 export default class Line {
@@ -37,7 +41,10 @@ export default class Line {
    * @param {LineLike} line - Any object with point-like `start` and `end` properties
    */
   static from(line: LineLike): Line {
-    return new Line(Point.from(line.start), Point.from(line.end));
+    return new Line(
+      Point.precise(line.start.x, line.start.y),
+      Point.precise(line.end.x, line.end.y),
+    );
   }
 
   /**
@@ -91,32 +98,30 @@ export default class Line {
 
   /**
    * Get the point where two lines would intersect if both were to extend that far
-   * @param {Line} line1
-   * @param {Line} line2
+   * @param {Line} lineA
+   * @param {Line} lineB
    * @returns {Point|null} the intersection point, if it exists
    */
-  static intersection(line1: Line, line2: Line): Point | null {
-    if (Line.areParallel(line1, line2)) {
+  static getIntersectionPoint(lineA: Line, lineB: Line): Point | null {
+    const spanA = lineA.span;
+    const spanB = lineB.span;
+
+    const divisor = (spanA.x * spanB.y) - (spanA.y * spanB.x);
+
+    // The lines will be parallel in this case
+    if (divisor === 0) {
       return null;
     }
+    // The delta between the two start points
+    const startSpan = Vector.between(lineB.start, lineA.start);
 
-    // Vertical lines have no slope or usable y-intercept, and their x value is constant
-    // In that case, the intersection is just wherever the other line has that x value
-    // Because the lines cannot be parallel, we know that no more than one will be vertical
-    const [verticalLine, slopedLine = line1] = differentiate(
-      [line1, line2],
-      (line) => line.isVertical,
-    );
+    const totalA = spanB.x * startSpan.y - spanB.y * startSpan.x;
+    const scaledPositionAlongA = totalA / divisor;
 
-    const x = verticalLine
-      ? verticalLine.start.x
-      // This formula can be derived by taking two `y = mx + b` equations & solving for x when y is equal
-      : (line2.slope - line1.slope) / (line1.yIntercept - line2.yIntercept);
+    const x = lineA.start.x + (scaledPositionAlongA * spanA.x);
+    const y = lineA.start.y + (scaledPositionAlongA * spanA.y);
 
-    // Plug x into the equation for one of the lines to get y
-    const y = (slopedLine.slope * x) + slopedLine.yIntercept;
-
-    return new Point(x, y);
+    return Point.precise(x, y);
   }
 
   // Getters ------------------------------------------------------------------
@@ -133,13 +138,13 @@ export default class Line {
    * Get the Vector between the start and end points of this line
    * @returns {Vector}
    */
-  get vector(): Vector {
+  get span(): Vector {
     // TODO: this should probably be cached rather than created every time
     return Vector.between(this.start, this.end);
   }
 
   get slope(): number {
-    return this.vector.slope;
+    return this.span.slope;
   }
 
   /**
@@ -162,24 +167,48 @@ export default class Line {
   // Instance methods ---------------------------------------------------------
 
   /**
-   * Returns an array of `resolution` points evenly spaced along this line,
+   * Determine if a given point is along this line
+   * @param {Point} point
+   * @returns {boolean}
+   */
+  goesThrough(point: PointLike | null): boolean {
+    if (!Point.isPointLike(point)) {
+      return false;
+    }
+    const distanceFromStart = distance(point, this.start);
+    const distanceFromEnd = distance(point, this.end);
+
+    // If the sum of the distances from the two endpoints is the same as the length of the line,
+    // the point must be somewhere along the line
+    return this.length === (distanceFromStart + distanceFromEnd);
+  }
+
+  /**
+   * Returns an array of `segmentCount` points evenly spaced along this line,
    * excluding points in `excluded`.
    *
-   * @param {number} resolution - The number of total points to include
-   * @param {number} offset - How many initial points to skip
+   * @param {number} segmentCount - The number of segments to split the line into
+   * @param {EndpointInclusion} config?
    * @returns {Point[]}
    */
-  getPoints(resolution: number, offset = 0): Point[] {
-    const rangeX = this.end.x - this.start.x;
-    const rangeY = this.end.y - this.start.y;
-    const stepX = rangeX / resolution;
-    const stepY = rangeY / resolution;
+  getPoints(segmentCount: number, config: Partial<EndpointInclusion> = {}): Point[] {
+    const range = this.span;
+    const stepX = range.x / segmentCount;
+    const stepY = range.y / segmentCount;
 
-    return mapInRange(offset, resolution + offset, (stepNum) => {
-      const x = this.start.x + (stepNum * stepX);
-      const y = this.start.y + (stepNum * stepY);
-      return new Point(x, y);
+    // Get the points in-between the two ends
+    const points = mapInRange(1, segmentCount, (stepIndex) => {
+      const x = this.start.x + (stepIndex * stepX);
+      const y = this.start.y + (stepIndex * stepY);
+      return Point.precise(x, y);
     });
+
+    // Add the necessary endpoints
+    const { includeStart = true, includeEnd = false } = config;
+    if (includeStart) points.unshift(this.start);
+    if (includeEnd) points.push(this.end);
+
+    return points;
   }
 
   toString(): string {

@@ -7,7 +7,9 @@ import { CURVE_TYPES } from '@/constants';
 import {
   type Pair,
 } from '@/types/utility';
-import { mapInRange } from '@/utils';
+import {
+  mapInRange,
+} from '@/utils';
 
 import Group from './Group';
 import Line from './Line';
@@ -46,18 +48,22 @@ type SpinePair = Pair<Spine>;
  * @param {LinePair} linePair
  * @returns {LinePair} A modified line pair, or the original if no change was needed
  */
-export function flipLines(linePair: LinePair): LinePair {
-  const intersectionPoint = Line.intersection(...linePair);
+export function arrangeLines(linePair: LinePair): {
+  lines: LinePair,
+  intersectPoint: Point | null,
+} {
+  const intersectPoint = Line.getIntersectionPoint(...linePair);
 
-  if (intersectionPoint === null) {
-    return linePair;
+  // If the lines are parallel, just assume they're already in the order that the user intends
+  if (intersectPoint === null) {
+    return { lines: linePair, intersectPoint };
   }
   const [lineA, lineB] = linePair;
-  const closerEndOfA = intersectionPoint.closest(lineA.start, lineA.end);
-  const closerEndOfB = intersectionPoint.closest(lineB.start, lineB.end);
+  const closerEndOfA = intersectPoint.closest(lineA.end, lineA.start); // `end` is first because if they're equidistant, `closest` will preference whichever is first
+  const closerEndOfB = intersectPoint.closest(lineB.start, lineB.end);
 
   if (closerEndOfA === lineA.end && closerEndOfB === lineB.start) {
-    return linePair;
+    return { lines: linePair, intersectPoint };
   }
 
   // Flip A if its `start` is closer to the intersection
@@ -65,7 +71,7 @@ export function flipLines(linePair: LinePair): LinePair {
   const newA = closerEndOfA === lineA.start ? Line.inverseOf(lineA) : lineA;
   const newB = closerEndOfB === lineB.end ? Line.inverseOf(lineB) : lineB;
 
-  return [newA, newB];
+  return { lines: [newA, newB], intersectPoint };
 }
 
 /**
@@ -75,11 +81,17 @@ export function flipLines(linePair: LinePair): LinePair {
  * @returns {SpinePair}
  */
 function getSpinePoints(linePair: LinePair, resolution: number): SpinePair {
-  const [lineA, lineB] = flipLines(linePair);
-  // TODO: the offset on B is really only necessary if lineA.end === lineB.start === intersectionPoint
-  //       If they don't, there could be one more spine point in each line
-  const spineAPoints: Point[] = lineA.getPoints(resolution);
-  const spineBPoints: Point[] = lineB.getPoints(resolution, 1);
+  const { lines: [lineA, lineB], intersectPoint } = arrangeLines(linePair);
+  const includeClosest = !intersectPoint || !lineA.goesThrough(intersectPoint);
+
+  const spineAPoints: Point[] = lineA.getPoints(resolution, {
+    includeStart: true,
+    includeEnd: includeClosest,
+  });
+  const spineBPoints: Point[] = lineB.getPoints(resolution, {
+    includeStart: includeClosest,
+    includeEnd: true,
+  });
 
   return [spineAPoints, spineBPoints];
 }

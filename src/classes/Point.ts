@@ -29,6 +29,21 @@ export default class Point {
   // Static methods -----------------------------------------------------------
 
   /**
+   * Create a point whose coordinates aren't rounded
+   * NOTE: this may just replace the constructor if it becomes clear that more complex Curves no longer need points to be rounded
+   *
+   * @param {number} x
+   * @param {number} y
+   * @returns {Point}
+   */
+  static precise(x: number, y: number): Point {
+    const point = new Point();
+    point.x = x;
+    point.y = y;
+    return point;
+  }
+
+  /**
    * Create a new point from a point-like object
    *
    * @param {PointLike} pointLike - Any object with x and y properties
