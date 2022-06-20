@@ -86,17 +86,6 @@ export default class Line {
   }
 
   /**
-   * Determine if two lines are parallel
-   * @param {Line} line1
-   * @param {Line} line2
-   * @returns {boolean}
-   */
-  static areParallel(line1: Line, line2: Line): boolean {
-    // For the sake of determining parallel-ness, slope direction doesn't matter
-    return Math.abs(line1.slope) === Math.abs(line2.slope);
-  }
-
-  /**
    * Get the point where two lines would intersect if both were to extend that far
    * @param {Line} lineA
    * @param {Line} lineB
@@ -127,33 +116,12 @@ export default class Line {
   // Getters ------------------------------------------------------------------
 
   /**
-   * Determine if the line is completely vertical
-   * @returns {boolean}
-   */
-  get isVertical(): boolean {
-    return this.start.x === this.end.x;
-  }
-
-  /**
    * Get the Vector between the start and end points of this line
    * @returns {Vector}
    */
   get span(): Vector {
     // TODO: this should probably be cached rather than created every time
     return Vector.between(this.start, this.end);
-  }
-
-  get slope(): number {
-    return this.span.slope;
-  }
-
-  /**
-   * The point where this line would cross the y-axis (if it were an infinite line)
-   * @returns {number}
-   */
-  get yIntercept(): number {
-    const { x, y } = this.start;
-    return y - this.slope * x;
   }
 
   /**
