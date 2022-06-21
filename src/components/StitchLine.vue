@@ -16,19 +16,27 @@ export default defineComponent({
     point1: Point,
     point2: Point,
   },
-  data() {
-    const startPoint = this.line?.start ?? this.point1;
-    const endPoint = this.line?.end ?? this.point2;
+  computed: {
+    startPoint() {
+      return this.line?.start ?? this.point1;
+    },
+    endPoint() {
+      return this.line?.end ?? this.point2;
+    },
+  },
+  watch: {
+    startPoint: 'onPointsChange',
+    endPoint: 'onPointsChange',
+  },
+  methods: {
+    onPointsChange() {
+      const { startPoint, endPoint } = this;
 
-    if (!startPoint || !endPoint) {
-      console.warn('StitchLine will not render without two Points, or a Line!');
-      console.warn('Received:', this.$props);
-    }
-
-    return {
-      startPoint,
-      endPoint,
-    };
+      if (!startPoint || !endPoint) {
+        console.warn('StitchLine will not render without two Points, or a Line!');
+        console.warn('Received:', this.$props);
+      }
+    },
   },
 });
 </script>
