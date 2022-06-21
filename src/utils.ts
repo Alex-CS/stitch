@@ -1,4 +1,5 @@
 import _isFunction from 'lodash/isFunction';
+import _isNumber from 'lodash/isNumber';
 import _partition from 'lodash/partition';
 import _range from 'lodash/range';
 
@@ -62,6 +63,53 @@ export function differentiate<Item>(
     return [matches[0], nonmatches[0]];
   }
   return [];
+}
+
+/**
+ * Checks if `value` falls within the inclusive `lower` and `upper` bounds.
+ * If `lower` is greater than `upper`, the bounds will be swapped.
+ *
+ * @param {number} value - The value to test
+ * @param {Object|number} bounds - The upper bound or an object defining both bounds
+ * @param {number} bounds.upper - The upper bound
+ * @param {number} [bounds.lower=0] - The lower bound. Defaults to 0 if not provided
+ */
+export function inBounds(
+  value: number,
+  bounds: { lower: number, upper: number } | number,
+): boolean {
+  // Default `upper` to `bounds` if that's a number, and `lower` to 0 if not provided
+  const { upper, lower = 0 } = _isNumber(bounds) ? { upper: bounds } : bounds;
+  //Flip the bounds if they wouldn't overlap
+  const [lowerBound, upperBound] = lower > upper ? [upper, lower] : [lower, upper];
+
+  return lowerBound <= value && value <= upperBound;
+}
+
+/**
+ * Get an index that is "looped around" if it falls outside a given `length`.
+ * @param {number} length
+ * @param {number} rawIndex
+ * @returns {number}
+ */
+export function getLoopedIndex(length: number, rawIndex: number): number {
+  if (!Number.isInteger(length)) {
+    throw TypeError(`length must be an integer! got ${length}`);
+  }
+  if (!Number.isInteger(rawIndex)) {
+    throw TypeError(`rawIndex must be an integer! got ${rawIndex}`);
+  }
+
+  return (length + rawIndex) % length;
+}
+
+/**
+ * Get a version of `getLoopedIndex` with `length` baked in
+ * @param {number} length
+ * @returns {(rawIndex: number) => number}
+ */
+export function makeIndexLooper(length: number): (rawIndex: number) => number {
+  return (rawIndex: number) => getLoopedIndex(length, rawIndex);
 }
 
 /**

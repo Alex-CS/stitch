@@ -78,6 +78,7 @@ export default defineComponent({
       v-if="mode === 'canvas'"
       :resolution="20"
       :size="size"
+      debug-mode
     />
     <template v-else>
       <svg :width="size" :height="size">

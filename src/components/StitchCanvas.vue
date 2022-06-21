@@ -17,11 +17,16 @@ import {
 
 
 import {
+  Color,
   Point,
   Line,
   stitch,
   type PointLike,
 } from '@/classes';
+
+import {
+  makeIndexLooper,
+} from '@/utils';
 
 import StitchLine from './StitchLine.vue';
 
@@ -29,9 +34,76 @@ import StitchLine from './StitchLine.vue';
 type CurveStitches = Line[];
 
 const DEFAULT_INNER_RADIUS = 2;
+const DEBUG_INNER_RADIUS = 5;
 // The space to leave between the edge of the grid and the outer points
 // as a multiple of the space between the grid points
 const DEFAULT_GUTTER_WIDTH = 0.5;
+
+
+// Dummy lines for testing
+const DEBUG_LINES = [
+
+  { start: [0, 5], end: [0, 0] },
+  { start: [0, 0], end: [5, 0] },
+
+  { start: [-6, 0], end: [-2, 0] },
+  { start: [-1, 1], end: [-1, 5] },
+
+  { start: [0, -6], end: [0, -1] },
+  { start: [1, -1], end: [5, -4] },
+
+  { start: [-1, -6], end: [-2, -1] },
+  { start: [-1, -2], end: [-6, -1] },
+
+  { start: [4, 4], end: [4, -5] },
+  { start: [-5, -5], end: [-5, 4] },
+
+  // { start: [8, 0], end: [3, 0] },
+  // { start: [3, 0], end: [0, 4] },
+  //
+  // { start: [14, 0], end: [9, 0] },
+  // { start: [9, 0], end: [6, 4] },
+  //
+  // { start: [4, 9], end: [8, 9] },
+  // { start: [9, 4], end: [9, 8] },
+  //
+  // { start: [0, 8], end: [4, 8] },
+  // { start: [1, 9], end: [1, 5] },
+  //
+  // { start: [2, 3], end: [5, 3] },
+  // { start: [4, 4], end: [4, 7] },
+  //
+  // { start: [8, 2], end: [5, 1] },
+  // { start: [7, 1], end: [8, 4] },
+  //
+  // { start: [10, 5], end: [11, 0] },
+  // { start: [10, 1], end: [15, 0] },
+  //
+  // { start: [1, 2], end: [1, 9] },
+  // { start: [9, 1], end: [2, 1] },
+  //
+  // { start: [2, 9], end: [9, 8] },
+  // { start: [9, 2], end: [8, 9] },
+];
+
+function getDebugLines(
+  resolution: number,
+  gridSize: { x: number, y: number },
+  outerRadius: number,
+): Line[] {
+  const getIndex = makeIndexLooper(resolution);
+  const { x: xScale, y: yScale } = gridSize;
+  const scaleUp = ([x, y]: number[]) => ({
+    x: getIndex(x) * xScale + outerRadius,
+    y: getIndex(y) * yScale + outerRadius,
+  });
+
+  return  DEBUG_LINES.map((line) => {
+    const start = scaleUp(line.start);
+    const end = scaleUp(line.end);
+    return Line.from({ start, end });
+  });
+}
 
 export default defineComponent({
   name: 'StitchCanvas',
@@ -51,6 +123,7 @@ export default defineComponent({
     },
     // Whether to show the dots or not
     hideDots: Boolean,
+    debugMode: Boolean,
   },
   data() {
     return {
@@ -61,6 +134,10 @@ export default defineComponent({
       selectedLine: null as Line | null,
       lines: [] as Line[],
       stitches: [] as CurveStitches,
+      // Debug mode things
+      stitchColors: new WeakMap<Line, Color>(),
+      firstLineColor: new Color(0, 127, 255),
+      lastLineColor: new Color(180, 15, 127),
     };
   },
   computed: {
@@ -103,7 +180,10 @@ export default defineComponent({
      * @return {Number}
      */
     innerRadius(): number {
-      return this.hideDots ? 0 : DEFAULT_INNER_RADIUS;
+      if (this.hideDots) return 0;
+      if (this.debugMode) return DEBUG_INNER_RADIUS;
+
+      return DEFAULT_INNER_RADIUS;
     },
 
     /**
@@ -165,7 +245,37 @@ export default defineComponent({
       return this.dotRadius + (this.dotStrokeWidth / 2);
     },
   },
+  mounted() {
+    if (this.debugMode) {
+      this.initDebugMode();
+    }
+  },
   methods: {
+    initDebugMode() {
+      this.lines.push(...getDebugLines(
+        this.resolution,
+        this.gridSize,
+        this.outerRadius,
+      ));
+
+      const stop = this.lines.length;
+      const stitchNext = (i = 0) => {
+        this.selectLine(this.lines[i]);
+        if (i + 1 >= stop) return;
+        this.$nextTick(() => {
+          stitchNext(i + 1);
+        });
+      };
+      stitchNext();
+    },
+
+    getCoords(index: number): string {
+      const dotsPerRow = this.resolution;
+      const y = Math.floor(index / dotsPerRow);
+      const x = index % dotsPerRow;
+      return `(${x}, ${y})`;
+    },
+
     getPosition(xIndex: number, yIndex: number): PointLike {
       const getPos = (index: number, axis: 'x' | 'y') => (
         this.gridSize[axis] * (index + this.gutterWidth)
@@ -179,6 +289,7 @@ export default defineComponent({
         y: getPos(yIndex, 'y'),
       };
     },
+
     isSelected(item: PointLike | Line): boolean {
       if (Point.isPointLike(item)) {
         return Point.areEqual(this.selectedPoint, item);
@@ -187,6 +298,7 @@ export default defineComponent({
       }
       return false;
     },
+
     selectPoint(point: PointLike) {
       const { x, y } = point;
       // TODO order these better
@@ -207,6 +319,7 @@ export default defineComponent({
         this.selectedPoint = null;
       }
     },
+
     selectLine(line: Line) {
       if (this.selectedLine === null) {
         // Select first line
@@ -225,23 +338,32 @@ export default defineComponent({
         this.selectedLine = null;
       }
     },
+
     getStitches(lineA: Line, lineB: Line): CurveStitches {
       // NOTE: This only works for horizontal and vertical lines
       // Get the number of grid dots along this line to make it easier to eyeball if the lines are right
-      const dynamicResolution = lineB.length / (this.outerRadius * 2);
-      const stitchLines = stitch([lineA, lineB], dynamicResolution);
+      const dynamicResolution = Math.round(lineB.length / (this.outerRadius * 2));
+      const stitches = stitch([lineA, lineB], dynamicResolution);
+      if (this.debugMode) {
+        this.stitchColors.set(stitches[0], this.firstLineColor);
+        this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
+      }
 
-      return stitchLines;
+      return stitches;
     },
   },
 });
 </script>
 
 <template>
-  <svg :width="width" :height="height">
+  <svg
+    :width="width"
+    :height="height"
+    class="svg-canvas"
+  >
     <g id="circles">
       <circle
-        v-for="point in gridDots"
+        v-for="(point, i) in gridDots"
         :key="point.toString()"
         :class="{
           active: isSelected(point),
@@ -251,7 +373,7 @@ export default defineComponent({
         :r="dotRadius"
         :stroke-width="dotStrokeWidth"
         @click.stop="selectPoint(point)"
-      />
+      ><title v-if="debugMode">{{ getCoords(i) }}</title></circle>
       <!-- TODO Add hover event that makes the inner circle bigger -->
     </g> <!-- end #circles -->
 
@@ -273,6 +395,9 @@ export default defineComponent({
         v-for="(stitch) in stitches"
         :key="stitch.toString()"
         :line="stitch"
+        :style="{
+          stroke: stitchColors.get(stitch)?.toRGBAString(),
+        }"
         class="stitch"
       />
     </g> <!-- end #stitches -->
@@ -286,11 +411,12 @@ $hover-color: darken($active-color, 10%);
 $trans-props: .2s ease-in-out;
 
 @mixin color-states($prop) {
-  transition: $prop $trans-props;
+  transition: all $trans-props;
   #{$prop}: $default-color;
 
   &:hover {
     #{$prop}: $hover-color;
+    opacity: 1;
   }
 
   &.active {
@@ -298,14 +424,28 @@ $trans-props: .2s ease-in-out;
   }
 }
 
+.svg-canvas {
+  overflow: visible;
+}
+
 circle {
   @include color-states(fill);
   cursor: pointer;
   stroke: var(--color-background);
+  opacity: .25;
 }
 
 line {
+  stroke: currentColor;
+}
+.spine {
   @include color-states(stroke);
+  opacity: .25;
+  stroke-width: 2;
+
+  &:hover {
+    stroke-width: 5;
+  }
 }
 
 </style>
