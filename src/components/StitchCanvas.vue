@@ -141,19 +141,23 @@ export default defineComponent({
   },
   computed: {
     gridDots(): Point[] {
+      const getGridPosition = (index: number, unit: number) => (
+        (index + this.gutterWidth) * unit
+      );
+      const makePointFromCoords = (xIndex: number, yIndex: number) => {
+        return Point.precise(
+          getGridPosition(xIndex, this.gridStep.x),
+          getGridPosition(yIndex, this.gridStep.y),
+        );
+      };
       // FIXME There's gotta be a better way to get points
-      return _range(this.resolution ** 2).map((index) => this.makePointFromCoords(
+      return _range(this.resolution ** 2).map((index) => makePointFromCoords(
         index % this.resolution,
         Math.floor(index / this.resolution),
       ));
-      // for (const yIndex = 0; yIndex < this.resolution; yIndex++) {
-      //   for (const xIndex = 0; xIndex < this.resolution; xIndex++)) {
-      //     yield this.getPosition(xIndex, yIndex);
-      //   }
-      // }
     },
 
-    gridSize(): { x: number, y: number } {
+    gridStep(): { x: number, y: number } {
       // TODO: `width` & `height` might be better return names
       // The distance between adjacent points
       const getGridSpace = (max: number) => {
@@ -202,7 +206,7 @@ export default defineComponent({
      * @return {Number}
      */
     dotRadius(): number {
-      const gridSize = Math.min(this.gridSize.x, this.gridSize.y);
+      const gridSize = Math.min(this.gridStep.x, this.gridStep.y);
       // We want `outerRadius` to be half of gridSize, so:
       // gridSize = 2 * outerRadius = 2 * (r + w/2)
       // gridSize = 2r + (w = 2r - 2r_)
@@ -268,20 +272,9 @@ export default defineComponent({
 
     getCoordsFromIndex(index: number): string {
       const dotsPerRow = this.resolution;
-      const y = Math.floor(index / dotsPerRow);
-      const x = index % dotsPerRow;
-      return `(${x}, ${y})`;
-    },
-
-    makePointFromCoords(xIndex: number, yIndex: number): Point {
-      const getPos = (index: number, axis: 'x' | 'y') => (
-        this.gridSize[axis] * (index + this.gutterWidth)
-      );
-
-      return Point.precise(
-        getPos(xIndex, 'x'),
-        getPos(yIndex, 'y'),
-      );
+      const yIndex = Math.floor(index / dotsPerRow);
+      const xIndex = index % dotsPerRow;
+      return `(${xIndex}, ${yIndex})`;
     },
 
     isSelected(item: Point | Line): boolean {
