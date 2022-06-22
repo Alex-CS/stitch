@@ -53,99 +53,97 @@ export default defineComponent({
 </script>
 
 <template>
-  <div id="app">
-    <div class="ModeToggle">
-      <label>
-        <input
-          v-model="mode"
-          type="radio"
-          name="mode"
-          value="canvas"
-        >
-        Canvas
-      </label>
-      <label>
-        <input
-          v-model="mode"
-          type="radio"
-          name="mode"
-          value="config"
-        >
-        Config
-      </label>
-    </div>
-    <StitchCanvas
-      v-if="mode === 'canvas'"
-      :resolution="20"
-      :size="size"
-      debug-mode
-    />
-    <template v-else>
-      <svg :width="size" :height="size">
-        <StitchMultiCurve
-          :options="options"
-          :curve-type="curveType"
-          :reps="reps"
-          :radius="radius"
-          :initial="initial"
-          :colors="colors"
-        />
-      </svg>
-      <div class="controls">
-        <div>
-          <label>layerCount</label>
-          <input
-            v-model="options.layerCount"
-            type="range"
-            min="1"
-            max="8"
-          >
-          <span>{{ options.layerCount }}</span>
-        </div>
-        <div>
-          <label>layerSepFactor</label>
-          <input
-            v-model="options.layerSepFactor"
-            type="range"
-            min="1"
-            max="8"
-          >
-          <span>{{ options.layerSepFactor }}</span>
-        </div>
-        <div>
-          <label>numVertices</label>
-          <input
-            v-model="options.numVertices"
-            type="range"
-            min="3"
-            max="8"
-          >
-          <span>{{ options.numVertices }}</span>
-        </div>
-        <div>
-          <label>resolution</label>
-          <input
-            v-model="options.resolution"
-            type="range"
-            min="4"
-            max="64"
-          >
-          <span>{{ options.resolution }}</span>
-        </div>
-        <div>
-          <label>rotation</label>
-          <input
-            v-model="options.rotation"
-            type="range"
-            min="0"
-            max="1"
-            :step="1/8"
-          >
-          <span>{{ options.rotation * 360 }}</span>
-        </div>
-      </div>
-    </template>
+  <div class="ModeToggle">
+    <label>
+      <input
+        v-model="mode"
+        type="radio"
+        name="mode"
+        value="canvas"
+      >
+      Canvas
+    </label>
+    <label>
+      <input
+        v-model="mode"
+        type="radio"
+        name="mode"
+        value="config"
+      >
+      Config
+    </label>
   </div>
+  <StitchCanvas
+    v-if="mode === 'canvas'"
+    :resolution="20"
+    :size="size"
+    debug-mode
+  />
+  <template v-else>
+    <svg :width="size" :height="size">
+      <StitchMultiCurve
+        :options="options"
+        :curve-type="curveType"
+        :reps="reps"
+        :radius="radius"
+        :initial="initial"
+        :colors="colors"
+      />
+    </svg>
+    <div class="controls">
+      <div>
+        <label>layerCount</label>
+        <input
+          v-model="options.layerCount"
+          type="range"
+          min="1"
+          max="8"
+        >
+        <span>{{ options.layerCount }}</span>
+      </div>
+      <div>
+        <label>layerSepFactor</label>
+        <input
+          v-model="options.layerSepFactor"
+          type="range"
+          min="1"
+          max="8"
+        >
+        <span>{{ options.layerSepFactor }}</span>
+      </div>
+      <div>
+        <label>numVertices</label>
+        <input
+          v-model="options.numVertices"
+          type="range"
+          min="3"
+          max="8"
+        >
+        <span>{{ options.numVertices }}</span>
+      </div>
+      <div>
+        <label>resolution</label>
+        <input
+          v-model="options.resolution"
+          type="range"
+          min="4"
+          max="64"
+        >
+        <span>{{ options.resolution }}</span>
+      </div>
+      <div>
+        <label>rotation</label>
+        <input
+          v-model="options.rotation"
+          type="range"
+          min="0"
+          max="1"
+          :step="1/8"
+        >
+        <span>{{ options.rotation * 360 }}</span>
+      </div>
+    </div>
+  </template>
 </template>
 
 <style lang="scss">
