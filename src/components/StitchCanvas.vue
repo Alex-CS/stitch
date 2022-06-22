@@ -23,6 +23,10 @@ import {
 } from '@/classes';
 
 import {
+  type Pair,
+} from '@/types/utility';
+
+import {
   makeIndexLooper,
 } from '@/utils';
 
@@ -38,9 +42,8 @@ const DEBUG_INNER_RADIUS = 5;
 const DEFAULT_GUTTER_WIDTH = 0.5;
 
 
-// Dummy lines for testing
-const DEBUG_LINES = [
-
+// Lines in a simplified notation for easier testing
+const DEBUG_LINES: { start: Pair<number>, end: Pair<number> }[] = [
   { start: [0, 5], end: [0, 0] },
   { start: [0, 0], end: [5, 0] },
 
@@ -55,51 +58,22 @@ const DEBUG_LINES = [
 
   { start: [4, 4], end: [4, -5] },
   { start: [-5, -5], end: [-5, 4] },
-
-  // { start: [8, 0], end: [3, 0] },
-  // { start: [3, 0], end: [0, 4] },
-  //
-  // { start: [14, 0], end: [9, 0] },
-  // { start: [9, 0], end: [6, 4] },
-  //
-  // { start: [4, 9], end: [8, 9] },
-  // { start: [9, 4], end: [9, 8] },
-  //
-  // { start: [0, 8], end: [4, 8] },
-  // { start: [1, 9], end: [1, 5] },
-  //
-  // { start: [2, 3], end: [5, 3] },
-  // { start: [4, 4], end: [4, 7] },
-  //
-  // { start: [8, 2], end: [5, 1] },
-  // { start: [7, 1], end: [8, 4] },
-  //
-  // { start: [10, 5], end: [11, 0] },
-  // { start: [10, 1], end: [15, 0] },
-  //
-  // { start: [1, 2], end: [1, 9] },
-  // { start: [9, 1], end: [2, 1] },
-  //
-  // { start: [2, 9], end: [9, 8] },
-  // { start: [9, 2], end: [8, 9] },
 ];
 
 function getDebugLines(
   resolution: number,
-  gridSize: { x: number, y: number },
-  outerRadius: number,
+  gridDots: Point[],
 ): Line[] {
-  const getIndex = makeIndexLooper(resolution);
-  const { x: xScale, y: yScale } = gridSize;
-  const scaleUp = ([x, y]: number[]) => ({
-    x: getIndex(x) * xScale + outerRadius,
-    y: getIndex(y) * yScale + outerRadius,
-  });
+  const getDirectionalIndex = makeIndexLooper(resolution);
+  const getFlattenedIndex = (xIndexRaw: number, yIndexRaw: number) => {
+    const [xIndex, yIndex] = [xIndexRaw, yIndexRaw].map(getDirectionalIndex);
+    return xIndex + (yIndex * resolution);
+  };
 
   return  DEBUG_LINES.map((line) => {
-    const start = scaleUp(line.start);
-    const end = scaleUp(line.end);
-    return Line.from({ start, end });
+    const start = gridDots[getFlattenedIndex(...line.start)];
+    const end = gridDots[getFlattenedIndex(...line.end)];
+    return new Line(start, end);
   });
 }
 
@@ -255,8 +229,7 @@ export default defineComponent({
     initDebugMode() {
       this.lines.push(...getDebugLines(
         this.resolution,
-        this.gridSize,
-        this.outerRadius,
+        this.gridDots,
       ));
 
       const stop = this.lines.length;
