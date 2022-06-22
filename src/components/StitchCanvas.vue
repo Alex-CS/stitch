@@ -8,7 +8,6 @@
 -->
 
 <script lang="ts">
-import _flatMap from 'lodash/flatMap';
 import _range from 'lodash/range';
 
 import {
@@ -21,7 +20,6 @@ import {
   Point,
   Line,
   stitch,
-  type PointLike,
 } from '@/classes';
 
 import {
@@ -130,25 +128,24 @@ export default defineComponent({
       gutterWidth: DEFAULT_GUTTER_WIDTH,
       width: this.size,
       height: this.size,
-      selectedPoint: null as PointLike | null,
+      selectedPoint: null as Point | null,
       selectedLine: null as Line | null,
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
+      stitchedPoints: new Set<ReturnType<Point['toString']>>(),
       stitchColors: new WeakMap<Line, Color>(),
       firstLineColor: new Color(0, 127, 255),
       lastLineColor: new Color(180, 15, 127),
     };
   },
   computed: {
-    gridDots(): PointLike[] {
+    gridDots(): Point[] {
       // FIXME There's gotta be a better way to get points
-      const range = _range(this.resolution);
-      return _flatMap(range,
-        yIndex => range.map(
-          xIndex => this.getPosition(xIndex, yIndex),
-        ),
-      );
+      return _range(this.resolution ** 2).map((index) => this.makePointFromCoords(
+        index % this.resolution,
+        Math.floor(index / this.resolution),
+      ));
       // for (const yIndex = 0; yIndex < this.resolution; yIndex++) {
       //   for (const xIndex = 0; xIndex < this.resolution; xIndex++)) {
       //     yield this.getPosition(xIndex, yIndex);
@@ -269,28 +266,25 @@ export default defineComponent({
       stitchNext();
     },
 
-    getCoords(index: number): string {
+    getCoordsFromIndex(index: number): string {
       const dotsPerRow = this.resolution;
       const y = Math.floor(index / dotsPerRow);
       const x = index % dotsPerRow;
       return `(${x}, ${y})`;
     },
 
-    getPosition(xIndex: number, yIndex: number): PointLike {
+    makePointFromCoords(xIndex: number, yIndex: number): Point {
       const getPos = (index: number, axis: 'x' | 'y') => (
         this.gridSize[axis] * (index + this.gutterWidth)
       );
 
-      // TODO: For some (probably good) reason, past Alex
-      // TODO: made the Point constructor rounds its input,
-      // TODO: which is why it can't be used here
-      return {
-        x: getPos(xIndex, 'x'),
-        y: getPos(yIndex, 'y'),
-      };
+      return Point.precise(
+        getPos(xIndex, 'x'),
+        getPos(yIndex, 'y'),
+      );
     },
 
-    isSelected(item: PointLike | Line): boolean {
+    isSelected(item: Point | Line): boolean {
       if (Point.isPointLike(item)) {
         return Point.areEqual(this.selectedPoint, item);
       } else if (this.selectedLine) {
@@ -299,23 +293,23 @@ export default defineComponent({
       return false;
     },
 
-    selectPoint(point: PointLike) {
+    selectPoint(point: Point) {
       const { x, y } = point;
       // TODO order these better
       if (this.selectedPoint === null) {
         // Select first point
         console.log(`Select { x: ${x}, y: ${y} }`);
-        this.selectedPoint = { x, y };
+        this.selectedPoint = point;
       } else if (this.isSelected(point)) {
         // Deselect
         console.log(`Deselect { x: ${x}, y: ${y} }`);
         this.selectedPoint = null;
       } else {
         // Draw line
-        this.lines.push(Line.from({
-          start: this.selectedPoint,
-          end: point,
-        }));
+        this.lines.push(new Line(
+          this.selectedPoint,
+          point,
+        ));
         this.selectedPoint = null;
       }
     },
@@ -345,6 +339,10 @@ export default defineComponent({
       const dynamicResolution = Math.round(lineB.length / (this.outerRadius * 2));
       const stitches = stitch([lineA, lineB], dynamicResolution);
       if (this.debugMode) {
+        stitches.forEach((stitchedLine) => {
+          this.stitchedPoints.add(stitchedLine.start.toString());
+          this.stitchedPoints.add(stitchedLine.end.toString());
+        });
         this.stitchColors.set(stitches[0], this.firstLineColor);
         this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
       }
@@ -367,13 +365,14 @@ export default defineComponent({
         :key="point.toString()"
         :class="{
           active: isSelected(point),
+          stitched: debugMode && stitchedPoints.has(point.toString()),
         }"
         :cx="point.x"
         :cy="point.y"
         :r="dotRadius"
         :stroke-width="dotStrokeWidth"
         @click.stop="selectPoint(point)"
-      ><title v-if="debugMode">{{ getCoords(i) }}</title></circle>
+      ><title v-if="debugMode">{{ getCoordsFromIndex(i) }}</title></circle>
       <!-- TODO Add hover event that makes the inner circle bigger -->
     </g> <!-- end #circles -->
 
@@ -433,6 +432,10 @@ circle {
   cursor: pointer;
   stroke: var(--color-background);
   opacity: .25;
+
+  &.stitched {
+    fill: cyan;
+  }
 }
 
 line {
