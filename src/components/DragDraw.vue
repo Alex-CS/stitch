@@ -20,6 +20,7 @@ export default defineComponent({
     this.$nextTick(this.updateScale);
   },
   methods: {
+
     updateScale() {
       // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
       //      It's only been tested using viewBox internally and getting styled to be 100% width externally
@@ -33,6 +34,14 @@ export default defineComponent({
 
       this.scaleBy.x = actualWidth / coordinateWidth;
       this.scaleBy.y = actualHeight / coordinateHeight;
+    },
+
+    getSVGCoords(mouseEvent: MouseEvent): readonly [number, number] {
+      this.updateScale();
+      return [
+        mouseEvent.offsetX * this.scaleBy.x,
+        mouseEvent.offsetY * this.scaleBy.y,
+      ];
     },
 
     startLine(x: number, y: number) {
@@ -54,23 +63,17 @@ export default defineComponent({
     },
 
     startDrawing(mouseEvent: MouseEvent) {
-      this.updateScale();
-      this.startLine(
-        mouseEvent.offsetX * this.scaleBy.x,
-        mouseEvent.offsetY * this.scaleBy.y,
-      );
+      this.startLine(...this.getSVGCoords(mouseEvent));
       this.$el.addEventListener('mousemove', this.cursorMoved);
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
-      this.updateLine(
-        mouseEvent.offsetX * this.scaleBy.x,
-        mouseEvent.offsetY * this.scaleBy.y,
-      );
+      this.updateLine(...this.getSVGCoords(mouseEvent));
     },
 
     endDrawing() {
       this.$el.removeEventListener('mousemove', this.cursorMoved, false);
+      this.currentLine = null;
     },
 
   },
