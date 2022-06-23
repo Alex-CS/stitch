@@ -1,29 +1,34 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
+import {
+  Line,
+  type PointLike,
+} from '@/classes';
+
+import StitchLine from '@/components/StitchLine.vue';
+
 
 export default defineComponent({
   name: 'DragDraw',
+  components: {
+    StitchLine,
+  },
   data() {
     return {
-      currentLine: null as SVGLineElement | null,
+      currentLine: null as Line | null,
+      finishedLines: [] as Line[],
       scaleBy: { x: 1, y: 1 },
     };
   },
   mounted() {
-    const svg = this.$el as SVGSVGElement;
-    svg.addEventListener('mousedown', this.startDrawing, false);
-    svg.addEventListener('mouseup', this.endDrawing, false);
-    svg.onresize = () => {
-      this.updateScale();
-    };
-    this.$nextTick(this.updateScale);
   },
   methods: {
 
     updateScale() {
       // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
       //      It's only been tested using viewBox internally and getting styled to be 100% width externally
+      //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
       const svgEl = this.$el as SVGSVGElement;
 
       const coordinateWidth = svgEl.width.baseVal.value;
@@ -36,43 +41,44 @@ export default defineComponent({
       this.scaleBy.y = actualHeight / coordinateHeight;
     },
 
-    getSVGCoords(mouseEvent: MouseEvent): readonly [number, number] {
+    getSVGCoords(mouseEvent: MouseEvent): PointLike {
       this.updateScale();
-      return [
-        mouseEvent.offsetX * this.scaleBy.x,
-        mouseEvent.offsetY * this.scaleBy.y,
-      ];
+      return {
+        x: mouseEvent.offsetX * this.scaleBy.x,
+        y: mouseEvent.offsetY * this.scaleBy.y,
+      };
     },
 
-    startLine(x: number, y: number) {
-      this.currentLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      this.currentLine.setAttribute('x1', `${x}`);
-      this.currentLine.setAttribute('y1', `${y}`);
-
-      // Set the end point for a smoother transition
-      this.updateLine(x, y);
-
-      this.$el.append(this.currentLine);
+    startLine(startCoords: PointLike) {
+      this.currentLine = Line.from({
+        start: startCoords,
+        // Set the end point for a smoother transition
+        end: startCoords,
+      });
     },
 
-    updateLine(x: number, y: number) {
+    updateLine(endCoords: PointLike) {
       if (this.currentLine === null) return;
 
-      this.currentLine.setAttribute('x2', `${x}`);
-      this.currentLine.setAttribute('y2', `${y}`);
+      Object.assign(this.currentLine.end, endCoords);
     },
 
     startDrawing(mouseEvent: MouseEvent) {
-      this.startLine(...this.getSVGCoords(mouseEvent));
+      this.startLine(this.getSVGCoords(mouseEvent));
       this.$el.addEventListener('mousemove', this.cursorMoved);
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
-      this.updateLine(...this.getSVGCoords(mouseEvent));
+      this.updateLine(this.getSVGCoords(mouseEvent));
     },
 
     endDrawing() {
       this.$el.removeEventListener('mousemove', this.cursorMoved, false);
+      if (this.currentLine === null) { // Something has gone wrong
+        return;
+      }
+
+      this.finishedLines.push(this.currentLine);
       this.currentLine = null;
     },
 
@@ -83,13 +89,28 @@ export default defineComponent({
 <template>
   <svg
     viewBox="0 0 200 200"
+    @mousedown="startDrawing"
+    @mouseup="endDrawing"
   >
+    <!-- TODO^: we probably need some modifiers on these listeners to make them more specific -->
     <circle
-      cx="10"
-      cy="10"
+      cx="50%"
+      cy="50%"
       r="1"
       stroke="currentColor"
     />
+    <StitchLine
+      v-if="currentLine"
+      :line="currentLine"
+      style="color: lightgreen;"
+    />
+    <g>
+      <StitchLine
+        v-for="line in finishedLines"
+        :key="line"
+        :line="line"
+      />
+    </g>
   </svg>
 </template>
 
