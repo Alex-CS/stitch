@@ -18,6 +18,7 @@ export default defineComponent({
     return {
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
+      // `scaleBy` is the coordinate conversion ratio between DOM & SVG
       scaleBy: { x: 1, y: 1 },
     };
   },
@@ -25,22 +26,35 @@ export default defineComponent({
   },
   methods: {
 
+    /**
+     * Update `scaleBy` with the current ratio between DOM coordinates and SVG coordinates.
+     *
+     * SVGs [S]cale cleanly because their internal coordinate system is independent of their rendered size.
+     * Knowing the ratio between DOM coordinates and internal coordinates allows us to convert back and forth
+     *
+     * More info: https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement
+     */
     updateMouseToSVGScale() {
       // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
       //      It's only been tested using viewBox internally and getting styled to be 100% width externally
       //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
       const svgEl = this.$el as SVGSVGElement;
 
-      const coordinateWidth = svgEl.width.baseVal.value;
-      const actualWidth = svgEl.viewBox.baseVal.width;
+      const renderedWidth = svgEl.width.baseVal.value;
+      const coordinateWidth = svgEl.viewBox.baseVal.width;
 
-      const coordinateHeight = svgEl.height.baseVal.value;
-      const actualHeight = svgEl.viewBox.baseVal.height;
+      const renderedHeight = svgEl.height.baseVal.value;
+      const coordinateHeight = svgEl.viewBox.baseVal.height;
 
-      this.scaleBy.x = actualWidth / coordinateWidth;
-      this.scaleBy.y = actualHeight / coordinateHeight;
+      this.scaleBy.x = coordinateWidth / renderedWidth;
+      this.scaleBy.y = coordinateHeight / renderedHeight;
     },
 
+    /**
+     * Convert a `MouseEvent`'s coordinates into SVG coordinates
+     * @param {MouseEvent} mouseEvent
+     * @returns {PointLike}
+     */
     convertMouseToSVGCoords(mouseEvent: MouseEvent): PointLike {
       this.updateMouseToSVGScale();
       return {
@@ -49,14 +63,22 @@ export default defineComponent({
       };
     },
 
+    /**
+     * Create a new Line
+     * @param {PointLike} startCoords
+     */
     startLine(startCoords: PointLike) {
       this.currentLine = Line.from({
         start: startCoords,
-        // Set the end point for a smoother transition
+        // The transition to the first update is smoother if there's an initial end point
         end: startCoords,
       });
     },
 
+    /**
+     * Move the end point of currentLine
+     * @param {PointLike} endCoords
+     */
     updateLine(endCoords: PointLike) {
       if (this.currentLine === null) return;
 
