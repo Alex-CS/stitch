@@ -1,5 +1,8 @@
 <script lang="ts">
-import { defineComponent } from 'vue';
+import {
+  defineComponent,
+  withModifiers,
+} from 'vue';
 
 import {
   Line,
@@ -8,6 +11,10 @@ import {
 
 import StitchLine from '@/components/StitchLine.vue';
 
+
+type EventHandlers<EventMap extends GlobalEventHandlersEventMap> = {
+  [K in keyof EventMap]?: (ev: EventMap[K]) => any
+};
 
 export default defineComponent({
   name: 'DragDraw',
@@ -21,6 +28,30 @@ export default defineComponent({
       // `scaleBy` is the coordinate conversion ratio between DOM & SVG
       scaleBy: { x: 1, y: 1 },
     };
+  },
+  computed: {
+    isDrawing() {
+      return Line.isLineLike(this.currentLine);
+    },
+
+    drawingEventHandlers(): EventHandlers<SVGSVGElementEventMap> {
+      return this.isDrawing ? {
+        mouseup: withModifiers(this.finishDrawing, [
+          'left',
+          'stop',
+          'prevent',
+        ]),
+        mousemove: withModifiers(this.cursorMoved, [
+          'passive',
+        ]),
+      } : {
+        mousedown: withModifiers(this.beginDrawing, [
+          'left',
+          'stop',
+          'prevent',
+        ]),
+      };
+    },
   },
   mounted() {
   },
@@ -85,10 +116,11 @@ export default defineComponent({
       Object.assign(this.currentLine.end, endCoords);
     },
 
+    // Event Handlers --------------------------------------------------------
+
     beginDrawing(mouseEvent: MouseEvent) {
       console.debug('beginDrawing');
       this.startLine(this.convertMouseToSVGCoords(mouseEvent));
-      this.$el.addEventListener('mousemove', this.cursorMoved);
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
@@ -98,7 +130,6 @@ export default defineComponent({
 
     finishDrawing() {
       console.debug('finishDrawing');
-      this.$el.removeEventListener('mousemove', this.cursorMoved, false);
       if (this.currentLine === null) { // Something has gone wrong
         return;
       }
@@ -114,10 +145,8 @@ export default defineComponent({
 <template>
   <svg
     viewBox="0 0 200 200"
-    @mousedown="beginDrawing"
-    @mouseup="finishDrawing"
+    v-on="drawingEventHandlers"
   >
-    <!-- TODO^: we probably need some modifiers on these listeners to make them more specific -->
     <circle
       cx="50%"
       cy="50%"

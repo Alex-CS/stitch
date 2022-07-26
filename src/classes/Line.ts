@@ -53,8 +53,8 @@ export default class Line {
    * @returns {candidate is LineLike}
    */
   static isLineLike(candidate: any): candidate is LineLike {
-    return Point.isPointLike(candidate.start)
-      && Point.isPointLike(candidate.end);
+    return Point.isPointLike(candidate?.start)
+      && Point.isPointLike(candidate?.end);
   }
 
   /**
