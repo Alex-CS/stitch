@@ -85,16 +85,19 @@ export default defineComponent({
       Object.assign(this.currentLine.end, endCoords);
     },
 
-    startDrawing(mouseEvent: MouseEvent) {
+    beginDrawing(mouseEvent: MouseEvent) {
+      console.debug('beginDrawing');
       this.startLine(this.convertMouseToSVGCoords(mouseEvent));
       this.$el.addEventListener('mousemove', this.cursorMoved);
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
+      console.debug('cursorMoved');
       this.updateLine(this.convertMouseToSVGCoords(mouseEvent));
     },
 
-    endDrawing() {
+    finishDrawing() {
+      console.debug('finishDrawing');
       this.$el.removeEventListener('mousemove', this.cursorMoved, false);
       if (this.currentLine === null) { // Something has gone wrong
         return;
@@ -111,8 +114,8 @@ export default defineComponent({
 <template>
   <svg
     viewBox="0 0 200 200"
-    @mousedown="startDrawing"
-    @mouseup="endDrawing"
+    @mousedown="beginDrawing"
+    @mouseup="finishDrawing"
   >
     <!-- TODO^: we probably need some modifiers on these listeners to make them more specific -->
     <circle
