@@ -25,7 +25,7 @@ export default defineComponent({
   },
   methods: {
 
-    updateScale() {
+    updateMouseToSVGScale() {
       // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
       //      It's only been tested using viewBox internally and getting styled to be 100% width externally
       //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
@@ -41,8 +41,8 @@ export default defineComponent({
       this.scaleBy.y = actualHeight / coordinateHeight;
     },
 
-    getSVGCoords(mouseEvent: MouseEvent): PointLike {
-      this.updateScale();
+    convertMouseToSVGCoords(mouseEvent: MouseEvent): PointLike {
+      this.updateMouseToSVGScale();
       return {
         x: mouseEvent.offsetX * this.scaleBy.x,
         y: mouseEvent.offsetY * this.scaleBy.y,
@@ -64,12 +64,12 @@ export default defineComponent({
     },
 
     startDrawing(mouseEvent: MouseEvent) {
-      this.startLine(this.getSVGCoords(mouseEvent));
+      this.startLine(this.convertMouseToSVGCoords(mouseEvent));
       this.$el.addEventListener('mousemove', this.cursorMoved);
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
-      this.updateLine(this.getSVGCoords(mouseEvent));
+      this.updateLine(this.convertMouseToSVGCoords(mouseEvent));
     },
 
     endDrawing() {
