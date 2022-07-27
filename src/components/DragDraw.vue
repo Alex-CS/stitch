@@ -11,10 +11,10 @@ import {
 
 import StitchLine from '@/components/StitchLine.vue';
 
+import {
+  type EventHandlers,
+} from '@/types/utility';
 
-type EventHandlers<EventMap extends GlobalEventHandlersEventMap> = {
-  [K in keyof EventMap]?: (ev: EventMap[K]) => any
-};
 
 export default defineComponent({
   name: 'DragDraw',
@@ -35,7 +35,7 @@ export default defineComponent({
     },
 
     drawingEventHandlers(): EventHandlers<SVGSVGElementEventMap> {
-      return this.isDrawing ? {
+      const drawingHandlers: EventHandlers<SVGSVGElementEventMap> = {
         mouseup: withModifiers(this.finishDrawing, [
           'left',
           'stop',
@@ -44,13 +44,17 @@ export default defineComponent({
         mousemove: withModifiers(this.cursorMoved, [
           'passive',
         ]),
-      } : {
+      };
+      const initialHandlers: EventHandlers<SVGSVGElementEventMap> = {
         mousedown: withModifiers(this.beginDrawing, [
           'left',
+          'exact', // ignore modifier keys
           'stop',
           'prevent',
         ]),
       };
+
+      return this.isDrawing ? drawingHandlers : initialHandlers;
     },
   },
   mounted() {
