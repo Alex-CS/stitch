@@ -13,12 +13,13 @@
  *       Check the history of that file for previous iterations
  */
 export function getRenderedScaleOfSVG(svgEl: SVGSVGElement): { x: number, y: number } {
-  // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
-  //      It's only been tested using viewBox internally and getting styled to be 100% width externally
-  //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
+  // If there's no viewBox, the scale doesn't differ
+  if (!svgEl.hasAttribute('viewBox')) {
+    return { x: 1, y: 1 };
+  }
 
-  const renderedWidth = svgEl.width.baseVal.value;
-  const renderedHeight = svgEl.height.baseVal.value;
+  const renderedWidth = svgEl.clientWidth;
+  const renderedHeight = svgEl.clientHeight;
 
   const coordinateWidth = svgEl.viewBox.baseVal.width;
   const coordinateHeight = svgEl.viewBox.baseVal.height;

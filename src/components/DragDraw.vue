@@ -132,12 +132,12 @@ export default defineComponent({
 
 <template>
   <svg
-    viewBox="-100 -100 200 200"
+    viewBox="0 0 200 200"
     v-on="drawingEventHandlers"
   >
     <circle
-      cx="0"
-      cy="0"
+      cx="50%"
+      cy="50%"
       r="1"
       stroke="currentColor"
     />
