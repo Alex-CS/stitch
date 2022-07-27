@@ -16,6 +16,7 @@ import {
 } from '@/types/utility';
 import {
   getRenderedScaleOfSVG,
+  getCoordinateOffset,
 } from '@/utils/svg-dom';
 
 
@@ -73,10 +74,11 @@ export default defineComponent({
       const { offsetX: mouseX, offsetY: mouseY } = mouseEvent;
       // The scale at which the SVG is currently rendered relative to its native dimensions
       const scaleBy = getRenderedScaleOfSVG(this.$el);
+      const minCoords = getCoordinateOffset(this.$el);
 
       return {
-        x: mouseX * scaleBy.x,
-        y: mouseY * scaleBy.y,
+        x: (mouseX * scaleBy.x) + minCoords.x,
+        y: (mouseY * scaleBy.y) + minCoords.y,
       };
     },
 
@@ -130,12 +132,12 @@ export default defineComponent({
 
 <template>
   <svg
-    viewBox="0 0 200 200"
+    viewBox="-100 -100 200 200"
     v-on="drawingEventHandlers"
   >
     <circle
-      cx="50%"
-      cy="50%"
+      cx="0"
+      cy="0"
       r="1"
       stroke="currentColor"
     />

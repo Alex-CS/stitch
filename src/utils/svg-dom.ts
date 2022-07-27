@@ -18,13 +18,25 @@ export function getRenderedScaleOfSVG(svgEl: SVGSVGElement): { x: number, y: num
   //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
 
   const renderedWidth = svgEl.width.baseVal.value;
-  const coordinateWidth = svgEl.viewBox.baseVal.width;
-
   const renderedHeight = svgEl.height.baseVal.value;
+
+  const coordinateWidth = svgEl.viewBox.baseVal.width;
   const coordinateHeight = svgEl.viewBox.baseVal.height;
 
   const x = coordinateWidth / renderedWidth;
   const y = coordinateHeight / renderedHeight;
+
+  return { x, y };
+}
+
+/**
+ * Get the (SVG) coordinates of an <svg> element's top-left point.
+ * All child element coordinates are relative to this, so it's essentially an "offset" for them
+ *
+ * More info: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/viewBox
+ */
+export function getCoordinateOffset(svgEl: SVGSVGElement): { x: number, y: number } {
+  const { x, y } = svgEl.viewBox.baseVal;
 
   return { x, y };
 }
