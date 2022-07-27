@@ -14,6 +14,10 @@ import StitchLine from '@/components/StitchLine.vue';
 import {
   type EventHandlers,
 } from '@/types/utility';
+import {
+  getRenderedScaleOfSVG,
+} from '@/utils/svg-dom';
+
 
 
 export default defineComponent({
@@ -25,8 +29,6 @@ export default defineComponent({
     return {
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
-      // `scaleBy` is the coordinate conversion ratio between DOM & SVG
-      scaleBy: { x: 1, y: 1 },
     };
   },
   computed: {
@@ -62,39 +64,19 @@ export default defineComponent({
   methods: {
 
     /**
-     * Update `scaleBy` with the current ratio between DOM coordinates and SVG coordinates.
-     *
-     * SVGs [S]cale cleanly because their internal coordinate system is independent of their rendered size.
-     * Knowing the ratio between DOM coordinates and internal coordinates allows us to convert back and forth
-     *
-     * More info: https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement
-     */
-    updateMouseToSVGScale() {
-      // TODO: Need to test this with other external ways of resizing the SVG, and other internal ways of defining the coordinate system
-      //      It's only been tested using viewBox internally and getting styled to be 100% width externally
-      //      Also, if aspect ratio is preserved, the scale _maaaay_ always be the same in both dimensions
-      const svgEl = this.$el as SVGSVGElement;
-
-      const renderedWidth = svgEl.width.baseVal.value;
-      const coordinateWidth = svgEl.viewBox.baseVal.width;
-
-      const renderedHeight = svgEl.height.baseVal.value;
-      const coordinateHeight = svgEl.viewBox.baseVal.height;
-
-      this.scaleBy.x = coordinateWidth / renderedWidth;
-      this.scaleBy.y = coordinateHeight / renderedHeight;
-    },
-
-    /**
      * Convert a `MouseEvent`'s coordinates into SVG coordinates
      * @param {MouseEvent} mouseEvent
      * @returns {PointLike}
      */
     convertMouseToSVGCoords(mouseEvent: MouseEvent): PointLike {
-      this.updateMouseToSVGScale();
+      // DOM Coordinates of the mouse, relative to the top-left corner of the <svg>
+      const { offsetX: mouseX, offsetY: mouseY } = mouseEvent;
+      // The scale at which the SVG is currently rendered relative to its native dimensions
+      const scaleBy = getRenderedScaleOfSVG(this.$el);
+
       return {
-        x: mouseEvent.offsetX * this.scaleBy.x,
-        y: mouseEvent.offsetY * this.scaleBy.y,
+        x: mouseX * scaleBy.x,
+        y: mouseY * scaleBy.y,
       };
     },
 
