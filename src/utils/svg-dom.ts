@@ -18,11 +18,16 @@ export function getRenderedScaleOfSVG(svgEl: SVGSVGElement): { x: number, y: num
     return { x: 1, y: 1 };
   }
 
-  const renderedWidth = svgEl.clientWidth;
-  const renderedHeight = svgEl.clientHeight;
+  const {
+    clientWidth: renderedWidth,
+    clientHeight: renderedHeight,
+    viewBox,
+  } = svgEl;
 
-  const coordinateWidth = svgEl.viewBox.baseVal.width;
-  const coordinateHeight = svgEl.viewBox.baseVal.height;
+  const {
+    width: coordinateWidth,
+    height: coordinateHeight,
+  } = viewBox.baseVal;
 
   const x = coordinateWidth / renderedWidth;
   const y = coordinateHeight / renderedHeight;
