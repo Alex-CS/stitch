@@ -15,6 +15,10 @@ import {
   type EventHandlers,
 } from '@/types/utility';
 import {
+  roundToMultiple,
+  toPercent,
+} from '@/utils';
+import {
   convertEventCoordsToSVGCoords,
 } from '@/utils/svg-dom';
 
@@ -24,13 +28,32 @@ export default defineComponent({
   components: {
     StitchLine,
   },
+  props: {
+    // The number of grid squares to divide each dimension into
+    gridDensity: {
+      type: Number,
+      default: 20,
+    },
+    showGrid: Boolean,
+    snapToGrid: Boolean,
+  },
   data() {
     return {
+      gridSize: 200,
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
     };
   },
   computed: {
+
+    gridSepFraction(): number {
+      return 1 / this.gridDensity;
+    },
+
+    gridSeparation(): number {
+      return this.gridSize / this.gridDensity;
+    },
+
     isDrawing() {
       return Line.isLineLike(this.currentLine);
     },
@@ -57,10 +80,19 @@ export default defineComponent({
 
       return this.isDrawing ? drawingHandlers : initialHandlers;
     },
+
   },
   mounted() {
   },
   methods: {
+    toPercent,
+
+    getClosestGridPoint(actualPoint: PointLike): PointLike {
+      return {
+        x: roundToMultiple(actualPoint.x, this.gridSeparation),
+        y: roundToMultiple(actualPoint.y, this.gridSeparation),
+      };
+    },
 
     /**
      * Convert a `MouseEvent`'s coordinates into SVG coordinates
@@ -120,9 +152,31 @@ export default defineComponent({
 
 <template>
   <svg
-    viewBox="0 0 200 200"
+    :viewBox="`0 0 ${gridSize} ${gridSize}`"
     v-on="drawingEventHandlers"
   >
+    <g v-if="showGrid" class="grid-lines">
+      <line
+        v-for="i in (gridDensity - 1)"
+        :key="`grid-line:v-${i}`"
+        :x1="toPercent(gridSepFraction * i, 0)"
+        :x2="toPercent(gridSepFraction * i, 0)"
+        y1="0%"
+        y2="100%"
+        class="vertical"
+      />
+
+      <line
+        v-for="i in (gridDensity - 1)"
+        :key="`grid-line:h-${i}`"
+        :y1="toPercent(gridSepFraction * i, 0)"
+        :y2="toPercent(gridSepFraction * i, 0)"
+        x1="0%"
+        x2="100%"
+        class="horizontal"
+      />
+    </g>
+
     <circle
       cx="50%"
       cy="50%"
@@ -134,7 +188,7 @@ export default defineComponent({
       :line="currentLine"
       style="color: lightgreen;"
     />
-    <g>
+    <g class="completed-lines">
       <StitchLine
         v-for="line in finishedLines"
         :key="line"
@@ -145,6 +199,13 @@ export default defineComponent({
 </template>
 
 <style>
+
+
+.grid-lines {
+  stroke-width: 1;
+  stroke-opacity: 0.1;
+}
+
 line {
   stroke: currentColor;
 }

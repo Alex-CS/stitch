@@ -1,3 +1,10 @@
+
+
+/**
+ * Alias to allow being explicit about numbers that should be integers
+ */
+export type Integer = number;
+
 /**
  * A generic tuple type
  */

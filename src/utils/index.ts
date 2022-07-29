@@ -4,6 +4,7 @@ import _partition from 'lodash/partition';
 import _range from 'lodash/range';
 
 import {
+  type Integer,
   type Pair,
 } from '@/types/utility';
 
@@ -110,6 +111,34 @@ export function getLoopedIndex(length: number, rawIndex: number): number {
  */
 export function makeIndexLooper(length: number): (rawIndex: number) => number {
   return (rawIndex: number) => getLoopedIndex(length, rawIndex);
+}
+
+/**
+ * Calculate the multiple of `unit` that is closest to `num`
+ * @param {number} num
+ * @param {number} unit
+ * @returns {number}
+ */
+export function roundToMultiple(num: number, unit: number): number {
+  const multiplier = Math.round(num / unit);
+
+  return multiplier * unit;
+}
+
+/**
+ * Convert a number into a percent string
+ * @param {number} num
+ * @param {Integer} [digits]
+ * @returns {string}
+ */
+export function toPercent(num: number, digits?: Integer): string {
+  const percentage = (num * 100);
+
+  if (Number.isFinite(digits)) {
+    return `${percentage.toFixed(digits)}%`;
+  }
+
+  return `${percentage}%`;
 }
 
 /**

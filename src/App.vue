@@ -95,6 +95,8 @@ export default defineComponent({
   <DragDraw
     v-else-if="mode === 'drag-draw'"
     style="border: solid 1px currentColor;"
+    snap-to-grid
+    show-grid
   />
   <template v-else>
     <svg :width="size" :height="size">
