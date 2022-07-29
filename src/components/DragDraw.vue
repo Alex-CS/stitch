@@ -98,6 +98,10 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
+      if (this.snapToGrid) {
+        return this.getClosestGridPoint(svgCoords);
+      }
+
       return svgCoords;
     },
 
