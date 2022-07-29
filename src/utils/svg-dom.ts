@@ -1,3 +1,6 @@
+import {
+  type PointLike,
+} from '@/classes';
 
 
 /**
@@ -45,4 +48,27 @@ export function getCoordinateOffset(svgEl: SVGSVGElement): { x: number, y: numbe
   const { x, y } = svgEl.viewBox.baseVal;
 
   return { x, y };
+}
+
+/**
+ * Convert the coordinates from a `MouseEvent` into SVG coordinates
+ */
+export function convertEventCoordsToSVGCoords(
+  event: MouseEvent,
+  svgEl: SVGSVGElement,
+): PointLike {
+  const {
+    // DOM Coordinates of the mouse relative to the top-left corner of the <svg>
+    offsetX: mouseX,
+    offsetY: mouseY,
+  } = event;
+
+  // The scale at which the SVG is currently rendered relative to its native dimensions
+  const scaleBy = getRenderedScaleOfSVG(svgEl);
+  const minCoords = getCoordinateOffset(svgEl);
+
+  return {
+    x: (mouseX * scaleBy.x) + minCoords.x,
+    y: (mouseY * scaleBy.y) + minCoords.y,
+  };
 }

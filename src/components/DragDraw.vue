@@ -15,10 +15,8 @@ import {
   type EventHandlers,
 } from '@/types/utility';
 import {
-  getRenderedScaleOfSVG,
-  getCoordinateOffset,
+  convertEventCoordsToSVGCoords,
 } from '@/utils/svg-dom';
-
 
 
 export default defineComponent({
@@ -69,17 +67,10 @@ export default defineComponent({
      * @param {MouseEvent} mouseEvent
      * @returns {PointLike}
      */
-    convertMouseToSVGCoords(mouseEvent: MouseEvent): PointLike {
-      // DOM Coordinates of the mouse, relative to the top-left corner of the <svg>
-      const { offsetX: mouseX, offsetY: mouseY } = mouseEvent;
-      // The scale at which the SVG is currently rendered relative to its native dimensions
-      const scaleBy = getRenderedScaleOfSVG(this.$el);
-      const minCoords = getCoordinateOffset(this.$el);
+    getCoordinates(mouseEvent: MouseEvent): PointLike {
+      const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      return {
-        x: (mouseX * scaleBy.x) + minCoords.x,
-        y: (mouseY * scaleBy.y) + minCoords.y,
-      };
+      return svgCoords;
     },
 
     /**
@@ -108,12 +99,12 @@ export default defineComponent({
 
     beginDrawing(mouseEvent: MouseEvent) {
       console.debug('beginDrawing');
-      this.startLine(this.convertMouseToSVGCoords(mouseEvent));
+      this.startLine(this.getCoordinates(mouseEvent));
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
       console.debug('cursorMoved');
-      this.updateLine(this.convertMouseToSVGCoords(mouseEvent));
+      this.updateLine(this.getCoordinates(mouseEvent));
     },
 
     finishDrawing() {
