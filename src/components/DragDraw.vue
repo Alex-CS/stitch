@@ -9,6 +9,7 @@ import {
   type PointLike,
 } from '@/classes';
 
+import StitchGridLines from '@/components/StitchGridLines.vue';
 import StitchLine from '@/components/StitchLine.vue';
 
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/types/utility';
 import {
   roundToMultiple,
-  toPercent,
 } from '@/utils';
 import {
   convertEventCoordsToSVGCoords,
@@ -26,6 +26,7 @@ import {
 export default defineComponent({
   name: 'DragDraw',
   components: {
+    StitchGridLines,
     StitchLine,
   },
   props: {
@@ -45,10 +46,6 @@ export default defineComponent({
     };
   },
   computed: {
-
-    gridSepFraction(): number {
-      return 1 / this.gridDensity;
-    },
 
     gridSeparation(): number {
       return this.gridSize / this.gridDensity;
@@ -85,7 +82,6 @@ export default defineComponent({
   mounted() {
   },
   methods: {
-    toPercent,
 
     getClosestGridPoint(actualPoint: PointLike): PointLike {
       return {
@@ -155,27 +151,10 @@ export default defineComponent({
     :viewBox="`0 0 ${gridSize} ${gridSize}`"
     v-on="drawingEventHandlers"
   >
-    <g v-if="showGrid" class="grid-lines">
-      <line
-        v-for="i in (gridDensity - 1)"
-        :key="`grid-line:v-${i}`"
-        :x1="toPercent(gridSepFraction * i, 0)"
-        :x2="toPercent(gridSepFraction * i, 0)"
-        y1="0%"
-        y2="100%"
-        class="vertical"
-      />
-
-      <line
-        v-for="i in (gridDensity - 1)"
-        :key="`grid-line:h-${i}`"
-        :y1="toPercent(gridSepFraction * i, 0)"
-        :y2="toPercent(gridSepFraction * i, 0)"
-        x1="0%"
-        x2="100%"
-        class="horizontal"
-      />
-    </g>
+    <StitchGridLines
+      v-if="showGrid"
+      :grid-density="gridDensity"
+    />
 
     <circle
       cx="50%"
@@ -200,11 +179,6 @@ export default defineComponent({
 
 <style>
 
-
-.grid-lines {
-  stroke-width: 1;
-  stroke-opacity: 0.1;
-}
 
 line {
   stroke: currentColor;
