@@ -51,6 +51,12 @@ export default defineComponent({
       return this.gridSize / this.gridDensity;
     },
 
+    closestGridPoint() {
+      return this.currentLine === null
+        ? null
+        : this.getClosestGridPoint(this.currentLine.end);
+    },
+
     isDrawing() {
       return Line.isLineLike(this.currentLine);
     },
@@ -98,10 +104,6 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      if (this.snapToGrid) {
-        return this.getClosestGridPoint(svgCoords);
-      }
-
       return svgCoords;
     },
 
@@ -111,7 +113,9 @@ export default defineComponent({
      */
     startLine(startCoords: PointLike) {
       this.currentLine = Line.from({
-        start: startCoords,
+        start: this.snapToGrid
+          ? this.getClosestGridPoint(startCoords)
+          : startCoords,
         // The transition to the first update is smoother if there's an initial end point
         end: startCoords,
       });
@@ -142,6 +146,11 @@ export default defineComponent({
         return;
       }
 
+      if (this.snapToGrid) {
+        const gridPoint = this.getClosestGridPoint(this.currentLine.end);
+        this.updateLine(gridPoint);
+      }
+
       this.finishedLines.push(this.currentLine);
       this.currentLine = null;
     },
@@ -161,10 +170,10 @@ export default defineComponent({
     />
 
     <circle
-      cx="50%"
-      cy="50%"
+      :cx="closestGridPoint?.x ?? '50%'"
+      :cy="closestGridPoint?.y ?? '50%'"
       r="1"
-      stroke="currentColor"
+      :stroke="currentLine ? 'lightgreen' : 'currentColor'"
     />
     <StitchLine
       v-if="currentLine"
