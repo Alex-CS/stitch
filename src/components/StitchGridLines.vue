@@ -4,6 +4,7 @@ import {
 } from 'vue';
 
 import {
+  mapInRange,
   toPercent,
 } from '@/utils';
 
@@ -18,10 +19,11 @@ export default defineComponent({
   },
   computed: {
 
-
-  },
-  methods: {
-    toPercent,
+    gridSteps(): string[] {
+      return mapInRange(1, this.gridDensity, (i) => {
+        return toPercent(i / this.gridDensity, 0);
+      });
+    },
 
   },
 });
@@ -30,20 +32,20 @@ export default defineComponent({
 <template>
   <g class="grid-lines">
     <line
-      v-for="i in (gridDensity - 1)"
+      v-for="(x, i) in gridSteps"
       :key="`grid-line:v-${i}`"
-      :x1="toPercent(i / gridDensity, 0)"
-      :x2="toPercent(i / gridDensity, 0)"
+      :x1="x"
+      :x2="x"
       y1="0%"
       y2="100%"
       class="vertical"
     />
 
     <line
-      v-for="i in (gridDensity - 1)"
+      v-for="(y, i) in gridSteps"
       :key="`grid-line:h-${i}`"
-      :y1="toPercent(i / gridDensity, 0)"
-      :y2="toPercent(i / gridDensity, 0)"
+      :y1="y"
+      :y2="y"
       x1="0%"
       x2="100%"
       class="horizontal"
