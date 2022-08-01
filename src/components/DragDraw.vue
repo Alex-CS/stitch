@@ -23,6 +23,11 @@ import {
 } from '@/utils/svg-dom';
 
 
+enum SnapMode {
+  Always = 'ALWAYS',
+  OnRelease = 'ON_RELEASE',
+}
+
 export default defineComponent({
   name: 'DragDraw',
   components: {
@@ -43,6 +48,7 @@ export default defineComponent({
       gridSize: 200,
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
+      snapMode: SnapMode.OnRelease as SnapMode,
     };
   },
   computed: {
@@ -51,7 +57,7 @@ export default defineComponent({
       return this.gridSize / this.gridDensity;
     },
 
-    closestGridPoint() {
+    currentEndGridPoint() {
       return this.currentLine === null
         ? null
         : this.getClosestGridPoint(this.currentLine.end);
@@ -103,6 +109,10 @@ export default defineComponent({
      */
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
+
+      if (this.snapToGrid && this.snapMode === SnapMode.Always) {
+        return this.getClosestGridPoint(svgCoords);
+      }
 
       return svgCoords;
     },
@@ -170,15 +180,16 @@ export default defineComponent({
     />
 
     <circle
-      :cx="closestGridPoint?.x ?? '50%'"
-      :cy="closestGridPoint?.y ?? '50%'"
+      v-if="currentEndGridPoint"
+      :cx="currentEndGridPoint?.x"
+      :cy="currentEndGridPoint?.y"
       r="1"
-      :stroke="currentLine ? 'lightgreen' : 'currentColor'"
+      class="active"
     />
     <StitchLine
       v-if="currentLine"
       :line="currentLine"
-      style="color: lightgreen;"
+      class="active"
     />
     <g class="completed-lines">
       <StitchLine
@@ -193,7 +204,12 @@ export default defineComponent({
 <style>
 
 
+circle,
 line {
   stroke: currentColor;
+}
+
+.active {
+  color: lightgreen;
 }
 </style>
