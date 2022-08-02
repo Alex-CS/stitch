@@ -100,8 +100,6 @@ export default defineComponent({
   data() {
     return {
       gutterWidth: DEFAULT_GUTTER_WIDTH,
-      width: this.size,
-      height: this.size,
       selectedPoint: null as Point | null,
       selectedLine: null as Line | null,
       lines: [] as Line[],
@@ -143,8 +141,8 @@ export default defineComponent({
       };
 
       return {
-        x: getGridSpace(this.width),
-        y: getGridSpace(this.height),
+        x: getGridSpace(this.size),
+        y: getGridSpace(this.size),
       };
     },
 
@@ -321,8 +319,7 @@ export default defineComponent({
 
 <template>
   <svg
-    :width="width"
-    :height="height"
+    :viewBox="`0 0 ${size} ${size}`"
     class="svg-canvas"
   >
     <g id="circles">
