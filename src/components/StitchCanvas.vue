@@ -100,7 +100,7 @@ export default defineComponent({
       // Debug mode things
       gridDots: [] as Point[],
       stitchedPoints: new Set<ReturnType<Point['toString']>>(),
-      stitchColors: new WeakMap<Line, Color>(),
+      stitchColors: new WeakMap<Line, string>(),
       firstLineColor: new Color(0, 127, 255),
       lastLineColor: new Color(180, 15, 127),
     };
@@ -131,6 +131,17 @@ export default defineComponent({
       stitchNext();
     },
 
+    addDebugStitches(stitches: CurveStitches) {
+      // Record which points have been stitched
+      stitches.forEach((stitchedLine) => {
+        this.stitchedPoints.add(stitchedLine.start.toString());
+        this.stitchedPoints.add(stitchedLine.end.toString());
+      });
+      // Differentiate the first and last stitch by color
+      this.stitchColors.set(stitches[0], this.firstLineColor.toRGBAString());
+      this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor.toRGBAString());
+    },
+
     isSelected(item: Point | Line): boolean {
       if (Point.isPointLike(item)) {
         return Point.areEqual(this.selectedPoint, item);
@@ -141,22 +152,15 @@ export default defineComponent({
     },
 
     selectPoint(point: Point) {
-      const { x, y } = point;
-      // TODO order these better
       if (this.selectedPoint === null) {
         // Select first point
-        console.log(`Select { x: ${x}, y: ${y} }`);
         this.selectedPoint = point;
       } else if (this.isSelected(point)) {
         // Deselect
-        console.log(`Deselect { x: ${x}, y: ${y} }`);
         this.selectedPoint = null;
       } else {
         // Draw line
-        this.lines.push(new Line(
-          this.selectedPoint,
-          point,
-        ));
+        this.lines.push(new Line(this.selectedPoint, point));
         this.selectedPoint = null;
       }
     },
@@ -164,18 +168,13 @@ export default defineComponent({
     selectLine(line: Line) {
       if (this.selectedLine === null) {
         // Select first line
-        console.log(`Selected spine1: ${line}`);
         this.selectedLine = line;
       } else if (this.isSelected(line)) {
         // Deselect
-        console.log(`Deselect spine1: ${line}`);
         this.selectedLine = null;
       } else {
         // Stitch
-        console.log(`Stitching spine1: ${this.selectedLine}, spine2: ${line}`);
-
         this.stitches.push(...this.getStitches(this.selectedLine, line));
-
         this.selectedLine = null;
       }
     },
@@ -186,12 +185,7 @@ export default defineComponent({
       const dynamicResolution = Math.round(lineB.length / (this.size / this.resolution));
       const stitches = stitch([lineA, lineB], dynamicResolution);
       if (this.debugMode) {
-        stitches.forEach((stitchedLine) => {
-          this.stitchedPoints.add(stitchedLine.start.toString());
-          this.stitchedPoints.add(stitchedLine.end.toString());
-        });
-        this.stitchColors.set(stitches[0], this.firstLineColor);
-        this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
+        this.addDebugStitches(stitches);
       }
 
       return stitches;
@@ -234,7 +228,7 @@ export default defineComponent({
         :key="stitch.toString()"
         :line="stitch"
         :style="{
-          stroke: stitchColors.get(stitch)?.toRGBAString(),
+          color: stitchColors.get(stitch),
         }"
         class="stitch"
       />
