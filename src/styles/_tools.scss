@@ -1,0 +1,18 @@
+$default-color: #aaaaaa;
+$active-color: royalblue;
+$hover-color: darken($active-color, 10%);
+$trans-props: .2s ease-in-out;
+
+@mixin color-states($prop) {
+  transition: all $trans-props;
+  #{$prop}: $default-color;
+
+  &:hover {
+    #{$prop}: $hover-color;
+    opacity: 1;
+  }
+
+  &.active {
+    #{$prop}: $active-color;
+  }
+}
