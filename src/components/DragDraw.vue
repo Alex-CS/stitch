@@ -98,17 +98,14 @@ export default defineComponent({
     // Event Handlers --------------------------------------------------------
 
     beginDrawing(mouseEvent: MouseEvent) {
-      console.debug('beginDrawing');
       this.startLine(this.getCoordinates(mouseEvent));
     },
 
     cursorMoved(mouseEvent: MouseEvent) {
-      console.debug('cursorMoved');
       this.updateLine(this.getCoordinates(mouseEvent));
     },
 
     finishDrawing() {
-      console.debug('finishDrawing');
       if (this.currentLine === null) { // Something has gone wrong
         return;
       }
