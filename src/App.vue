@@ -11,6 +11,7 @@ import { CURVE_TYPES } from '@/constants';
 
 import StitchCanvas from './components/StitchCanvas.vue';
 import StitchMultiCurve from './components/StitchMultiCurve.vue';
+import StitchMultiCurveControls from './components/StitchMultiCurveControls.vue';
 
 
 export default defineComponent({
@@ -18,6 +19,7 @@ export default defineComponent({
   components: {
     StitchCanvas,
     StitchMultiCurve,
+    StitchMultiCurveControls,
   },
   data() {
     const size = 600;
@@ -90,59 +92,7 @@ export default defineComponent({
         :colors="colors"
       />
     </svg>
-    <div class="controls">
-      <div>
-        <label>layerCount</label>
-        <input
-          v-model="options.layerCount"
-          type="range"
-          min="1"
-          max="8"
-        >
-        <span>{{ options.layerCount }}</span>
-      </div>
-      <div>
-        <label>layerSepFactor</label>
-        <input
-          v-model="options.layerSepFactor"
-          type="range"
-          min="1"
-          max="8"
-        >
-        <span>{{ options.layerSepFactor }}</span>
-      </div>
-      <div>
-        <label>numVertices</label>
-        <input
-          v-model="options.numVertices"
-          type="range"
-          min="3"
-          max="8"
-        >
-        <span>{{ options.numVertices }}</span>
-      </div>
-      <div>
-        <label>resolution</label>
-        <input
-          v-model="options.resolution"
-          type="range"
-          min="4"
-          max="64"
-        >
-        <span>{{ options.resolution }}</span>
-      </div>
-      <div>
-        <label>rotation</label>
-        <input
-          v-model="options.rotation"
-          type="range"
-          min="0"
-          max="1"
-          :step="1/8"
-        >
-        <span>{{ options.rotation * 360 }}</span>
-      </div>
-    </div>
+    <StitchMultiCurveControls v-model="options" />
   </template>
 </template>
 
@@ -170,13 +120,4 @@ svg {
   overflow: auto;
 }
 
-.controls {
-  align-self: flex-end;
-  display: flex;
-  flex-direction: column;
-
-  div {
-    text-align: end;
-  }
-}
 </style>
