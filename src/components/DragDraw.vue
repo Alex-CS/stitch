@@ -24,9 +24,12 @@ import {
 
 
 enum SnapMode {
+  Off = 'OFF',
   Always = 'ALWAYS',
   OnRelease = 'ON_RELEASE',
 }
+
+const DEFAULT_SNAP_MODE = SnapMode.OnRelease;
 
 export default defineComponent({
   name: 'DragDraw',
@@ -45,13 +48,20 @@ export default defineComponent({
   },
   data() {
     return {
+      SnapMode,
       gridSize: 200,
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
-      snapMode: SnapMode.OnRelease as SnapMode,
     };
   },
   computed: {
+
+    snapMode(): SnapMode {
+      if (this.snapToGrid) {
+        return DEFAULT_SNAP_MODE;
+      }
+      return SnapMode.Off;
+    },
 
     gridSeparation(): number {
       return this.gridSize / this.gridDensity;
@@ -67,7 +77,7 @@ export default defineComponent({
       return Line.isLineLike(this.currentLine);
     },
 
-    drawingEventHandlers(): EventHandlers<SVGSVGElementEventMap> {
+    rootEvents(): EventHandlers<SVGSVGElementEventMap> {
       const drawingHandlers: EventHandlers<SVGSVGElementEventMap> = {
         mouseup: withModifiers(this.finishDrawing, [
           'left',
@@ -110,7 +120,7 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      if (this.snapToGrid && this.snapMode === SnapMode.Always) {
+      if (this.snapMode === SnapMode.Always) {
         return this.getClosestGridPoint(svgCoords);
       }
 
@@ -123,7 +133,7 @@ export default defineComponent({
      */
     startLine(startCoords: PointLike) {
       this.currentLine = Line.from({
-        start: this.snapToGrid
+        start: (this.snapMode === SnapMode.OnRelease)
           ? this.getClosestGridPoint(startCoords)
           : startCoords,
         // The transition to the first update is smoother if there's an initial end point
@@ -156,7 +166,7 @@ export default defineComponent({
         return;
       }
 
-      if (this.snapToGrid) {
+      if (this.snapMode === SnapMode.OnRelease) {
         const gridPoint = this.getClosestGridPoint(this.currentLine.end);
         this.updateLine(gridPoint);
       }
@@ -172,7 +182,7 @@ export default defineComponent({
 <template>
   <svg
     :viewBox="`0 0 ${gridSize} ${gridSize}`"
-    v-on="drawingEventHandlers"
+    v-on="rootEvents"
   >
     <StitchGridLines
       v-if="showGrid"
@@ -180,7 +190,7 @@ export default defineComponent({
     />
 
     <circle
-      v-if="currentEndGridPoint"
+      v-if="snapMode === SnapMode.OnRelease && currentEndGridPoint"
       :cx="currentEndGridPoint?.x"
       :cy="currentEndGridPoint?.y"
       r="1"
