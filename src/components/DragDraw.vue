@@ -8,6 +8,7 @@ import {
   Line,
   type PointLike,
 } from '@/classes';
+import { distance } from '@/classes/utils';
 
 import StitchGridLines from '@/components/StitchGridLines.vue';
 import StitchLine from '@/components/StitchLine.vue';
@@ -27,9 +28,10 @@ enum SnapMode {
   Off = 'OFF',
   Always = 'ALWAYS',
   OnRelease = 'ON_RELEASE',
+  Magnetic = 'MAGNETIC',
 }
 
-const DEFAULT_SNAP_MODE = SnapMode.OnRelease;
+const DEFAULT_SNAP_MODE = SnapMode.Magnetic;
 
 export default defineComponent({
   name: 'DragDraw',
@@ -61,6 +63,10 @@ export default defineComponent({
         return DEFAULT_SNAP_MODE;
       }
       return SnapMode.Off;
+    },
+
+    magneticThreshold() {
+      return 0.25 * this.gridSeparation;
     },
 
     gridSeparation(): number {
@@ -122,6 +128,14 @@ export default defineComponent({
 
       if (this.snapMode === SnapMode.Always) {
         return this.getClosestGridPoint(svgCoords);
+      }
+
+      if (this.snapMode === SnapMode.Magnetic) {
+        const gridPoint = this.getClosestGridPoint(svgCoords);
+        const distanceFromGrid = distance(gridPoint, svgCoords);
+
+        // Snap if within the threshold distance
+        return distanceFromGrid <= this.magneticThreshold ? gridPoint : svgCoords;
       }
 
       return svgCoords;
