@@ -42,9 +42,6 @@ export default defineComponent({
     selectPoint(payload: Point) {
       return Point.isPointLike(payload);
     },
-    generatedDots(payload: Point[]) {
-      return Array.isArray(payload);
-    },
   },
   data() {
     return {
@@ -158,9 +155,6 @@ export default defineComponent({
       return this.dotRadius + (this.dotStrokeWidth / 2);
     },
 
-  },
-  mounted() {
-    this.$emit('generatedDots', this.gridDots);
   },
   methods: {
 

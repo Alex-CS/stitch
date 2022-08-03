@@ -54,19 +54,22 @@ const DEBUG_LINES: { start: Pair<number>, end: Pair<number> }[] = [
 ];
 
 function getDebugLines(
-  resolution: number,
-  gridDots: Point[],
+  gridDensity: number,
+  gridSeparation: number,
 ): Line[] {
-  const getDirectionalIndex = makeIndexLooper(resolution);
-  const getFlattenedIndex = (xIndexRaw: number, yIndexRaw: number) => {
+  const getDirectionalIndex = makeIndexLooper(gridDensity);
+  const getPoint = (xIndexRaw: number, yIndexRaw: number) => {
     const [xIndex, yIndex] = [xIndexRaw, yIndexRaw].map(getDirectionalIndex);
-    return xIndex + (yIndex * resolution);
+    return {
+      x: (xIndex + 0.5) * gridSeparation,
+      y: (yIndex + 0.5) * gridSeparation,
+    };
   };
 
   return  DEBUG_LINES.map((line) => {
-    const start = gridDots[getFlattenedIndex(...line.start)];
-    const end = gridDots[getFlattenedIndex(...line.end)];
-    return new Line(start, end);
+    const start = getPoint(...line.start);
+    const end = getPoint(...line.end);
+    return Line.from({ start, end });
   });
 }
 
@@ -98,7 +101,6 @@ export default defineComponent({
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
-      gridDots: [] as Point[],
       stitchedPoints: new Set<ReturnType<Point['toString']>>(),
       stitchColors: new WeakMap<Line, string>(),
       firstLineColor: new Color(0, 127, 255),
@@ -106,6 +108,9 @@ export default defineComponent({
     };
   },
   computed: {
+    gridSeparation() {
+      return this.size / this.resolution;
+    },
   },
   mounted() {
     if (this.debugMode) {
@@ -116,7 +121,7 @@ export default defineComponent({
     initDebugMode() {
       this.lines.push(...getDebugLines(
         this.resolution,
-        this.gridDots,
+        this.gridSeparation,
       ));
 
       // FIXME: clean this up if I decide to formally keep debug mode
@@ -182,7 +187,7 @@ export default defineComponent({
     getStitches(lineA: Line, lineB: Line): CurveStitches {
       // NOTE: This only works for horizontal and vertical lines
       // Get the number of grid dots along this line to make it easier to eyeball if the lines are right
-      const dynamicResolution = Math.round(lineB.length / (this.size / this.resolution));
+      const dynamicResolution = Math.round(lineB.length / this.gridSeparation);
       const stitches = stitch([lineA, lineB], dynamicResolution);
       if (this.debugMode) {
         this.addDebugStitches(stitches);
@@ -206,7 +211,6 @@ export default defineComponent({
       :stitched-points="stitchedPoints"
       :selected-point="selectedPoint"
       @select-point="selectPoint"
-      @generated-dots="gridDots = $event"
     />
 
     <g id="lines">
