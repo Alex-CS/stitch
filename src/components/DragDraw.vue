@@ -58,6 +58,14 @@ export default defineComponent({
   },
   computed: {
 
+    isDrawing() {
+      return Line.isLineLike(this.currentLine);
+    },
+
+    gridSeparation(): number {
+      return this.gridSize / this.gridDensity;
+    },
+
     snapMode(): SnapMode {
       if (this.snapToGrid) {
         return DEFAULT_SNAP_MODE;
@@ -69,18 +77,10 @@ export default defineComponent({
       return 0.25 * this.gridSeparation;
     },
 
-    gridSeparation(): number {
-      return this.gridSize / this.gridDensity;
-    },
-
     currentEndGridPoint() {
       return this.currentLine === null
         ? null
         : this.getClosestGridPoint(this.currentLine.end);
-    },
-
-    isDrawing() {
-      return Line.isLineLike(this.currentLine);
     },
 
     rootEvents(): EventHandlers<SVGSVGElementEventMap> {
