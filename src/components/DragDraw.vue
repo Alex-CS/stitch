@@ -141,6 +141,8 @@ export default defineComponent({
       return svgCoords;
     },
 
+    // Line handlers ---------------------------------------------------------
+
     /**
      * Create a new Line
      * @param {PointLike} startCoords
@@ -165,6 +167,22 @@ export default defineComponent({
       Object.assign(this.currentLine.end, endCoords);
     },
 
+
+    /**
+     * Finalize the current line, store it, and reset `currentLine`
+     * @param {PointLike} endCoords
+     */
+    endLine(endCoords: PointLike) {
+      if (this.currentLine === null) return;
+
+      if (this.snapMode === SnapMode.OnRelease) {
+        this.updateLine(this.getClosestGridPoint(endCoords));
+      }
+
+      this.finishedLines.push(this.currentLine);
+      this.currentLine = null;
+    },
+
     // Event Handlers --------------------------------------------------------
 
     beginDrawing(mouseEvent: MouseEvent) {
@@ -175,18 +193,8 @@ export default defineComponent({
       this.updateLine(this.getCoordinates(mouseEvent));
     },
 
-    finishDrawing() {
-      if (this.currentLine === null) { // Something has gone wrong
-        return;
-      }
-
-      if (this.snapMode === SnapMode.OnRelease) {
-        const gridPoint = this.getClosestGridPoint(this.currentLine.end);
-        this.updateLine(gridPoint);
-      }
-
-      this.finishedLines.push(this.currentLine);
-      this.currentLine = null;
+    finishDrawing(mouseEvent: MouseEvent) {
+      this.endLine(this.getCoordinates(mouseEvent));
     },
 
   },
@@ -210,11 +218,13 @@ export default defineComponent({
       r="1"
       class="active"
     />
+
     <StitchLine
       v-if="currentLine"
       :line="currentLine"
       class="active"
     />
+
     <g class="completed-lines">
       <StitchLine
         v-for="line in finishedLines"
