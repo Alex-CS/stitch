@@ -27,7 +27,6 @@ import StitchLine from './StitchLine.vue';
 enum SnapMode {
   Off = 'OFF',
   Always = 'ALWAYS',
-  OnRelease = 'ON_RELEASE',
   Magnetic = 'MAGNETIC',
 }
 
@@ -98,7 +97,7 @@ export default defineComponent({
         cursorGridPoint: gridPoint,
       } = this;
 
-      if (this.snapMode === SnapMode.Always || this.snapMode === SnapMode.OnRelease) {
+      if (this.snapMode === SnapMode.Always) {
         return gridPoint;
       }
 
@@ -110,12 +109,6 @@ export default defineComponent({
       }
 
       return exactPoint;
-    },
-
-    currentEndGridPoint() {
-      return this.currentLine === null
-        ? null
-        : this.getClosestGridPoint(this.currentLine.end);
     },
 
     /**
@@ -212,9 +205,7 @@ export default defineComponent({
       this.cursorExactCoords = this.getCoordinates(mouseEvent);
 
       if (this.isDrawing) {
-        this.updateLine(this.snapMode === SnapMode.OnRelease
-          ? this.cursorExactCoords
-          : this.cursorPoint);
+        this.updateLine(this.cursorPoint);
       }
     },
 
@@ -246,14 +237,6 @@ export default defineComponent({
       <circle :r="magneticThreshold" class="cursor-point--ring" />
       <circle r="1" class="cursor-point--point" />
     </g>
-
-    <circle
-      v-if="snapMode === SnapMode.OnRelease && currentEndGridPoint"
-      :cx="currentEndGridPoint?.x"
-      :cy="currentEndGridPoint?.y"
-      r="1"
-      class="active"
-    />
 
     <StitchLine
       v-if="currentLine"
