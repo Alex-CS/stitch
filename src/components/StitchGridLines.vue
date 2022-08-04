@@ -53,10 +53,11 @@ export default defineComponent({
   </g>
 </template>
 
-<style>
+<style scoped>
 
 
 .grid-lines {
+  stroke: currentColor;
   stroke-width: 1;
   stroke-opacity: 0.1;
 }

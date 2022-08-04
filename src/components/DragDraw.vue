@@ -54,6 +54,7 @@ export default defineComponent({
       gridSize: 200,
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
+      cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
     };
   },
   computed: {
@@ -73,8 +74,42 @@ export default defineComponent({
       return SnapMode.Off;
     },
 
+    /**
+     * How close the cursor needs to be to snap to a grid point in Magnetic mode
+     */
     magneticThreshold() {
       return 0.25 * this.gridSeparation;
+    },
+
+    /**
+     * The closest grid point to the cursor
+     * @returns {PointLike}
+     */
+    cursorGridPoint(): PointLike {
+      return this.getClosestGridPoint(this.cursorExactCoords);
+    },
+
+    /**
+     * The rough coordinates of the cursor, depending on `snapMode`
+     */
+    cursorPoint(): PointLike {
+      const {
+        cursorExactCoords: exactPoint,
+        cursorGridPoint: gridPoint,
+      } = this;
+
+      if (this.snapMode === SnapMode.Always || this.snapMode === SnapMode.OnRelease) {
+        return gridPoint;
+      }
+
+      // Snap if within the threshold distance
+      if (this.snapMode === SnapMode.Magnetic) {
+        return distance(exactPoint, gridPoint) <= this.magneticThreshold
+          ? gridPoint
+          : exactPoint;
+      }
+
+      return exactPoint;
     },
 
     currentEndGridPoint() {
@@ -93,9 +128,6 @@ export default defineComponent({
           'left',
           'stop',
           'prevent',
-        ]),
-        mousemove: withModifiers(this.cursorMoved, [
-          'passive',
         ]),
       };
       const initialHandlers: EventHandlers<SVGSVGElementEventMap> = {
@@ -130,18 +162,6 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      if (this.snapMode === SnapMode.Always) {
-        return this.getClosestGridPoint(svgCoords);
-      }
-
-      if (this.snapMode === SnapMode.Magnetic) {
-        const gridPoint = this.getClosestGridPoint(svgCoords);
-        const distanceFromGrid = distance(gridPoint, svgCoords);
-
-        // Snap if within the threshold distance
-        return distanceFromGrid <= this.magneticThreshold ? gridPoint : svgCoords;
-      }
-
       return svgCoords;
     },
 
@@ -149,15 +169,12 @@ export default defineComponent({
 
     /**
      * Create a new Line
-     * @param {PointLike} startCoords
      */
-    startLine(startCoords: PointLike) {
+    startLine() {
       this.currentLine = Line.from({
-        start: (this.snapMode === SnapMode.OnRelease)
-          ? this.getClosestGridPoint(startCoords)
-          : startCoords,
+        start: this.cursorPoint,
         // The transition to the first update is smoother if there's an initial end point
-        end: startCoords,
+        end: this.cursorExactCoords,
       });
     },
 
@@ -174,14 +191,11 @@ export default defineComponent({
 
     /**
      * Finalize the current line, store it, and reset `currentLine`
-     * @param {PointLike} endCoords
      */
-    endLine(endCoords: PointLike) {
+    endLine() {
       if (this.currentLine === null) return;
 
-      if (this.snapMode === SnapMode.OnRelease) {
-        this.updateLine(this.getClosestGridPoint(endCoords));
-      }
+      this.updateLine(this.cursorPoint);
 
       this.finishedLines.push(this.currentLine);
       this.currentLine = null;
@@ -189,16 +203,24 @@ export default defineComponent({
 
     // Event Handlers --------------------------------------------------------
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     beginDrawing(mouseEvent: SVGSVGElementEventMap['mousedown']) {
-      this.startLine(this.getCoordinates(mouseEvent));
+      this.startLine();
     },
 
     cursorMoved(mouseEvent: SVGSVGElementEventMap['mousemove']) {
-      this.updateLine(this.getCoordinates(mouseEvent));
+      this.cursorExactCoords = this.getCoordinates(mouseEvent);
+
+      if (this.isDrawing) {
+        this.updateLine(this.snapMode === SnapMode.OnRelease
+          ? this.cursorExactCoords
+          : this.cursorPoint);
+      }
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     finishDrawing(mouseEvent: SVGSVGElementEventMap['mouseup']) {
-      this.endLine(this.getCoordinates(mouseEvent));
+      this.endLine();
     },
 
   },
@@ -208,12 +230,22 @@ export default defineComponent({
 <template>
   <svg
     :viewBox="`0 0 ${gridSize} ${gridSize}`"
+    class="svg-canvas"
     v-on="currentStateEvents"
+    @mousemove.passive="cursorMoved"
   >
     <StitchGridLines
       v-if="showGrid"
       :grid-density="gridDensity"
     />
+
+    <g
+      :transform="`translate(${cursorPoint.x} ${cursorPoint.y})`"
+      class="cursor-point"
+    >
+      <circle :r="magneticThreshold" class="cursor-point--ring" />
+      <circle r="1" class="cursor-point--point" />
+    </g>
 
     <circle
       v-if="snapMode === SnapMode.OnRelease && currentEndGridPoint"
@@ -239,15 +271,31 @@ export default defineComponent({
   </svg>
 </template>
 
-<style>
+<style scoped>
 
 
 circle,
 line {
   stroke: currentColor;
 }
-
 .active {
   color: lightgreen;
 }
+
+.cursor-point {
+  opacity: 0;
+}
+.cursor-point:hover {
+  opacity: 1;
+}
+
+.cursor-point--ring,
+.cursor-point--point {
+  stroke-width: 0;
+}
+
+.cursor-point--point {
+  fill: hotpink;
+}
+
 </style>
