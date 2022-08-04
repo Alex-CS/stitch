@@ -7,7 +7,7 @@ import {
 
 import {
   distance,
-} from './utils';
+} from '@/utils/geometry';
 
 
 export type PointLike = Point | { x: number, y: number };

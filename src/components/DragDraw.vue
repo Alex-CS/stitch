@@ -8,10 +8,6 @@ import {
   Line,
   type PointLike,
 } from '@/classes';
-import { distance } from '@/classes/utils';
-
-import StitchGridLines from '@/components/StitchGridLines.vue';
-import StitchLine from '@/components/StitchLine.vue';
 
 import {
   type EventHandlers,
@@ -19,9 +15,13 @@ import {
 import {
   roundToMultiple,
 } from '@/utils';
+import { distance } from '@/utils/geometry';
 import {
   convertEventCoordsToSVGCoords,
 } from '@/utils/svg-dom';
+
+import StitchGridLines from './StitchGridLines.vue';
+import StitchLine from './StitchLine.vue';
 
 
 enum SnapMode {

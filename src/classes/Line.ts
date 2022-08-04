@@ -1,11 +1,11 @@
 import {
   mapInRange,
 } from '@/utils';
-
-import Point, { type PointLike } from './Point';
 import {
   distance,
-} from './utils';
+} from '@/utils/geometry';
+
+import Point, { type PointLike } from './Point';
 import Vector from './Vector';
 
 

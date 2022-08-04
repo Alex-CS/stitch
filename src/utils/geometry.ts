@@ -1,6 +1,6 @@
 import {
   type PointLike,
-} from '.';
+} from '@/classes';
 
 
 /**
