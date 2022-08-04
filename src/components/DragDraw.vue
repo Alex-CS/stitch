@@ -83,7 +83,11 @@ export default defineComponent({
         : this.getClosestGridPoint(this.currentLine.end);
     },
 
-    rootEvents(): EventHandlers<SVGSVGElementEventMap> {
+    /**
+     * Events that vary depending on the drawing state
+     * @returns {EventHandlers<SVGSVGElementEventMap>}
+     */
+    currentStateEvents(): EventHandlers<SVGSVGElementEventMap> {
       const drawingHandlers: EventHandlers<SVGSVGElementEventMap> = {
         mouseup: withModifiers(this.finishDrawing, [
           'left',
@@ -185,15 +189,15 @@ export default defineComponent({
 
     // Event Handlers --------------------------------------------------------
 
-    beginDrawing(mouseEvent: MouseEvent) {
+    beginDrawing(mouseEvent: SVGSVGElementEventMap['mousedown']) {
       this.startLine(this.getCoordinates(mouseEvent));
     },
 
-    cursorMoved(mouseEvent: MouseEvent) {
+    cursorMoved(mouseEvent: SVGSVGElementEventMap['mousemove']) {
       this.updateLine(this.getCoordinates(mouseEvent));
     },
 
-    finishDrawing(mouseEvent: MouseEvent) {
+    finishDrawing(mouseEvent: SVGSVGElementEventMap['mouseup']) {
       this.endLine(this.getCoordinates(mouseEvent));
     },
 
@@ -204,7 +208,7 @@ export default defineComponent({
 <template>
   <svg
     :viewBox="`0 0 ${gridSize} ${gridSize}`"
-    v-on="rootEvents"
+    v-on="currentStateEvents"
   >
     <StitchGridLines
       v-if="showGrid"
