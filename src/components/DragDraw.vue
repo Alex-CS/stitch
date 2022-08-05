@@ -20,8 +20,10 @@ import {
   convertEventCoordsToSVGCoords,
 } from '@/utils/svg-dom';
 
+
 import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
+import StitchMagnetPoint from './StitchMagnetPoint.vue';
 
 
 enum SnapMode {
@@ -31,12 +33,16 @@ enum SnapMode {
 }
 
 const DEFAULT_SNAP_MODE = SnapMode.Magnetic;
+// How far away the snap points are "magnetic", as a proportion of the distance between snap points.
+// This should stay below .5, otherwise adjacent snap points with have overlapping magnetism
+const MAGNETIC_WEIGHT = 0.35;
 
 export default defineComponent({
   name: 'DragDraw',
   components: {
     StitchGridLines,
     StitchLine,
+    StitchMagnetPoint,
   },
   props: {
     // The number of grid squares to divide each dimension into
@@ -50,7 +56,7 @@ export default defineComponent({
   data() {
     return {
       SnapMode,
-      gridSize: 200,
+      gridSize: 1000,
       currentLine: null as Line | null,
       finishedLines: [] as Line[],
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
@@ -77,7 +83,7 @@ export default defineComponent({
      * How close the cursor needs to be to snap to a grid point in Magnetic mode
      */
     magneticThreshold() {
-      return 0.25 * this.gridSeparation;
+      return MAGNETIC_WEIGHT * this.gridSeparation;
     },
 
     /**
@@ -221,6 +227,9 @@ export default defineComponent({
 <template>
   <svg
     :viewBox="`0 0 ${gridSize} ${gridSize}`"
+    :class="{
+      drawing: isDrawing,
+    }"
     class="svg-canvas"
     v-on="currentStateEvents"
     @mousemove.passive="cursorMoved"
@@ -230,13 +239,11 @@ export default defineComponent({
       :grid-density="gridDensity"
     />
 
-    <g
-      :transform="`translate(${cursorPoint.x} ${cursorPoint.y})`"
-      class="cursor-point"
-    >
-      <circle :r="magneticThreshold" class="cursor-point--ring" />
-      <circle r="1" class="cursor-point--point" />
-    </g>
+    <StitchMagnetPoint
+      :point="cursorPoint"
+      :outer-radius="magneticThreshold"
+      :active="cursorPoint === cursorGridPoint && !isDrawing"
+    />
 
     <StitchLine
       v-if="currentLine"
@@ -254,8 +261,15 @@ export default defineComponent({
   </svg>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 
+
+.svg-canvas {
+
+  &.drawing {
+    cursor: crosshair;
+  }
+}
 
 circle,
 line {
@@ -263,22 +277,6 @@ line {
 }
 .active {
   color: lightgreen;
-}
-
-.cursor-point {
-  opacity: 0;
-}
-.cursor-point:hover {
-  opacity: 1;
-}
-
-.cursor-point--ring,
-.cursor-point--point {
-  stroke-width: 0;
-}
-
-.cursor-point--point {
-  fill: hotpink;
 }
 
 </style>

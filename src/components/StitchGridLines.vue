@@ -59,6 +59,6 @@ export default defineComponent({
 .grid-lines {
   stroke: currentColor;
   stroke-width: 1;
-  stroke-opacity: 0.1;
+  stroke-opacity: 0.5;
 }
 </style>
