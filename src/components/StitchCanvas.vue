@@ -99,8 +99,6 @@ export default defineComponent({
   },
   data() {
     return {
-      selectedPoint: null as Point | null,
-      selectedLine: null as Line | null,
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
@@ -145,15 +143,6 @@ export default defineComponent({
       // Differentiate the first and last stitch by color
       this.stitchColors.set(stitches[0], this.firstLineColor.toRGBAString());
       this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor.toRGBAString());
-    },
-
-    isSelected(item: Point | Line): boolean {
-      if (Point.isPointLike(item)) {
-        return Point.areEqual(this.selectedPoint, item);
-      } else if (this.selectedLine) {
-        return Line.areEqual(this.selectedLine, item);
-      }
-      return false;
     },
 
     addSpine(pointA: Point, pointB: Point) {
