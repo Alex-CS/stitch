@@ -8,6 +8,7 @@
 -->
 
 <script lang="ts">
+import _chunk from 'lodash/chunk';
 import {
   defineComponent,
 } from 'vue';
@@ -28,6 +29,7 @@ import {
   makeIndexLooper,
 } from '@/utils';
 
+import StitchCanvasSpines from './StitchCanvasSpines.vue';
 import StitchGridDots from './StitchGridDots.vue';
 import StitchLine from './StitchLine.vue';
 
@@ -76,6 +78,7 @@ function getDebugLines(
 export default defineComponent({
   name: 'StitchCanvas',
   components: {
+    StitchCanvasSpines,
     StitchGridDots,
     StitchLine,
   },
@@ -125,15 +128,12 @@ export default defineComponent({
       ));
 
       // FIXME: clean this up if I decide to formally keep debug mode
-      const stop = this.lines.length;
-      const stitchNext = (i = 0) => {
-        this.selectLine(this.lines[i]);
-        if (i + 1 >= stop) return;
-        this.$nextTick(() => {
-          stitchNext(i + 1);
-        });
-      };
-      stitchNext();
+      const pairs = _chunk(this.lines, 2);
+      pairs.forEach((pair) => {
+        if (pair.length === 2) {
+          this.stitchSpines(pair[0], pair[1]);
+        }
+      });
     },
 
     addDebugStitches(stitches: CurveStitches) {
@@ -170,18 +170,8 @@ export default defineComponent({
       }
     },
 
-    selectLine(line: Line) {
-      if (this.selectedLine === null) {
-        // Select first line
-        this.selectedLine = line;
-      } else if (this.isSelected(line)) {
-        // Deselect
-        this.selectedLine = null;
-      } else {
-        // Stitch
-        this.stitches.push(...this.getStitches(this.selectedLine, line));
-        this.selectedLine = null;
-      }
+    stitchSpines(lineA: Line, lineB: Line) {
+      this.stitches.push(...this.getStitches(lineA, lineB));
     },
 
     getStitches(lineA: Line, lineB: Line): CurveStitches {
@@ -213,18 +203,10 @@ export default defineComponent({
       @select-point="selectPoint"
     />
 
-    <g id="lines">
-      <StitchLine
-        v-for="(line) in lines"
-        :key="line.toString()"
-        :class="{
-          active: isSelected(line),
-        }"
-        :line="line"
-        class="spine"
-        @click="selectLine(line)"
-      />
-    </g> <!-- end #lines -->
+    <StitchCanvasSpines
+      :lines="lines"
+      @pair-selected="stitchSpines"
+    />
 
     <g id="stitches">
       <StitchLine
@@ -250,15 +232,6 @@ export default defineComponent({
 
 line {
   stroke: currentColor;
-}
-.spine {
-  @include tools.color-states(stroke);
-  opacity: .25;
-  stroke-width: 2;
-
-  &:hover {
-    stroke-width: 5;
-  }
 }
 
 </style>
