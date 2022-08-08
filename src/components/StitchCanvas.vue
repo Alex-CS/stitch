@@ -156,18 +156,8 @@ export default defineComponent({
       return false;
     },
 
-    selectPoint(point: Point) {
-      if (this.selectedPoint === null) {
-        // Select first point
-        this.selectedPoint = point;
-      } else if (this.isSelected(point)) {
-        // Deselect
-        this.selectedPoint = null;
-      } else {
-        // Draw line
-        this.lines.push(new Line(this.selectedPoint, point));
-        this.selectedPoint = null;
-      }
+    addSpine(pointA: Point, pointB: Point) {
+      this.lines.push(new Line(pointA, pointB));
     },
 
     stitchSpines(lineA: Line, lineB: Line) {
@@ -199,8 +189,7 @@ export default defineComponent({
       :grid-density="resolution"
       :debug-mode="debugMode"
       :stitched-points="stitchedPoints"
-      :selected-point="selectedPoint"
-      @select-point="selectPoint"
+      @add-line="addSpine"
     />
 
     <StitchCanvasSpines

@@ -9,6 +9,9 @@ import {
 import {
   Point,
 } from '@/classes';
+import type {
+  Pair,
+} from '@/types/utility';
 
 
 const DEFAULT_INNER_RADIUS = 2;
@@ -28,10 +31,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    selectedPoint: {
-      type: [Point, null] as PropType<Point | null>,
-      required: true,
-    },
     stitchedPoints: {
       type: Set as PropType<Set<ReturnType<Point['toString']>>>,
       required: true,
@@ -39,13 +38,14 @@ export default defineComponent({
     debugMode: Boolean,
   },
   emits: {
-    selectPoint(payload: Point) {
-      return Point.isPointLike(payload);
+    addLine(...points: Pair<Point>) {
+      return points.length === 2 && points.every(Point.isPointLike);
     },
   },
   data() {
     return {
       gutterWidth: DEFAULT_GUTTER_WIDTH,
+      selectedPoint: null as Point | null,
     };
   },
   computed: {
@@ -162,6 +162,20 @@ export default defineComponent({
       return Point.areEqual(this.selectedPoint, point);
     },
 
+    selectPoint(point: Point) {
+      if (this.selectedPoint === null) {
+        // Select first point
+        this.selectedPoint = point;
+      } else if (this.isSelected(point)) {
+        // Deselect
+        this.selectedPoint = null;
+      } else {
+        // Draw line
+        this.$emit('addLine', this.selectedPoint, point);
+        this.selectedPoint = null;
+      }
+    },
+
     getCoordsFromIndex(index: number): string {
       const dotsPerRow = this.gridDensity;
       const yIndex = Math.floor(index / dotsPerRow);
@@ -186,7 +200,7 @@ export default defineComponent({
       :cy="point.y"
       :r="dotRadius"
       :stroke-width="dotStrokeWidth"
-      @click.stop="$emit('selectPoint', point)"
+      @click.stop="selectPoint(point)"
     ><title v-if="debugMode">{{ getCoordsFromIndex(i) }}</title></circle>
     <!-- TODO Add hover event that makes the inner circle bigger -->
   </g>
