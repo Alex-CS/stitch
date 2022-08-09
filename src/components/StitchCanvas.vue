@@ -30,9 +30,9 @@ import {
 } from '@/utils';
 
 import StitchCanvasSpines from './StitchCanvasSpines.vue';
+import StitchCanvasStitches from './StitchCanvasStitches.vue';
 import StitchDragDrawSVG from './StitchDragDrawSVG.vue';
 import StitchGridDots from './StitchGridDots.vue';
-import StitchLine from './StitchLine.vue';
 
 
 type CurveStitches = Line[];
@@ -80,9 +80,9 @@ export default defineComponent({
   name: 'StitchCanvas',
   components: {
     StitchCanvasSpines,
+    StitchCanvasStitches,
     StitchDragDrawSVG,
     StitchGridDots,
-    StitchLine,
   },
   props: {
     // How many dots to show per row/column
@@ -185,17 +185,10 @@ export default defineComponent({
       @pair-selected="stitchSpines"
     />
 
-    <g id="stitches">
-      <StitchLine
-        v-for="(stitch) in stitches"
-        :key="stitch.toString()"
-        :line="stitch"
-        :style="{
-          color: stitchColors.get(stitch),
-        }"
-        class="stitch"
-      />
-    </g> <!-- end #stitches -->
+    <StitchCanvasStitches
+      :stitches="stitches"
+      :colors="stitchColors"
+    />
   </StitchDragDrawSVG>
 </template>
 
@@ -206,10 +199,6 @@ export default defineComponent({
 .svg-canvas {
   overflow: visible;
   border: solid 1px currentColor;
-}
-
-line {
-  stroke: currentColor;
 }
 
 </style>

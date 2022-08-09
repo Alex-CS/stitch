@@ -274,11 +274,6 @@ export default defineComponent({
     cursor: crosshair;
   }
 }
-
-circle,
-line {
-  stroke: currentColor;
-}
 .active {
   color: lightgreen;
 }
