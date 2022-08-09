@@ -46,7 +46,8 @@ export default defineComponent({
   fill: transparent;
   opacity: 0;
 
-  &.active {
+  // "active" only matters if the cursor is actually within the canvas
+  svg:hover &.active {
     opacity: 1;
   }
 }
