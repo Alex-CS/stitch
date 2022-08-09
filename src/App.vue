@@ -10,7 +10,6 @@ import {
 import { CURVE_TYPES } from '@/constants';
 
 import StitchCanvas from './components/StitchCanvas.vue';
-import DragDraw from './components/StitchDragDrawSVG.vue';
 import StitchMultiCurve from './components/StitchMultiCurve.vue';
 import StitchMultiCurveControls from './components/StitchMultiCurveControls.vue';
 
@@ -18,7 +17,6 @@ import StitchMultiCurveControls from './components/StitchMultiCurveControls.vue'
 export default defineComponent({
   name: 'App',
   components: {
-    DragDraw,
     StitchCanvas,
     StitchMultiCurve,
     StitchMultiCurveControls,
@@ -46,7 +44,7 @@ export default defineComponent({
         showSpines: false,
         center: new Point(size / 2, size / 2),
       },
-      mode: 'drag-draw',
+      mode: 'canvas',
     };
   },
   computed: {
@@ -72,15 +70,6 @@ export default defineComponent({
         v-model="mode"
         type="radio"
         name="mode"
-        value="drag-draw"
-      >
-      Drag to Draw
-    </label>
-    <label>
-      <input
-        v-model="mode"
-        type="radio"
-        name="mode"
         value="config"
       >
       Config
@@ -88,13 +77,8 @@ export default defineComponent({
   </div>
   <StitchCanvas
     v-if="mode === 'canvas'"
+    show-dots
     debug-mode
-  />
-  <DragDraw
-    v-else-if="mode === 'drag-draw'"
-    style="border: solid 1px currentColor;"
-    snap-to-grid
-    show-grid
   />
   <template v-else>
     <svg :width="size" :height="size">

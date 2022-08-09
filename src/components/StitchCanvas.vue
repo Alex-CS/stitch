@@ -86,12 +86,12 @@ export default defineComponent({
   },
   props: {
     // How many dots to show per row/column
-    resolution: {
+    gridDensity: {
       type: Number,
       default: 20,
     },
     // Whether to show the dots or not
-    hideDots: Boolean,
+    showDots: Boolean,
     debugMode: Boolean,
   },
   data() {
@@ -108,7 +108,7 @@ export default defineComponent({
   },
   computed: {
     gridSeparation() {
-      return this.size / this.resolution;
+      return this.size / this.gridDensity;
     },
   },
   mounted() {
@@ -119,7 +119,7 @@ export default defineComponent({
   methods: {
     initDebugMode() {
       this.lines.push(...getDebugLines(
-        this.resolution,
+        this.gridDensity,
         this.gridSeparation,
       ));
 
@@ -168,14 +168,17 @@ export default defineComponent({
 
 <template>
   <StitchDragDrawSVG
+    @line-drawn="lines.push($event)"
   >
-    <StitchGridDots
-      :grid-size="size"
-      :grid-density="resolution"
-      :debug-mode="debugMode"
-      :stitched-points="stitchedPoints"
-      @add-line="addSpine"
-    />
+    <template v-if="showDots" #behind>
+      <StitchGridDots
+        :grid-size="size"
+        :grid-density="gridDensity"
+        :debug-mode="debugMode"
+        :stitched-points="stitchedPoints"
+        @add-line="addSpine"
+      />
+    </template>
 
     <StitchCanvasSpines
       :lines="lines"
@@ -202,6 +205,7 @@ export default defineComponent({
 
 .svg-canvas {
   overflow: visible;
+  border: solid 1px currentColor;
 }
 
 line {

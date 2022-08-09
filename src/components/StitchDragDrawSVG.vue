@@ -45,6 +45,10 @@ export default defineComponent({
     StitchMagnetPoint,
   },
   props: {
+    size: {
+      type: Number,
+      default: 1000,
+    },
     // The number of grid squares to divide each dimension into
     gridDensity: {
       type: Number,
@@ -60,7 +64,6 @@ export default defineComponent({
   },
   data() {
     return {
-      gridSize: 1000,
       currentLine: null as Line | null,
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
     };
@@ -72,7 +75,7 @@ export default defineComponent({
     },
 
     gridSeparation(): number {
-      return this.gridSize / this.gridDensity;
+      return this.size / this.gridDensity;
     },
 
     snapMode(): SnapMode {
@@ -231,7 +234,7 @@ export default defineComponent({
 
 <template>
   <svg
-    :viewBox="`0 0 ${gridSize} ${gridSize}`"
+    :viewBox="`0 0 ${size} ${size}`"
     :class="{
       drawing: isDrawing,
     }"
@@ -239,6 +242,8 @@ export default defineComponent({
     v-on="currentStateEvents"
     @mousemove.passive="cursorMoved"
   >
+    <slot name="behind" />
+
     <StitchGridLines
       v-if="showGrid"
       :grid-density="gridDensity"
