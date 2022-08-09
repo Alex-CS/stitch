@@ -59,12 +59,18 @@ function getDebugLines(
   gridDensity: number,
   gridSeparation: number,
 ): Line[] {
+  const baseOffset = 0.5;
+  const getOffset = (xIndexRaw: number, yIndexRaw: number) => ({
+    x: baseOffset + Number(xIndexRaw < 0),
+    y: baseOffset + Number(yIndexRaw < 0),
+  });
   const getDirectionalIndex = makeIndexLooper(gridDensity);
   const getPoint = (xIndexRaw: number, yIndexRaw: number) => {
     const [xIndex, yIndex] = [xIndexRaw, yIndexRaw].map(getDirectionalIndex);
+    const offset = getOffset(xIndexRaw, yIndexRaw);
     return {
-      x: (xIndex + 0.5) * gridSeparation,
-      y: (yIndex + 0.5) * gridSeparation,
+      x: (xIndex + offset.x) * gridSeparation,
+      y: (yIndex + offset.y) * gridSeparation,
     };
   };
 
@@ -118,7 +124,7 @@ export default defineComponent({
   methods: {
     initDebugMode() {
       this.lines.push(...getDebugLines(
-        this.gridDensity,
+        this.gridDensity - 1,
         this.gridSeparation,
       ));
 

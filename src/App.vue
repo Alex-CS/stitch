@@ -77,8 +77,6 @@ export default defineComponent({
   </div>
   <StitchCanvas
     v-if="mode === 'canvas'"
-    show-dots
-    debug-mode
   />
   <template v-else>
     <svg :width="size" :height="size">
