@@ -249,6 +249,8 @@ export default defineComponent({
       :grid-density="gridDensity"
     />
 
+    <slot />
+
     <StitchMagnetPoint
       :point="cursorPoint"
       :outer-radius="magneticThreshold"
@@ -260,8 +262,6 @@ export default defineComponent({
       :line="currentLine"
       class="active"
     />
-
-    <slot />
   </svg>
 </template>
 
