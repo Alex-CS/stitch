@@ -30,6 +30,7 @@ import {
 } from '@/utils';
 
 import StitchCanvasSpines from './StitchCanvasSpines.vue';
+import StitchDragDrawSVG from './StitchDragDrawSVG.vue';
 import StitchGridDots from './StitchGridDots.vue';
 import StitchLine from './StitchLine.vue';
 
@@ -79,6 +80,7 @@ export default defineComponent({
   name: 'StitchCanvas',
   components: {
     StitchCanvasSpines,
+    StitchDragDrawSVG,
     StitchGridDots,
     StitchLine,
   },
@@ -86,12 +88,7 @@ export default defineComponent({
     // How many dots to show per row/column
     resolution: {
       type: Number,
-      required: true,
-    },
-    // How big the canvas should be
-    size: {
-      type: Number,
-      required: true,
+      default: 20,
     },
     // Whether to show the dots or not
     hideDots: Boolean,
@@ -99,6 +96,7 @@ export default defineComponent({
   },
   data() {
     return {
+      size: 1000,
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
@@ -169,9 +167,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <svg
-    :viewBox="`0 0 ${size} ${size}`"
-    class="svg-canvas"
+  <StitchDragDrawSVG
   >
     <StitchGridDots
       :grid-size="size"
@@ -197,7 +193,7 @@ export default defineComponent({
         class="stitch"
       />
     </g> <!-- end #stitches -->
-  </svg>
+  </StitchDragDrawSVG>
 </template>
 
 <style lang="scss" scoped>

@@ -12,7 +12,7 @@ import {
  *
  * More info: https://developer.mozilla.org/en-US/docs/Web/API/SVGSVGElement
  *
- * Note: This was originally a method of DragDraw.vue.
+ * Note: This was originally a method of StitchDragDrawSVG.vue.
  *       Check the history of that file for previous iterations
  */
 export function getRenderedScaleOfSVG(svgEl: SVGSVGElement): { x: number, y: number } {

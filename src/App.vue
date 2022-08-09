@@ -9,8 +9,8 @@ import {
 } from '@/classes';
 import { CURVE_TYPES } from '@/constants';
 
-import DragDraw from './components/DragDraw.vue';
 import StitchCanvas from './components/StitchCanvas.vue';
+import DragDraw from './components/StitchDragDrawSVG.vue';
 import StitchMultiCurve from './components/StitchMultiCurve.vue';
 import StitchMultiCurveControls from './components/StitchMultiCurveControls.vue';
 
@@ -88,8 +88,6 @@ export default defineComponent({
   </div>
   <StitchCanvas
     v-if="mode === 'canvas'"
-    :resolution="20"
-    :size="size"
     debug-mode
   />
   <DragDraw

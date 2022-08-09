@@ -38,7 +38,7 @@ const DEFAULT_SNAP_MODE = SnapMode.Magnetic;
 const MAGNETIC_WEIGHT = 0.35;
 
 export default defineComponent({
-  name: 'DragDraw',
+  name: 'StitchDragDrawSVG',
   components: {
     StitchGridLines,
     StitchLine,
@@ -53,12 +53,15 @@ export default defineComponent({
     showGrid: Boolean,
     snapToGrid: Boolean,
   },
+  emits: {
+    lineDrawn(line: Line) {
+      return Line.isLineLike(line);
+    },
+  },
   data() {
     return {
-      SnapMode,
       gridSize: 1000,
       currentLine: null as Line | null,
-      finishedLines: [] as Line[],
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
     };
   },
@@ -196,7 +199,9 @@ export default defineComponent({
 
       this.updateLine(this.cursorPoint);
 
-      this.finishedLines.push(this.currentLine);
+      if (this.currentLine.length > 0) {
+        this.$emit('lineDrawn', this.currentLine);
+      }
       this.currentLine = null;
     },
 
@@ -251,13 +256,7 @@ export default defineComponent({
       class="active"
     />
 
-    <g class="completed-lines">
-      <StitchLine
-        v-for="line in finishedLines"
-        :key="line"
-        :line="line"
-      />
-    </g>
+    <slot />
   </svg>
 </template>
 
