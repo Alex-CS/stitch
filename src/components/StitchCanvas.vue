@@ -15,7 +15,6 @@ import {
 
 
 import {
-  Color,
   Point,
   Line,
   stitch,
@@ -102,8 +101,8 @@ export default defineComponent({
       // Debug mode things
       stitchedPoints: new Set<ReturnType<Point['toString']>>(),
       stitchColors: new WeakMap<Line, string>(),
-      firstLineColor: new Color(0, 127, 255),
-      lastLineColor: new Color(180, 15, 127),
+      firstLineColor: 'rgb(0, 127, 255)',
+      lastLineColor: 'rgb(255, 0, 127)',
     };
   },
   computed: {
@@ -139,8 +138,8 @@ export default defineComponent({
         this.stitchedPoints.add(stitchedLine.end.toString());
       });
       // Differentiate the first and last stitch by color
-      this.stitchColors.set(stitches[0], this.firstLineColor.toRGBAString());
-      this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor.toRGBAString());
+      this.stitchColors.set(stitches[0], this.firstLineColor);
+      this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
     },
 
     addSpine(pointA: Point, pointB: Point) {
