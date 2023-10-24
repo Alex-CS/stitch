@@ -21,18 +21,18 @@ import {
 } from '@/utils/svg-dom';
 
 
+import StitchBullseye from './StitchBullseye.vue';
 import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
-import StitchMagnetPoint from './StitchMagnetPoint.vue';
 
 
 enum SnapMode {
   Off = 'OFF',
   Always = 'ALWAYS',
-  Magnetic = 'MAGNETIC',
+  MagneticGrid = 'MAGNETIC-GRID',
 }
 
-const DEFAULT_SNAP_MODE = SnapMode.Magnetic;
+const DEFAULT_SNAP_MODE = SnapMode.MagneticGrid;
 // How far away the snap points are "magnetic", as a proportion of the distance between snap points.
 // This should stay below .5, otherwise adjacent snap points with have overlapping magnetism
 const MAGNETIC_WEIGHT = 0.35;
@@ -42,7 +42,7 @@ export default defineComponent({
   components: {
     StitchGridLines,
     StitchLine,
-    StitchMagnetPoint,
+    StitchBullseye,
   },
   props: {
     size: {
@@ -86,7 +86,7 @@ export default defineComponent({
     },
 
     /**
-     * How close the cursor needs to be to snap to a grid point in Magnetic mode
+     * How close the cursor needs to be to snap to a grid point in MagneticGrid mode
      */
     magneticThreshold() {
       return MAGNETIC_WEIGHT * this.gridSeparation;
@@ -97,6 +97,7 @@ export default defineComponent({
      * @returns {PointLike}
      */
     cursorGridPoint(): PointLike {
+      // TODO: this may only need to be reactive in a grid type mode
       return this.getClosestGridPoint(this.cursorExactCoords);
     },
 
@@ -104,23 +105,19 @@ export default defineComponent({
      * The rough coordinates of the cursor, depending on `snapMode`
      */
     cursorPoint(): PointLike {
-      const {
-        cursorExactCoords: exactPoint,
-        cursorGridPoint: gridPoint,
-      } = this;
 
       if (this.snapMode === SnapMode.Always) {
-        return gridPoint;
+        return this.cursorGridPoint;
       }
 
       // Snap if within the threshold distance
-      if (this.snapMode === SnapMode.Magnetic) {
-        return distance(exactPoint, gridPoint) <= this.magneticThreshold
-          ? gridPoint
-          : exactPoint;
+      if (this.snapMode === SnapMode.MagneticGrid) {
+        return distance(this.cursorExactCoords, this.cursorGridPoint) <= this.magneticThreshold
+          ? this.cursorGridPoint
+          : this.cursorExactCoords;
       }
 
-      return exactPoint;
+      return this.cursorExactCoords;
     },
 
     /**
@@ -251,7 +248,7 @@ export default defineComponent({
 
     <slot />
 
-    <StitchMagnetPoint
+    <StitchBullseye
       :point="cursorPoint"
       :outer-radius="magneticThreshold"
       :active="cursorPoint === cursorGridPoint && !isDrawing"

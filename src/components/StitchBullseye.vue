@@ -10,7 +10,7 @@ import {
 
 
 export default defineComponent({
-  name: 'StitchMagnetPoint',
+  name: 'StitchBullseye',
   props: {
     point: {
       type: Object as PropType<PointLike>,

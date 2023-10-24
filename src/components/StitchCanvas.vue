@@ -204,6 +204,8 @@ export default defineComponent({
 .svg-canvas {
   overflow: visible;
   border: solid 1px currentColor;
+  max-height: 90vh;
+  max-width: 90vw;
 }
 
 </style>

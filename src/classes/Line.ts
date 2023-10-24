@@ -156,7 +156,7 @@ export default class Line {
    * excluding points in `excluded`.
    *
    * @param {number} segmentCount - The number of segments to split the line into
-   * @param {EndpointInclusion} config?
+   * @param {EndpointInclusion} [config]
    * @returns {Point[]}
    */
   getPoints(segmentCount: number, config: Partial<EndpointInclusion> = {}): Point[] {
