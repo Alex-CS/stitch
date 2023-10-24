@@ -1,11 +1,11 @@
 <script lang="ts">
 import {
-  defineComponent,
+  defineComponent, PropType,
   withModifiers,
 } from 'vue';
 
 import {
-  Line,
+  Line, Point,
   type PointLike,
 } from '@/classes';
 
@@ -26,13 +26,13 @@ import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
 
 
-enum SnapMode {
+export enum SnapMode {
   Off = 'OFF',
   Always = 'ALWAYS',
   MagneticGrid = 'MAGNETIC-GRID',
+  MagneticKnown = 'MAGNETIC-KNOWN',
 }
 
-const DEFAULT_SNAP_MODE = SnapMode.MagneticGrid;
 // How far away the snap points are "magnetic", as a proportion of the distance between snap points.
 // This should stay below .5, otherwise adjacent snap points with have overlapping magnetism
 const MAGNETIC_WEIGHT = 0.35;
@@ -54,8 +54,11 @@ export default defineComponent({
       type: Number,
       default: 20,
     },
+    snapMode: {
+      type: String as PropType<SnapMode>,
+      default: SnapMode.MagneticKnown,
+    },
     showGrid: Boolean,
-    snapToGrid: Boolean,
   },
   emits: {
     lineDrawn(line: Line) {
@@ -66,6 +69,7 @@ export default defineComponent({
     return {
       currentLine: null as Line | null,
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
+      knownPoints: [] as PointLike[],
     };
   },
   computed: {
@@ -76,13 +80,6 @@ export default defineComponent({
 
     gridSeparation(): number {
       return this.size / this.gridDensity;
-    },
-
-    snapMode(): SnapMode {
-      if (this.snapToGrid) {
-        return DEFAULT_SNAP_MODE;
-      }
-      return SnapMode.Off;
     },
 
     /**
@@ -114,6 +111,14 @@ export default defineComponent({
       if (this.snapMode === SnapMode.MagneticGrid) {
         return distance(this.cursorExactCoords, this.cursorGridPoint) <= this.magneticThreshold
           ? this.cursorGridPoint
+          : this.cursorExactCoords;
+      }
+
+      // Snap if within the threshold of another point
+      if (this.snapMode === SnapMode.MagneticKnown && this.knownPoints.length) {
+        const closestKnown = Point.closestTo(this.cursorExactCoords, this.knownPoints) as PointLike;
+        return distance(this.cursorExactCoords, closestKnown) <= this.magneticThreshold
+          ? closestKnown
           : this.cursorExactCoords;
       }
 
@@ -201,6 +206,7 @@ export default defineComponent({
 
       if (this.currentLine.length > 0) {
         this.$emit('lineDrawn', this.currentLine);
+        this.knownPoints.push(this.currentLine.start, this.currentLine.end);
       }
       this.currentLine = null;
     },
@@ -251,7 +257,7 @@ export default defineComponent({
     <StitchBullseye
       :point="cursorPoint"
       :outer-radius="magneticThreshold"
-      :active="cursorPoint === cursorGridPoint && !isDrawing"
+      :active="cursorPoint !== cursorExactCoords"
     />
 
     <StitchLine

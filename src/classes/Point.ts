@@ -110,8 +110,12 @@ export default class Point {
    * @param {P[]} otherPoints
    * @returns {P | undefined}
    */
-  closest<P extends PointLike>(...otherPoints: P[]): P | undefined {
-    return _minBy(otherPoints, (point) => distance(this, point));
+  closest(...otherPoints: PointLike[]): PointLike | undefined {
+    return Point.closestTo(this, otherPoints);
+  }
+
+  static closestTo(target: PointLike, otherPoints: PointLike[]): PointLike | undefined {
+    return _minBy(otherPoints, (point) => distance(target, point));
   }
 
   /**
