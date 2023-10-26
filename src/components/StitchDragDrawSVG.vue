@@ -1,11 +1,13 @@
 <script lang="ts">
 import {
-  defineComponent, PropType,
+  defineComponent,
   withModifiers,
+  type PropType,
 } from 'vue';
 
 import {
-  Line, Point,
+  Line,
+  Point,
   type PointLike,
 } from '@/classes';
 
@@ -15,7 +17,10 @@ import {
 import {
   roundToMultiple,
 } from '@/utils';
-import { distance } from '@/utils/geometry';
+import {
+  distance,
+  roundCoordinates,
+} from '@/utils/geometry';
 import {
   convertEventCoordsToSVGCoords,
 } from '@/utils/svg-dom';
@@ -176,7 +181,8 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      return svgCoords;
+      // Round the coordinates to simplify the generated DOM attributes
+      return roundCoordinates(svgCoords);
     },
 
     // Line handlers ---------------------------------------------------------
