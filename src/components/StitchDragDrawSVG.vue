@@ -29,6 +29,7 @@ import {
 import StitchBullseye from './StitchBullseye.vue';
 import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
+import StitchLineInfinite from './StitchLineInfinite.vue';
 
 
 // TODO: this component honestly probably would be cleaner with the composition API
@@ -63,6 +64,7 @@ export default defineComponent({
   components: {
     StitchGridLines,
     StitchLine,
+    StitchLineInfinite,
     StitchBullseye,
   },
   props: {
@@ -170,6 +172,20 @@ export default defineComponent({
       return this.isDrawing ? this.drawingHandlers : this.initialHandlers;
     },
 
+    guideLines(): { x: Set<number>, y: Set<number> } {
+      const lines = {
+        x: new Set<number>(),
+        y: new Set<number>(),
+      };
+
+      this.knownPoints.forEach(({ x, y }) => {
+        lines.x.add(x);
+        lines.y.add(y);
+      });
+
+      return lines;
+    },
+
   },
   mounted() {
   },
@@ -205,6 +221,7 @@ export default defineComponent({
         // The transition to the first update is smoother if there's an initial end point
         end: this.cursorExactCoords,
       });
+      this.knownPoints.push(this.cursorPoint);
     },
 
     /**
@@ -226,9 +243,11 @@ export default defineComponent({
 
       this.updateLine(this.cursorPoint);
 
-      if (this.currentLine.length > 0) {
+      if (this.currentLine.length > this.magneticThreshold) {
         this.$emit('lineDrawn', this.currentLine);
-        this.knownPoints.push(this.currentLine.start, this.currentLine.end);
+        this.knownPoints.push(this.cursorPoint);
+      } else {
+        this.knownPoints.pop();
       }
       this.currentLine = null;
     },
@@ -274,6 +293,17 @@ export default defineComponent({
       :grid-density="gridDensity"
     />
 
+    <StitchLineInfinite
+      v-if="guideLines.x.has(cursorPoint.x)"
+      :x="cursorPoint.x"
+      class="guide-line"
+    />
+    <StitchLineInfinite
+      v-if="guideLines.y.has(cursorPoint.y)"
+      :y="cursorPoint.y"
+      class="guide-line"
+    />
+
     <slot />
 
     <StitchBullseye
@@ -301,6 +331,11 @@ export default defineComponent({
 }
 .active {
   color: lightgreen;
+}
+
+.guide-line {
+  opacity: 0.7;
+  stroke-dasharray: 0 10 0;
 }
 
 </style>
