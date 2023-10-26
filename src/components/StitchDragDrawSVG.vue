@@ -45,6 +45,19 @@ export enum SnapMode {
 // This should stay below .5, otherwise adjacent snap points with have overlapping magnetism
 const MAGNETIC_WEIGHT = 0.35;
 
+/**
+ * If a point is within a given radius of a magnetic point, snap it to that
+ * @param {PointLike} point
+ * @param {PointLike} magneticPoint
+ * @param {number} magneticRadius
+ * @return {PointLike}
+ */
+function magnetize(point: PointLike, magneticPoint: PointLike, magneticRadius: number): PointLike {
+  return distance(point, magneticPoint) <= magneticRadius
+    ? magneticPoint
+    : point;
+}
+
 export default defineComponent({
   name: 'StitchDragDrawSVG',
   components: {
@@ -136,17 +149,13 @@ export default defineComponent({
 
       // Snap if within the threshold distance
       if (this.snapMode === SnapMode.MagneticGrid) {
-        return distance(this.cursorExactCoords, this.cursorGridPoint) <= this.magneticThreshold
-          ? this.cursorGridPoint
-          : this.cursorExactCoords;
+        return magnetize(this.cursorExactCoords, this.cursorGridPoint, this.magneticThreshold);
       }
 
       // Snap if within the threshold of another point
       if (this.snapMode === SnapMode.MagneticKnown && this.knownPoints.length) {
         const closestKnown = Point.closestTo(this.cursorExactCoords, this.knownPoints) as PointLike;
-        return distance(this.cursorExactCoords, closestKnown) <= this.magneticThreshold
-          ? closestKnown
-          : this.cursorExactCoords;
+        return magnetize(this.cursorExactCoords, closestKnown, this.magneticThreshold);
       }
 
       return this.cursorExactCoords;
