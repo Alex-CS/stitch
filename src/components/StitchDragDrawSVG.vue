@@ -26,6 +26,9 @@ import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
 
 
+// TODO: this component honestly probably would be cleaner with the composition API
+//       to clean up the event handlers
+
 export enum SnapMode {
   Off = 'OFF',
   Always = 'ALWAYS',
@@ -66,7 +69,26 @@ export default defineComponent({
     },
   },
   data() {
+    // TODO: this component honestly probably would be cleaner with the composition API
+    const drawingHandlers: EventHandlers<SVGSVGElementEventMap> = {
+      mouseup: withModifiers(this.finishDrawing, [
+        'left',
+        'stop',
+        'prevent',
+      ]),
+    };
+    const initialHandlers: EventHandlers<SVGSVGElementEventMap> = {
+      mousedown: withModifiers(this.beginDrawing, [
+        'left',
+        'exact', // ignore modifier keys
+        'stop',
+        'prevent',
+      ]),
+    };
+
     return {
+      drawingHandlers,
+      initialHandlers,
       currentLine: null as Line | null,
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
       knownPoints: [] as PointLike[],
@@ -130,23 +152,8 @@ export default defineComponent({
      * @returns {EventHandlers<SVGSVGElementEventMap>}
      */
     currentStateEvents(): EventHandlers<SVGSVGElementEventMap> {
-      const drawingHandlers: EventHandlers<SVGSVGElementEventMap> = {
-        mouseup: withModifiers(this.finishDrawing, [
-          'left',
-          'stop',
-          'prevent',
-        ]),
-      };
-      const initialHandlers: EventHandlers<SVGSVGElementEventMap> = {
-        mousedown: withModifiers(this.beginDrawing, [
-          'left',
-          'exact', // ignore modifier keys
-          'stop',
-          'prevent',
-        ]),
-      };
 
-      return this.isDrawing ? drawingHandlers : initialHandlers;
+      return this.isDrawing ? this.drawingHandlers : this.initialHandlers;
     },
 
   },
