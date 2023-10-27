@@ -32,6 +32,7 @@ export default defineComponent({
       active,
     }"
     class="cursor-point"
+    pointer-events="none"
   >
     <circle :r="outerRadius" class="ring" />
     <circle r="1" class="point" />

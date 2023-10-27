@@ -87,6 +87,7 @@ export default defineComponent({
   stroke-width: 2;
 
   &:hover {
+    opacity: 1;
     stroke-width: 5;
   }
 }
