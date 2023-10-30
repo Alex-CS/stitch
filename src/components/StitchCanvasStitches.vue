@@ -36,9 +36,8 @@ export default defineComponent({
       :key="stitch.toString()"
       :line="stitch"
       :style="{
-        color: colors?.get(stitch),
+        stroke: colors?.get(stitch),
       }"
-      class="stitch"
     />
   </g>
 </template>

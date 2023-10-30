@@ -15,6 +15,7 @@ import {
 
 
 import {
+  Color,
   Point,
   Line,
   stitch,
@@ -109,6 +110,8 @@ export default defineComponent({
       stitchColors: new WeakMap<Line, string>(),
       firstLineColor: 'rgb(0, 127, 255)',
       lastLineColor: 'rgb(255, 0, 127)',
+      firstColor: Color.fromHexString('#007fff'),
+      lastColor: Color.fromHexString('#ff007f'),
     };
   },
   computed: {
@@ -163,6 +166,11 @@ export default defineComponent({
       const stitches = stitch([lineA, lineB], dynamicResolution);
       if (this.debugMode) {
         this.addDebugStitches(stitches);
+      } else {
+        const colors = this.firstColor.stepsToward(this.lastColor, dynamicResolution - 1);
+        stitches.forEach((line, index) => {
+          this.stitchColors.set(line, (colors[index - 1] || this.firstColor).toHexString());
+        });
       }
 
       return stitches;
@@ -203,7 +211,7 @@ export default defineComponent({
 
 .svg-canvas {
   overflow: visible;
-  border: solid 1px currentColor;
+  background-color: black;
   max-height: 90vh;
   max-width: 90vw;
 }

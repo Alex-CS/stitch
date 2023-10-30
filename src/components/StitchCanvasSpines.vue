@@ -84,11 +84,13 @@ export default defineComponent({
 .spine {
   @include tools.color-states(stroke);
   opacity: .25;
-  stroke-width: 2;
+  stroke-width: 5;
 
   &:hover {
+    stroke-width: 10;
+  }
+  &.active {
     opacity: 1;
-    stroke-width: 5;
   }
 }
 

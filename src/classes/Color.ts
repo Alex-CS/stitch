@@ -45,12 +45,32 @@ export default class Color {
     return new Color(red, green, blue, alpha);
   }
 
+  static fromHexString(hexString: string): Color {
+    if (!hexString.startsWith('#') || hexString.length !== 7) {
+      throw new TypeError(`"${hexString}" isn't properly formatted`);
+    }
+    const red = parseInt(hexString.substring(1, 3), 16);
+    const green = parseInt(hexString.substring(3, 5), 16);
+    const blue = parseInt(hexString.substring(5, 7), 16);
+
+    return new Color(red, green, blue);
+  }
+
   clone(): Color {
     return Color.from(this);
   }
 
   toRGBAString(): string {
     return `rgba(${this.red},${this.green},${this.blue},${this.alpha})`;
+  }
+
+  toHexString(): string {
+    const hexCodes = [
+      this.red,
+      this.green,
+      this.blue,
+    ].map((color) => color.toString(16).padStart(2, '0'));
+    return `#${hexCodes.join('')}`;
   }
 
   toString(): string {
