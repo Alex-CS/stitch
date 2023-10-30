@@ -17,6 +17,7 @@ import {
 import {
   Color,
   Point,
+  PointLike,
   Line,
   stitch,
 } from '@/classes';
@@ -103,6 +104,7 @@ export default defineComponent({
   data() {
     return {
       size: 1200,
+      knownPoints: [] as PointLike[],
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
@@ -151,8 +153,8 @@ export default defineComponent({
       this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
     },
 
-    addSpine(pointA: Point, pointB: Point) {
-      this.lines.push(new Line(pointA, pointB));
+    addSpine(line: Line) {
+      this.lines.push(line);
     },
 
     stitchSpines(lineA: Line, lineB: Line) {
@@ -183,17 +185,28 @@ export default defineComponent({
   <StitchDragDrawSVG
     :size="size"
     :grid-density="gridDensity"
-    @line-drawn="lines.push($event)"
+    :known-points="knownPoints"
+    @line-drawn="addSpine"
   >
     <template v-if="showDots" #behind>
+      <!-- NOTE: this is defunct, will probably be replaced by knownPoints-->
       <StitchGridDots
         :grid-size="size"
         :grid-density="gridDensity"
         :debug-mode="debugMode"
         :stitched-points="stitchedPoints"
-        @add-line="addSpine"
       />
     </template>
+
+    <g class="known-points">
+      <circle
+        v-for="point in knownPoints"
+        :key="point.toString()"
+        r="1"
+        :cx="point.x"
+        :cy="point.y"
+      />
+    </g>
 
     <StitchCanvasSpines
       :lines="lines"

@@ -76,6 +76,12 @@ export default defineComponent({
       type: Number,
       default: 20,
     },
+    knownPoints: {
+      type: Array as PropType<PointLike[]>,
+      default() {
+        return [];
+      },
+    },
     snapMode: {
       type: String as PropType<SnapMode>,
       default: SnapMode.MagneticKnown,
@@ -83,6 +89,12 @@ export default defineComponent({
     showGrid: Boolean,
   },
   emits: {
+    lineStarted(point: PointLike) {
+      return Point.isPointLike(point);
+    },
+    lineCanceled(point: PointLike) {
+      return Point.isPointLike(point);
+    },
     lineDrawn(line: Line) {
       return Line.isLineLike(line);
     },
@@ -110,7 +122,6 @@ export default defineComponent({
       initialHandlers,
       currentLine: null as Line | null,
       cursorExactCoords: { x: 0, y: 0 }, // unmodified svg coordinates of the cursor
-      knownPoints: [] as PointLike[],
     };
   },
   computed: {
@@ -219,7 +230,7 @@ export default defineComponent({
         // The transition to the first update is smoother if there's an initial end point
         end: this.cursorExactCoords,
       });
-      this.knownPoints.push(this.cursorPoint);
+      this.$emit('lineStarted', this.currentLine.start);
     },
 
     /**
@@ -243,9 +254,8 @@ export default defineComponent({
 
       if (this.currentLine.length > this.magneticThreshold) {
         this.$emit('lineDrawn', this.currentLine);
-        this.knownPoints.push(this.cursorPoint);
       } else {
-        this.knownPoints.pop();
+        this.$emit('lineCanceled', this.currentLine.start);
       }
       this.currentLine = null;
     },
