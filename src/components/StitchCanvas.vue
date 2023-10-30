@@ -153,6 +153,18 @@ export default defineComponent({
       this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
     },
 
+    addPoint(point: PointLike) {
+      // TODO: should probably ensure uniqueness eventually
+      this.knownPoints.push(point);
+    },
+
+    removePoint(point: PointLike) {
+      const removalIndex = this.knownPoints.indexOf(point);
+      if (removalIndex) {
+        this.knownPoints.splice(removalIndex, 1);
+      }
+    },
+
     addSpine(line: Line) {
       this.lines.push(line);
     },
@@ -186,6 +198,8 @@ export default defineComponent({
     :size="size"
     :grid-density="gridDensity"
     :known-points="knownPoints"
+    @add-point="addPoint"
+    @remove-point="removePoint"
     @line-drawn="addSpine"
   >
     <template v-if="showDots" #behind>

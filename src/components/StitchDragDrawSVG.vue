@@ -89,10 +89,10 @@ export default defineComponent({
     showGrid: Boolean,
   },
   emits: {
-    lineStarted(point: PointLike) {
+    addPoint(point: PointLike) {
       return Point.isPointLike(point);
     },
-    lineCanceled(point: PointLike) {
+    removePoint(point: PointLike) {
       return Point.isPointLike(point);
     },
     lineDrawn(line: Line) {
@@ -230,7 +230,7 @@ export default defineComponent({
         // The transition to the first update is smoother if there's an initial end point
         end: this.cursorExactCoords,
       });
-      this.$emit('lineStarted', this.currentLine.start);
+      this.$emit('addPoint', this.currentLine.start);
     },
 
     /**
@@ -254,8 +254,9 @@ export default defineComponent({
 
       if (this.currentLine.length > this.magneticThreshold) {
         this.$emit('lineDrawn', this.currentLine);
+        this.$emit('addPoint', this.currentLine.end);
       } else {
-        this.$emit('lineCanceled', this.currentLine.start);
+        this.$emit('removePoint', this.currentLine.start);
       }
       this.currentLine = null;
     },
