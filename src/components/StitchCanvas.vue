@@ -94,7 +94,7 @@ export default defineComponent({
     // How many dots to show per row/column
     gridDensity: {
       type: Number,
-      default: 20,
+      default: 24,
     },
     // Whether to show the dots or not
     showDots: Boolean,
@@ -102,7 +102,7 @@ export default defineComponent({
   },
   data() {
     return {
-      size: 1000,
+      size: 1200,
       lines: [] as Line[],
       stitches: [] as CurveStitches,
       // Debug mode things
@@ -181,6 +181,8 @@ export default defineComponent({
 
 <template>
   <StitchDragDrawSVG
+    :size="size"
+    :grid-density="gridDensity"
     @line-drawn="lines.push($event)"
   >
     <template v-if="showDots" #behind>
