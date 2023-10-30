@@ -19,7 +19,6 @@ import {
 } from '@/utils';
 import {
   distance,
-  roundCoordinates,
 } from '@/utils/geometry';
 import {
   convertEventCoordsToSVGCoords,
@@ -206,8 +205,7 @@ export default defineComponent({
     getCoordinates(mouseEvent: MouseEvent): PointLike {
       const svgCoords = convertEventCoordsToSVGCoords(mouseEvent, this.$el);
 
-      // Round the coordinates to simplify the generated DOM attributes
-      return roundCoordinates(svgCoords);
+      return svgCoords;
     },
 
     // Line handlers ---------------------------------------------------------
@@ -307,9 +305,10 @@ export default defineComponent({
     <slot />
 
     <StitchBullseye
+      v-if="cursorPoint !== cursorExactCoords"
       :point="cursorPoint"
       :outer-radius="magneticThreshold"
-      :active="cursorPoint !== cursorExactCoords"
+      active
     />
 
     <StitchLine
