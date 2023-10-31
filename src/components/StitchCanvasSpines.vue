@@ -29,6 +29,9 @@ export default defineComponent({
     pairSelected(...lines: Pair<Line>) {
       return lines.length === 2 && lines.every(Line.isLineLike);
     },
+    removeLine(line: Line) {
+      return Line.isLineLike(line);
+    },
   },
   data() {
     return {
@@ -54,6 +57,12 @@ export default defineComponent({
         this.selectedLine = null;
       }
     },
+    removeLine(line: Line) {
+      if (line === this.selectedLine) {
+        this.selectedLine = null;
+      }
+      this.$emit('removeLine', line);
+    },
   },
 });
 </script>
@@ -68,7 +77,8 @@ export default defineComponent({
       }"
       :line="line"
       class="spine"
-      @click="selectLine(line)"
+      @click.left.stop="selectLine(line)"
+      @click.right.stop="removeLine(line)"
     />
   </g>
 </template>

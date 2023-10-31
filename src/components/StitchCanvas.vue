@@ -160,13 +160,20 @@ export default defineComponent({
 
     removePoint(point: PointLike) {
       const removalIndex = this.knownPoints.indexOf(point);
-      if (removalIndex) {
+      if (removalIndex > -1) {
         this.knownPoints.splice(removalIndex, 1);
       }
     },
 
     addSpine(line: Line) {
       this.lines.push(line);
+    },
+
+    removeSpine(spine: Line) {
+      const removalIndex = this.lines.indexOf(spine);
+      if (removalIndex > -1) {
+        this.lines.splice(removalIndex, 1);
+      }
     },
 
     stitchSpines(lineA: Line, lineB: Line) {
@@ -225,6 +232,7 @@ export default defineComponent({
     <StitchCanvasSpines
       :lines="lines"
       @pair-selected="stitchSpines"
+      @remove-line="removeSpine"
     />
 
     <StitchCanvasStitches

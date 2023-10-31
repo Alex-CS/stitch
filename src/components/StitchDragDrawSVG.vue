@@ -294,6 +294,7 @@ export default defineComponent({
     class="svg-canvas"
     v-on="currentStateEvents"
     @mousemove.passive="cursorMoved"
+    @contextmenu.capture.prevent
   >
     <slot name="behind" />
 
@@ -320,6 +321,7 @@ export default defineComponent({
       :point="cursorPoint"
       :outer-radius="magneticThreshold"
       active
+      @click.right.stop="$emit('removePoint', cursorPoint)"
     />
 
     <StitchLine
