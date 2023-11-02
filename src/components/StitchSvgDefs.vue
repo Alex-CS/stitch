@@ -10,14 +10,10 @@ export default defineComponent({
 <template>
   <defs>
     <radialGradient id="gradient--bullseye">
-      <stop offset="20%" stop-color="currentColor" />
-      <stop offset="20%" stop-color="transparent" />
+      <stop offset="10%" class="bullseye-stop" />
+      <stop stop-color="transparent" />
       <stop offset="90%" stop-color="transparent" />
-      <stop offset="90%" stop-color="currentColor" />
+      <stop class="bullseye-stop" />
     </radialGradient>
   </defs>
 </template>
-
-<style scoped lang="scss">
-
-</style>

@@ -344,9 +344,12 @@ export default defineComponent({
   &.drawing {
     cursor: crosshair;
   }
+  :deep(.bullseye-stop) {
+    stop-color: var(--color-active);
+  }
 }
 .active {
-  color: lightgreen;
+  color: var(--color-active);
 }
 
 .guide-line {

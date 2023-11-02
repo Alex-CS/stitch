@@ -1,6 +1,6 @@
 $default-color: #aaaaaa;
-$active-color: lightgreen;
-$hover-color: darken($active-color, 10%);
+$active-color: var(--color-active);
+$hover-color: color-mix(in hsl, $active-color 90%, black);
 $trans-props: .2s ease-in-out;
 
 @mixin color-states($prop) {
