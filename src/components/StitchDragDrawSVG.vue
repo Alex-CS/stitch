@@ -29,6 +29,7 @@ import StitchBullseye from './StitchBullseye.vue';
 import StitchGridLines from './StitchGridLines.vue';
 import StitchLine from './StitchLine.vue';
 import StitchLineInfinite from './StitchLineInfinite.vue';
+import StitchSvgDefs from './StitchSvgDefs.vue';
 
 
 // TODO: this component honestly probably would be cleaner with the composition API
@@ -61,6 +62,7 @@ function magnetize(point: PointLike, magneticPoint: PointLike, magneticRadius: n
 export default defineComponent({
   name: 'StitchDragDrawSVG',
   components: {
+    StitchSvgDefs,
     StitchGridLines,
     StitchLine,
     StitchLineInfinite,
@@ -296,6 +298,8 @@ export default defineComponent({
     @mousemove.passive="cursorMoved"
     @contextmenu.capture.prevent
   >
+    <StitchSvgDefs />
+
     <slot name="behind" />
 
     <StitchGridLines

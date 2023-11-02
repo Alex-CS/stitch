@@ -26,38 +26,27 @@ export default defineComponent({
 </script>
 
 <template>
-  <g
+  <circle
     :transform="`translate(${point.x} ${point.y})`"
     :class="{
       active,
     }"
     class="cursor-point"
-  >
-    <circle :r="outerRadius" class="ring" />
-    <circle r="1" class="point" />
-  </g>
+    :r="outerRadius"
+  />
 </template>
 
 <style lang="scss" scoped>
 
 
 .cursor-point {
-  stroke: transparent;
-  fill: transparent;
+  fill: url(#gradient--bullseye);
   opacity: 0;
 
   // "active" only matters if the cursor is actually within the canvas
   svg:hover &.active {
     opacity: 1;
   }
-}
-
-.ring {
-  stroke: currentColor;
-}
-
-.point {
-  fill: currentColor;
 }
 
 </style>
