@@ -78,7 +78,7 @@ export default defineComponent({
   <StitchCanvas
     v-if="mode === 'canvas'"
   />
-  <template v-else>
+  <div v-else>
     <svg :width="size" :height="size">
       <StitchMultiCurve
         :options="options"
@@ -90,7 +90,7 @@ export default defineComponent({
       />
     </svg>
     <StitchMultiCurveControls v-model="options" />
-  </template>
+  </div>
 </template>
 
 <style lang="scss">
@@ -100,15 +100,17 @@ body {
   margin: 0;
 }
 #app {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  height: 100vh;
+  display: grid;
+  grid-template:
+    'controls' max-content
+    'main' 1fr /
+     1fr;
   padding: 10px;
 }
 
 .ModeToggle {
+  justify-self: center;
   display: flex;
   gap: 5vw;
   margin-bottom: 10px;

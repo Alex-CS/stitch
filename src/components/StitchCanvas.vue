@@ -201,56 +201,73 @@ export default defineComponent({
 </script>
 
 <template>
-  <StitchDragDrawSVG
-    :size="size"
-    :grid-density="gridDensity"
-    :known-points="knownPoints"
-    @add-point="addPoint"
-    @remove-point="removePoint"
-    @line-drawn="addSpine"
-  >
-    <template v-if="showDots" #behind>
-      <!-- NOTE: this is defunct, will probably be replaced by knownPoints-->
-      <StitchGridDots
-        :grid-size="size"
-        :grid-density="gridDensity"
-        :debug-mode="debugMode"
-        :stitched-points="stitchedPoints"
+  <div class="stitch-canvas-container">
+    <StitchDragDrawSVG
+      :size="size"
+      :grid-density="gridDensity"
+      :known-points="knownPoints"
+      @add-point="addPoint"
+      @remove-point="removePoint"
+      @line-drawn="addSpine"
+    >
+      <template v-if="showDots" #behind>
+        <!-- NOTE: this is defunct, will probably be replaced by knownPoints-->
+        <StitchGridDots
+          :grid-size="size"
+          :grid-density="gridDensity"
+          :debug-mode="debugMode"
+          :stitched-points="stitchedPoints"
+        />
+      </template>
+
+      <g class="known-points">
+        <circle
+          v-for="point in knownPoints"
+          :key="point.toString()"
+          r="2"
+          :cx="point.x"
+          :cy="point.y"
+        />
+      </g>
+
+      <StitchCanvasSpines
+        :lines="lines"
+        @pair-selected="stitchSpines"
+        @remove-line="removeSpine"
       />
-    </template>
 
-    <g class="known-points">
-      <circle
-        v-for="point in knownPoints"
-        :key="point.toString()"
-        r="1"
-        :cx="point.x"
-        :cy="point.y"
+      <StitchCanvasStitches
+        :stitches="stitches"
+        :colors="stitchColors"
       />
-    </g>
-
-    <StitchCanvasSpines
-      :lines="lines"
-      @pair-selected="stitchSpines"
-      @remove-line="removeSpine"
-    />
-
-    <StitchCanvasStitches
-      :stitches="stitches"
-      :colors="stitchColors"
-    />
-  </StitchDragDrawSVG>
+    </StitchDragDrawSVG>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 @use '@/styles/tools';
 
+.stitch-canvas-container {
+  --gap: 16px;
+  display: grid;
+  padding: var(--gap);
+  gap: var(--gap);
+  grid-template:
+    'left canvas right'
+    / 1fr auto   1fr;
+  align-items: stretch;
+}
 
 .svg-canvas {
+  grid-area: canvas;
   overflow: visible;
-  background-color: black;
+  background-color: var(--color-background-soft);
   max-height: 90vh;
   max-width: 90vw;
+}
+
+.known-points {
+  fill: var(--color-heading);
 }
 
 </style>
