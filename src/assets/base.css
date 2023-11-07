@@ -33,7 +33,8 @@
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
 
-  --color-active: lightgreen;
+  --color-active: #00bf3f;
+  --color-menu: var(--color-heading);
 }
 
 @media (prefers-color-scheme: dark) {

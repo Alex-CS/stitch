@@ -4,6 +4,23 @@ import {
 
 
 /**
+ * Get the average between any number of points
+ * @param {PointLike} points
+ * @return {PointLike}
+ */
+export function averagePoint(...points: PointLike[]): PointLike {
+  const midPoint = { x: 0, y: 0 };
+  points.forEach(({ x, y }) => {
+    midPoint.x += x;
+    midPoint.y += y;
+  });
+  midPoint.x /= points.length;
+  midPoint.y /= points.length;
+
+  return midPoint;
+}
+
+/**
  * Get the absolute distance between two points
  * @param {PointLike} pointA
  * @param {PointLike} pointB

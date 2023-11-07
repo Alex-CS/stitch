@@ -2,6 +2,7 @@ import {
   mapInRange,
 } from '@/utils';
 import {
+  averagePoint,
   distance,
 } from '@/utils/geometry';
 
@@ -130,6 +131,10 @@ export default class Line {
    */
   get length(): number {
     return distance(this.start, this.end);
+  }
+
+  get midpoint(): PointLike {
+    return averagePoint(this.start, this.end);
   }
 
   // Instance methods ---------------------------------------------------------

@@ -29,6 +29,9 @@ import {
 import {
   makeIndexLooper,
 } from '@/utils';
+import {
+  convertSVGCoordsToHTML,
+} from '@/utils/svg-dom';
 
 import StitchCanvasSpines from './StitchCanvasSpines.vue';
 import StitchCanvasStitches from './StitchCanvasStitches.vue';
@@ -37,6 +40,10 @@ import StitchGridDots from './StitchGridDots.vue';
 
 
 type CurveStitches = Line[];
+interface MenuItem {
+  label: string,
+  action: () => void,
+}
 
 
 // Lines in a simplified notation for easier testing
@@ -107,6 +114,10 @@ export default defineComponent({
       knownPoints: [] as PointLike[],
       lines: [] as Line[],
       stitches: [] as CurveStitches,
+
+      menuCoordinates: null as PointLike | null,
+      menuItems: null as MenuItem[] | null,
+
       // Debug mode things
       stitchedPoints: new Set<ReturnType<Point['toString']>>(),
       stitchColors: new WeakMap<Line, string>(),
@@ -153,6 +164,29 @@ export default defineComponent({
       this.stitchColors.set(stitches[stitches.length - 1], this.lastLineColor);
     },
 
+    openMenu(coords: PointLike, items: MenuItem[]) {
+      const dragDrawSVG = this.$refs.dragDrawSVG as  InstanceType<typeof StitchDragDrawSVG>;
+      const svgEl: SVGSVGElement = dragDrawSVG.$el;
+
+      const coordsWithinSVG = convertSVGCoordsToHTML(coords, svgEl);
+      this.menuCoordinates = coordsWithinSVG;
+      this.menuItems = items.map(({ label, action }) => ({
+        label,
+        action: action === this.clearMenu ? action : () => {
+          action();
+          this.clearMenu();
+        },
+      }));
+      svgEl.addEventListener('mousedown', this.clearMenu, {
+        once: true,
+      });
+    },
+
+    clearMenu() {
+      this.menuCoordinates = null;
+      this.menuItems = null;
+    },
+
     addPoint(point: PointLike) {
       // TODO: should probably ensure uniqueness eventually
       this.knownPoints.push(point);
@@ -170,10 +204,21 @@ export default defineComponent({
     },
 
     removeSpine(spine: Line) {
-      const removalIndex = this.lines.indexOf(spine);
-      if (removalIndex > -1) {
-        this.lines.splice(removalIndex, 1);
-      }
+      this.openMenu(spine.midpoint, [
+        {
+          label: 'Delete',
+          action: () => {
+            const removalIndex = this.lines.indexOf(spine);
+            if (removalIndex > -1) {
+              this.lines.splice(removalIndex, 1);
+            }
+          },
+        },
+        {
+          label: 'Cancel',
+          action: this.clearMenu,
+        },
+      ]);
     },
 
     stitchSpines(lineA: Line, lineB: Line) {
@@ -203,6 +248,7 @@ export default defineComponent({
 <template>
   <div class="stitch-canvas-container">
     <StitchDragDrawSVG
+      ref="dragDrawSVG"
       :size="size"
       :grid-density="gridDensity"
       :known-points="knownPoints"
@@ -240,7 +286,48 @@ export default defineComponent({
         :stitches="stitches"
         :colors="stitchColors"
       />
+      <!--<foreignObject
+        v-if="menuCoordinates"
+        :x="menuCoordinates.x"
+        :y="menuCoordinates.y"
+        height="0"
+        width="0"
+        class="canvas-menu-wrapper"
+      >
+        <menu class="canvas-menu">
+          <li
+            v-for="item in menuItems"
+            :key="item.label"
+          >
+            <button type="button" @click=item.action>
+              {{ item.label }}
+            </button>
+          </li>
+        </menu>
+      </foreignObject>-->
     </StitchDragDrawSVG>
+    <menu
+      v-if="menuCoordinates"
+      :style="{
+        '--x': menuCoordinates.x + 'px',
+        '--y': menuCoordinates.y + 'px',
+      }"
+      class="canvas-menu"
+    >
+      <li
+        v-for="item in menuItems"
+        :key="item.label"
+        class="canvas-menu-item"
+      >
+        <button
+          class="canvas-menu-button"
+          type="button"
+          @click="item.action"
+        >
+          {{ item.label }}
+        </button>
+      </li>
+    </menu>
   </div>
 </template>
 
@@ -268,6 +355,43 @@ export default defineComponent({
 
 .known-points {
   fill: var(--color-heading);
+}
+
+.canvas-menu-wrapper {
+  overflow: visible;
+}
+.canvas-menu {
+  --offset: 8px;
+  grid-area: canvas;
+  place-self: self-start;
+  top: var(--y);
+  left: var(--x);
+  padding: 2px;
+  border-radius: 4px;
+  border: solid 1px var(--color-menu);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.canvas-menu-item {
+  border-radius: inherit;
+   & + & {
+     margin-top: 2px;
+   }
+}
+
+.canvas-menu-button {
+  border-radius: inherit;
+  width: 100%;
+  border: none;
+  display: block;
+  background-color: var(--color-background);
+  color: var(--color-menu);
+
+  &:hover {
+    background-color: var(--color-active);
+  }
 }
 
 </style>

@@ -72,3 +72,25 @@ export function convertEventCoordsToSVGCoords(
     y: (mouseY * scaleBy.y) + minCoords.y,
   };
 }
+
+/**
+ * Convert scaled SVG coordinates into pixel coordinates relative to the top-left corner of the <svg>
+ */
+export function convertSVGCoordsToHTML(
+  coordinates: PointLike,
+  svgEl: SVGSVGElement,
+): PointLike {
+  const {
+    x: svgX,
+    y: svgY,
+  } = coordinates;
+
+  // The scale at which the SVG is currently rendered relative to its native dimensions
+  const scaleBy = getRenderedScaleOfSVG(svgEl);
+  const minCoords = getCoordinateOffset(svgEl);
+
+  return {
+    x: (svgX - minCoords.x) / scaleBy.x,
+    y: (svgY - minCoords.y) / scaleBy.y,
+  };
+}
