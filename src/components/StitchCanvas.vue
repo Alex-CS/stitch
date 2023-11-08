@@ -171,16 +171,7 @@ export default defineComponent({
 
       const coordsWithinSVG = convertSVGCoordsToHTML(coords, svgEl);
       this.menuCoordinates = coordsWithinSVG;
-      this.menuItems = items.map(({ label, action }) => ({
-        label,
-        action: action === this.clearMenu ? action : () => {
-          action();
-          this.clearMenu();
-        },
-      }));
-      svgEl.addEventListener('mousedown', this.clearMenu, {
-        once: true,
-      });
+      this.menuItems = items;
     },
 
     clearMenu() {
@@ -296,6 +287,7 @@ export default defineComponent({
       }"
       class="canvas-menu"
       :menu-items="menuItems"
+      @close="clearMenu"
     />
   </div>
 </template>

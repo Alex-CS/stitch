@@ -7,11 +7,17 @@ import {
 defineProps<{
   menuItems: MenuItem[],
 }>();
+
+defineEmits<{
+  close: [],
+}>();
+
 </script>
 
 <template>
   <menu
     class="canvas-menu"
+    @click.stop="$emit('close')"
   >
     <li
       v-for="item in menuItems"
@@ -32,6 +38,14 @@ defineProps<{
 <style lang="scss" scoped>
 
 .canvas-menu {
+  &::before { // Invisible backdrop behind the menu
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
   padding: 2px;
   border-radius: 4px;
   border: solid 1px var(--color-menu);
