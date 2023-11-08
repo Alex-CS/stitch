@@ -17,11 +17,14 @@ import {
 import {
   Color,
   Point,
-  PointLike,
+  type PointLike,
   Line,
   stitch,
 } from '@/classes';
 
+import {
+  type MenuItem,
+} from '@/types/ui-interfaces';
 import {
   type Pair,
 } from '@/types/utility';
@@ -33,6 +36,7 @@ import {
   convertSVGCoordsToHTML,
 } from '@/utils/svg-dom';
 
+import StitchCanvasMenu from './StitchCanvasMenu.vue';
 import StitchCanvasSpines from './StitchCanvasSpines.vue';
 import StitchCanvasStitches from './StitchCanvasStitches.vue';
 import StitchDragDrawSVG from './StitchDragDrawSVG.vue';
@@ -40,10 +44,6 @@ import StitchGridDots from './StitchGridDots.vue';
 
 
 type CurveStitches = Line[];
-interface MenuItem {
-  label: string,
-  action: () => void,
-}
 
 
 // Lines in a simplified notation for easier testing
@@ -93,6 +93,7 @@ function getDebugLines(
 export default defineComponent({
   name: 'StitchCanvas',
   components: {
+    StitchCanvasMenu,
     StitchCanvasSpines,
     StitchCanvasStitches,
     StitchDragDrawSVG,
@@ -286,48 +287,16 @@ export default defineComponent({
         :stitches="stitches"
         :colors="stitchColors"
       />
-      <!--<foreignObject
-        v-if="menuCoordinates"
-        :x="menuCoordinates.x"
-        :y="menuCoordinates.y"
-        height="0"
-        width="0"
-        class="canvas-menu-wrapper"
-      >
-        <menu class="canvas-menu">
-          <li
-            v-for="item in menuItems"
-            :key="item.label"
-          >
-            <button type="button" @click=item.action>
-              {{ item.label }}
-            </button>
-          </li>
-        </menu>
-      </foreignObject>-->
     </StitchDragDrawSVG>
-    <menu
-      v-if="menuCoordinates"
+    <StitchCanvasMenu
+      v-if="menuCoordinates && menuItems"
       :style="{
         '--x': menuCoordinates.x + 'px',
         '--y': menuCoordinates.y + 'px',
       }"
       class="canvas-menu"
-    >
-      <li
-        v-for="item in menuItems"
-        :key="item.label"
-        class="canvas-menu-item"
-      >
-        <button
-          class="canvas-menu-button"
-          type="button"
-          @click="item.action"
-        >
-          {{ item.label }}
-        </button>
-      </li>
-    </menu>
+      :menu-items="menuItems"
+    />
   </div>
 </template>
 
@@ -360,38 +329,12 @@ export default defineComponent({
 .canvas-menu-wrapper {
   overflow: visible;
 }
+
 .canvas-menu {
-  --offset: 8px;
   grid-area: canvas;
   place-self: self-start;
   top: var(--y);
   left: var(--x);
-  padding: 2px;
-  border-radius: 4px;
-  border: solid 1px var(--color-menu);
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-.canvas-menu-item {
-  border-radius: inherit;
-   & + & {
-     margin-top: 2px;
-   }
-}
-
-.canvas-menu-button {
-  border-radius: inherit;
-  width: 100%;
-  border: none;
-  display: block;
-  background-color: var(--color-background);
-  color: var(--color-menu);
-
-  &:hover {
-    background-color: var(--color-active);
-  }
 }
 
 </style>
