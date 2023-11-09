@@ -196,14 +196,40 @@ export default defineComponent({
     },
 
     removeSpine(spine: Line) {
+      const removalIndex = this.lines.indexOf(spine);
+      if (removalIndex > -1) {
+        this.lines.splice(removalIndex, 1);
+      }
+    },
+
+    openSpineMenu(spine: Line) {
       this.openMenu(spine.midpoint, [
         {
           label: 'Delete',
           action: () => {
-            const removalIndex = this.lines.indexOf(spine);
-            if (removalIndex > -1) {
-              this.lines.splice(removalIndex, 1);
-            }
+            this.removeSpine(spine);
+          },
+        },
+        {
+          label: 'Cancel',
+          action: this.clearMenu,
+        },
+      ]);
+    },
+
+    onSpinePairSelected(lineA: Line, lineB: Line) {
+      const intersection = Line.getIntersectionPoint(lineA, lineB) as Point;
+      this.openMenu(intersection, [
+        {
+          label: 'Stitch',
+          action: () => {
+            this.stitchSpines(lineA, lineB);
+          },
+        },
+        {
+          label: 'Add Intersect Point',
+          action: () => {
+            this.knownPoints.push(intersection);
           },
         },
         {
@@ -220,7 +246,7 @@ export default defineComponent({
     getStitches(lineA: Line, lineB: Line): CurveStitches {
       // NOTE: This only works for horizontal and vertical lines
       // Get the number of grid dots along this line to make it easier to eyeball if the lines are right
-      const dynamicResolution = Math.round(lineB.length / this.gridSeparation);
+      const dynamicResolution = Math.round(lineB.length / this.gridSeparation) * 2;
       const stitches = stitch([lineA, lineB], dynamicResolution);
       if (this.debugMode) {
         this.addDebugStitches(stitches);
@@ -270,8 +296,8 @@ export default defineComponent({
 
       <StitchCanvasSpines
         :lines="lines"
-        @pair-selected="stitchSpines"
-        @remove-line="removeSpine"
+        @pair-selected="onSpinePairSelected"
+        @remove-line="openSpineMenu"
       />
 
       <StitchCanvasStitches
