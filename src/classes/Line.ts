@@ -1,4 +1,8 @@
 import {
+  type Pair,
+} from '@/types/utility';
+
+import {
   mapInRange,
 } from '@/utils';
 import {
@@ -137,6 +141,16 @@ export default class Line {
     return averagePoint(this.start, this.end);
   }
 
+  /**
+   * Get the endpoints in a consistent predictable order,
+   * independent of the order the line was actually created with
+   * @return {Pair<Point>}
+   */
+  get endpoints(): Pair<Point> {
+    const [first, second] = [this.start, this.end].sort(Point.compareFn);
+    return [first, second];
+  }
+
   // Instance methods ---------------------------------------------------------
 
   /**
@@ -186,5 +200,14 @@ export default class Line {
 
   toString(): string {
     return `${this.start}->${this.end}`;
+  }
+
+  /**
+   * Get a representation of the line that consistently orders the endpoints such that a line
+   * and its inverse will always have matching keys
+   * @return {string}
+   */
+  toKey(): string {
+    return this.endpoints.join('->');
   }
 }

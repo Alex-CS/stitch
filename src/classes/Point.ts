@@ -76,6 +76,28 @@ export default class Point {
     return false;
   }
 
+  /**
+   * A function to compare two Points, for sorting purposes
+   * @see {https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#comparefn}
+   * @param {PointLike} pointA
+   * @param {PointLike} pointB
+   * @return {number}
+   */
+  static compareFn(pointA: PointLike, pointB: PointLike): number {
+    // Get each point's "distance" from (0,0), skipping the square root because
+    // the difference between the two matters more than the actual distance values
+    const distance1 = pointA.x ** 2 + pointA.y ** 2;
+    const distance2 = pointB.x ** 2 + pointB.y ** 2;
+
+    // If they're different, we've got an answer
+    if (distance1 !== distance2) {
+      return distance2 - distance1;
+    }
+    // Otherwise, try each dimension for an order.
+    // At least ONE of these will give a value other than 0 unless they're the same point
+    return pointB.x - pointA.x || pointB.y - pointA.y;
+  }
+
   // Instance methods ---------------------------------------------------------
 
   /**
