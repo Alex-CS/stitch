@@ -112,8 +112,10 @@ export default defineComponent({
   data() {
     return {
       size: 1200,
-      knownPoints: [] as PointLike[],
-      lines: [] as Line[],
+      knownPoints: [
+      ] as PointLike[],
+      lines: [
+      ] as Line[],
       stitches: [] as CurveStitches,
 
       menuCoordinates: null as PointLike | null,
