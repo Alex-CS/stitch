@@ -126,6 +126,10 @@ export default defineComponent({
       lastLineColor: 'rgb(255, 0, 127)',
       firstColor: Color.fromHexString('#007fff'),
       lastColor: Color.fromHexString('#ff007f'),
+
+      // display controls
+      showKnownPoints: true,
+      showSpines: true,
     };
   },
   computed: {
@@ -265,6 +269,16 @@ export default defineComponent({
 
 <template>
   <div class="stitch-canvas-container">
+    <div class="stitch-canvas-controls">
+      <label>
+        <input v-model="showKnownPoints" type="checkbox">
+        Show points
+      </label>
+      <label>
+        <input v-model="showSpines" type="checkbox">
+        Show spines
+      </label>
+    </div>
     <StitchDragDrawSVG
       ref="dragDrawSVG"
       :size="size"
@@ -284,7 +298,10 @@ export default defineComponent({
         />
       </template>
 
-      <g class="known-points">
+      <g
+        v-show="showKnownPoints"
+        class="known-points"
+      >
         <circle
           v-for="point in knownPoints"
           :key="point.toString()"
@@ -295,6 +312,7 @@ export default defineComponent({
       </g>
 
       <StitchCanvasSpines
+        v-show="showSpines"
         :lines="lines"
         @pair-selected="onSpinePairSelected"
         @remove-line="openSpineMenu"
@@ -330,6 +348,14 @@ export default defineComponent({
     'left canvas right'
     / 1fr auto   1fr;
   align-items: stretch;
+}
+
+.stitch-canvas-controls {
+  justify-self: end;
+  display: grid;
+  grid-template-columns: max-content;
+  grid-auto-rows: max-content;
+  gap: var(--gap);
 }
 
 .svg-canvas {
