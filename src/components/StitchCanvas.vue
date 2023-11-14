@@ -20,13 +20,16 @@ import {
   type PointLike,
   Line,
   stitch,
+  type CurveStitches,
+  StitchCurveMap,
 } from '@/classes';
 
 import {
   type MenuItem,
 } from '@/types/ui-interfaces';
-import {
-  type Pair,
+import type {
+  Integer,
+  Pair,
 } from '@/types/utility';
 
 import {
@@ -41,9 +44,6 @@ import StitchCanvasSpines from './StitchCanvasSpines.vue';
 import StitchCanvasStitches from './StitchCanvasStitches.vue';
 import StitchDragDrawSVG from './StitchDragDrawSVG.vue';
 import StitchGridDots from './StitchGridDots.vue';
-
-
-type CurveStitches = Line[];
 
 
 // Lines in a simplified notation for easier testing
@@ -116,7 +116,7 @@ export default defineComponent({
       ] as PointLike[],
       lines: [
       ] as Line[],
-      stitches: [] as CurveStitches,
+      spineStitchMap: new StitchCurveMap(),
 
       menuCoordinates: null as PointLike | null,
       menuItems: null as MenuItem[] | null,
@@ -137,6 +137,9 @@ export default defineComponent({
   computed: {
     gridSeparation() {
       return this.size / this.gridDensity;
+    },
+    stitches() {
+      return this.spineStitchMap.stitches;
     },
   },
   mounted() {
@@ -225,13 +228,20 @@ export default defineComponent({
 
     onSpinePairSelected(lineA: Line, lineB: Line) {
       const intersection = Line.getIntersectionPoint(lineA, lineB) as Point;
-      this.openMenu(intersection, [
-        {
-          label: 'Stitch',
-          action: () => {
-            this.stitchSpines(lineA, lineB);
-          },
+      const isStitched = this.spineStitchMap.has([lineA, lineB]);
+      const stitchAction: MenuItem = isStitched ? {
+        label: 'Unstitch',
+        action: () => {
+          this.spineStitchMap.delete([lineA, lineB]);
         },
+      } : {
+        label: 'Stitch',
+        action: () => {
+          this.stitchSpines(lineA, lineB);
+        },
+      };
+      this.openMenu(intersection, [
+        stitchAction,
         {
           label: 'Add Intersect Point',
           action: () => {
@@ -246,18 +256,20 @@ export default defineComponent({
     },
 
     stitchSpines(lineA: Line, lineB: Line) {
-      this.stitches.push(...this.getStitches(lineA, lineB));
+      // Try to avoid the gaps between stitches looking too wide on the longer of the two spines
+      const longerLength = Math.max(...[lineA, lineB].map(l => l.length));
+      const dynamicResolution = Math.round(longerLength / this.gridSeparation) * 2;
+
+      const newStitches = this.getStitches(lineA, lineB, dynamicResolution);
+      this.spineStitchMap.set([lineA, lineB], newStitches);
     },
 
-    getStitches(lineA: Line, lineB: Line): CurveStitches {
-      // NOTE: This only works for horizontal and vertical lines
-      // Get the number of grid dots along this line to make it easier to eyeball if the lines are right
-      const dynamicResolution = Math.round(lineB.length / this.gridSeparation) * 2;
-      const stitches = stitch([lineA, lineB], dynamicResolution);
+    getStitches(lineA: Line, lineB: Line, resolution: Integer): CurveStitches {
+      const stitches = stitch([lineA, lineB], resolution);
       if (this.debugMode) {
         this.addDebugStitches(stitches);
       } else {
-        const colors = this.firstColor.stepsToward(this.lastColor, dynamicResolution - 1);
+        const colors = this.firstColor.stepsToward(this.lastColor, resolution - 1);
         stitches.forEach((line, index) => {
           this.stitchColors.set(line, (colors[index - 1] || this.firstColor).toHexString());
         });

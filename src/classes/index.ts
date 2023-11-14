@@ -18,5 +18,9 @@ export {
   type SpectrumParams,
 } from './Spectrum';
 export {
+  default as StitchCurveMap,
+  type CurveStitches,
+} from './StitchCurveMap';
+export {
   default as Vector,
 } from './Vector';

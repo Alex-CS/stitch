@@ -79,6 +79,21 @@ export default class Line {
   }
 
   /**
+   * A function to compare two Lines, for sorting purposes
+   * @see {https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#comparefn}
+   * @param {Line} lineA
+   * @param {Line} lineB
+   * @return {number}
+   */
+  static compareFn(lineA: Line, lineB: Line): number {
+    const [lineALower, lineAHigher] = lineA.endpoints;
+    const [lineBLower, lineBHigher] = lineB.endpoints;
+
+    // Compare the "smaller" of each line's endpoint, or if those are equal, the "larger" of each
+    return Point.compareFn(lineALower, lineBLower) || Point.compareFn(lineAHigher, lineBHigher);
+  }
+
+  /**
    * Get a new Line with the start and end points swapped
    * @param {LineLike} line
    * @returns {Line}
