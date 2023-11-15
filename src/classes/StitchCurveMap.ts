@@ -24,6 +24,38 @@ interface StitchCurveMapInternalValue {
   stitches: CurveStitches;
 }
 
+/**
+ * Create a new IterableIterator that wraps another and performs some transform on its values
+ * @template TValueInitial, TValueTransformed
+ * @param {IterableIterator<TValueInitial>} innerIterator
+ * @param {(innerYieldValue: TValueInitial) => TValueTransformed} valueTransformFn
+ * @return {IterableIterator<TValueTransformed>}
+ */
+function wrapIterator<TValueInitial, TValueTransformed>(
+  innerIterator: IterableIterator<TValueInitial>,
+  valueTransformFn: (innerYieldValue: TValueInitial) => TValueTransformed,
+): IterableIterator<TValueTransformed> {
+  return {
+    [Symbol.iterator]() {
+      return this;
+    },
+    next() {
+      const internalResult = innerIterator.next();
+      if (internalResult.done) {
+        // Value is always undefined here
+        return internalResult;
+      }
+
+      const value = valueTransformFn(internalResult.value);
+
+      return {
+        done: internalResult.done,
+        value,
+      };
+    },
+  };
+}
+
 export default class StitchCurveMap extends Map<SpinePair, CurveStitches> {
   #map = new Map<SpineKey, StitchCurveMapInternalValue>();
 
@@ -71,71 +103,26 @@ export default class StitchCurveMap extends Map<SpinePair, CurveStitches> {
   // Iterators
 
   keys(): IterableIterator<SpinePair> {
-    const iterator = this.#map.values();
-    return {
-      [Symbol.iterator]() {
-        return this;
-      },
-      next() {
-        const internalResult = iterator.next();
-        if (internalResult.done) {
-          // Value is always undefined here
-          return internalResult;
-        }
-
-        return {
-          done: internalResult.done,
-          value: internalResult.value.spines,
-        };
-      },
-    };
+    return wrapIterator(this.#map.values(), (innerValue) =>  {
+      return innerValue.spines;
+    });
   }
 
   values(): IterableIterator<CurveStitches> {
-    const iterator = this.#map.values();
-    return {
-      [Symbol.iterator]() {
-        return this;
-      },
-      next() {
-        const internalResult = iterator.next();
-        if (internalResult.done) {
-          // Value is always undefined here
-          return internalResult;
-        }
-
-        return {
-          done: internalResult.done,
-          value: internalResult.value.stitches,
-        };
-      },
-    };
+    return wrapIterator(this.#map.values(), (innerValue) => {
+      return innerValue.stitches;
+    });
   }
 
   entries(): IterableIterator<[SpinePair, CurveStitches]> {
-    const iterator = this.#map.values();
-    return {
-      [Symbol.iterator]() {
-        return this;
-      },
-      next() {
-        const internalResult = iterator.next();
-        if (internalResult.done) {
-          // Value is always undefined here
-          return internalResult;
-        }
+    return wrapIterator(this.#map.values(), (innerValue) => {
+      const {
+        spines,
+        stitches,
+      } = innerValue;
 
-        const {
-          spines,
-          stitches,
-        } = internalResult.value as StitchCurveMapInternalValue;
-
-        return {
-          done: internalResult.done,
-          value: [spines, stitches] as [SpinePair, CurveStitches],
-        };
-      },
-    };
+      return [spines, stitches] as [SpinePair, CurveStitches];
+    });
   }
 
   [Symbol.iterator]() {
